@@ -19,11 +19,11 @@ IT3030 PAF Assignment 2026 — Group XX
 Run these commands once:
 ```sql
 sudo -u postgres psql
-CREATE USER campus_user WITH PASSWORD 'campus123';
-CREATE DATABASE smart_campus OWNER campus_user;
-CREATE DATABASE smart_campus_test OWNER campus_user;
-GRANT ALL PRIVILEGES ON DATABASE smart_campus TO campus_user;
-GRANT ALL PRIVILEGES ON DATABASE smart_campus_test TO campus_user;
+CREATE USER campus_ops_user WITH PASSWORD 'campus_ops123';
+CREATE DATABASE campus_ops_db OWNER campus_ops_user;
+CREATE DATABASE campus_ops_test_db OWNER campus_ops_user;
+GRANT ALL PRIVILEGES ON DATABASE campus_ops_db TO campus_ops_user;
+GRANT ALL PRIVILEGES ON DATABASE campus_ops_test_db TO campus_ops_user;
 \q
 ```
 
