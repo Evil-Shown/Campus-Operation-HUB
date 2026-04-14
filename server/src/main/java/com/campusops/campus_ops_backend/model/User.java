@@ -34,6 +34,9 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     private String pictureUrl;
 
     @Default
