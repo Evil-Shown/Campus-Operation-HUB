@@ -4,10 +4,13 @@ import { ArrowRight, LogIn } from 'lucide-react'
 
 export default function CallToAction() {
   return (
-    <section id="contact" className="relative overflow-hidden py-20 md:py-28">
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-purple-600/20 to-pink-600/20 dark:from-indigo-600/10 dark:via-purple-600/10 dark:to-pink-600/10" />
-      <div className="absolute -left-40 -bottom-40 h-80 w-80 rounded-full bg-purple-500/20 blur-3xl" />
-      <div className="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
+    <section id="contact" className="relative overflow-hidden py-20 md:py-28 bg-white">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
+      
+      {/* Decorative elements */}
+      <div className="absolute -top-20 right-0 w-96 h-96 rounded-full bg-indigo-100/40 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 left-0 w-96 h-96 rounded-full bg-blue-100/40 blur-3xl pointer-events-none" />
 
       <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <motion.div
@@ -15,34 +18,57 @@ export default function CallToAction() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
           viewport={{ once: true }}
+          className="space-y-8"
         >
-          <h2 className="mb-6 text-4xl font-bold md:text-5xl">
-            <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-              Ready to transform your
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              campus operations?
-            </span>
-          </h2>
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-            Join institutions already streamlining their campus management with CampusOps.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+              <span className="text-slate-900">
+                Ready to streamline your
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                campus operations?
+              </span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600">
+              Join institutions already transforming their campus management with CampusOps. Get started in minutes, not months.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/app"
-              className="inline-flex items-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 font-semibold text-white shadow-lg shadow-indigo-600/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-600/30"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all duration-300 hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-600/40"
             >
               Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/login"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-8 py-4 font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-8 py-3.5 font-semibold text-slate-900 transition-all duration-300 hover:bg-slate-50 hover:border-slate-400"
             >
-              <LogIn className="mr-2 h-5 w-5" />
-              Login
+              <LogIn className="h-4 w-4" />
+              Sign In
             </Link>
+          </div>
+
+          {/* Trust badges */}
+          <div className="pt-8 border-t border-slate-200">
+            <p className="text-sm text-slate-600 mb-6">Trusted by leading educational institutions</p>
+            <div className="flex flex-wrap justify-center gap-8">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-slate-900">500+</p>
+                <p className="text-sm text-slate-600">Active Institutions</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-slate-900">50k+</p>
+                <p className="text-sm text-slate-600">Happy Users</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-slate-900">99.9%</p>
+                <p className="text-sm text-slate-600">Uptime Guaranteed</p>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

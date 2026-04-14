@@ -41,9 +41,7 @@ function App() {
           path="/app"
           element={
             <PrivateRoute>
-              <Shell>
-                <AdminDashboardPage />
-              </Shell>
+              <AdminDashboardPage />
             </PrivateRoute>
           }
         />

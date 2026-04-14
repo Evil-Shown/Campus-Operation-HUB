@@ -53,22 +53,24 @@ export default function Features() {
   }
 
   return (
-    <section id="features" ref={ref} className="bg-white py-20 md:py-28 dark:bg-slate-950">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-12 max-w-2xl text-center md:mb-16">
+    <section id="features" ref={ref} className="relative py-20 md:py-28 bg-white">
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-white pointer-events-none" />
+      
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-16 max-w-2xl text-center">
           <motion.span
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="text-sm font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400"
+            className="text-sm font-semibold uppercase tracking-wide text-indigo-600"
           >
-            Core Capabilities
+            Core Features
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-3 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-3xl font-bold text-transparent md:text-4xl dark:from-white dark:to-slate-300"
+            className="mt-4 text-4xl md:text-5xl font-bold text-slate-900"
           >
             Everything you need to manage campus operations
           </motion.h2>
@@ -76,9 +78,9 @@ export default function Features() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-4 text-slate-600 dark:text-slate-300"
+            className="mt-4 text-lg text-slate-600"
           >
-            Powerful features designed to streamline campus management and improve efficiency.
+            Powerful features designed to streamline campus management and improve operational efficiency.
           </motion.p>
         </div>
 
@@ -86,7 +88,7 @@ export default function Features() {
           variants={containerVariants}
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-5"
         >
           {features.map((feature) => {
             const Icon = feature.icon
@@ -95,15 +97,15 @@ export default function Features() {
               <motion.article
                 key={feature.title}
                 variants={cardVariants}
-                whileHover={{ scale: 1.02, y: -5 }}
+                whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 transition={{ duration: 0.2 }}
-                className="group relative rounded-2xl border border-slate-200 bg-white p-6 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-600/10 dark:border-slate-700 dark:bg-slate-900/70"
+                className="group relative rounded-xl border border-slate-200 bg-white p-6 transition-all duration-300 hover:border-slate-300 shadow-sm"
               >
-                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.color} shadow-lg`}>
+                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br ${feature.color} shadow-lg`}>
                   <Icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="mb-2 text-xl font-semibold text-slate-800 dark:text-white">{feature.title}</h3>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-300">{feature.description}</p>
+                <h3 className="mb-3 text-lg font-semibold text-slate-900">{feature.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-600">{feature.description}</p>
               </motion.article>
             )
           })}
