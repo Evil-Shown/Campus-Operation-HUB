@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
+  User,
   Mail,
   Lock,
   Eye,
   EyeOff,
-  LogIn,
+  UserPlus,
   ArrowRight,
   Building2,
   CalendarDays,
@@ -58,7 +59,6 @@ function Button({ variant = 'primary', isLoading = false, icon, children, classN
   const variants = {
     primary:
       'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow-md focus:ring-indigo-500 active:scale-[0.98] active:bg-indigo-800',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 focus:ring-gray-400',
     outline:
       'border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm focus:ring-gray-400',
   }
@@ -78,13 +78,24 @@ function Button({ variant = 'primary', isLoading = false, icon, children, classN
   )
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   const navigate = useNavigate()
-  const { loginAsLeader } = useAuth()
+  const { signUpAsLeader } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({ email: '', password: '' })
-  const [errors, setErrors] = useState({ email: '', password: '' })
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -96,8 +107,19 @@ export default function LoginPage() {
   }
 
   const validateForm = () => {
-    const newErrors = { email: '', password: '' }
+    const newErrors = {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    }
+
     let isValid = true
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required'
+      isValid = false
+    }
 
     if (!formData.email) {
       newErrors.email = 'Email is required'
@@ -115,27 +137,33 @@ export default function LoginPage() {
       isValid = false
     }
 
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password'
+      isValid = false
+    } else if (formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = 'Passwords do not match'
+      isValid = false
+    }
+
     setErrors(newErrors)
     return isValid
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     if (!validateForm()) {
       return
     }
 
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 700))
-    loginAsLeader()
-    setIsLoading(false)
-    navigate('/app')
-  }
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    loginAsLeader()
+    signUpAsLeader({
+      name: formData.name.trim(),
+      email: formData.email,
+    })
+
     setIsLoading(false)
     navigate('/app')
   }
@@ -190,11 +218,11 @@ export default function LoginPage() {
 
               <div className="max-w-md space-y-6">
                 <h1 className="text-4xl font-bold leading-tight tracking-tight text-white lg:text-5xl">
-                  Smart Campus
-                  <span className="block text-indigo-100">Operations Hub</span>
+                  Create Your
+                  <span className="block text-indigo-100">CampusOps Account</span>
                 </h1>
                 <p className="text-lg leading-relaxed text-indigo-100">
-                  Efficiently manage campus bookings, facilities, and incidents from a single, intuitive platform.
+                  Join your team and manage campus operations, bookings, and maintenance workflows in one place.
                 </p>
 
                 <div className="space-y-4 pt-8">
@@ -202,19 +230,19 @@ export default function LoginPage() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
                       <CalendarDays className="h-4 w-4" />
                     </div>
-                    <span>Smart room and equipment scheduling</span>
+                    <span>Set up events and resources in minutes</span>
                   </div>
                   <div className="flex items-center gap-3 text-indigo-100">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
                       <ClipboardList className="h-4 w-4" />
                     </div>
-                    <span>Real-time maintenance tracking</span>
+                    <span>Track requests and maintenance tickets</span>
                   </div>
                   <div className="flex items-center gap-3 text-indigo-100">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
                       <Users className="h-4 w-4" />
                     </div>
-                    <span>Seamless stakeholder collaboration</span>
+                    <span>Coordinate with your campus teams</span>
                   </div>
                 </div>
               </div>
@@ -240,32 +268,24 @@ export default function LoginPage() {
           >
             <motion.div variants={containerVariants} initial="hidden" animate="visible" className="w-full max-w-md">
               <motion.div variants={itemVariants} className="text-center lg:text-left">
-                <h2 className="text-3xl font-bold tracking-tight text-gray-900">Welcome Back</h2>
-                <p className="mt-2 text-gray-500">Sign in to your account to continue</p>
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900">Sign Up</h2>
+                <p className="mt-2 text-gray-500">Create your account to get started</p>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="mt-8">
-                <Button
-                  variant="outline"
-                  icon={<Mail className="h-4 w-4" />}
-                  onClick={handleGoogleSignIn}
-                  className="w-full"
-                  isLoading={isLoading}
-                >
-                  Sign in with Google
-                </Button>
-              </motion.div>
+              <motion.form variants={itemVariants} onSubmit={handleSubmit} className="mt-8 space-y-5">
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  label="Full name"
+                  placeholder="Enter your full name"
+                  icon={<User className="h-4 w-4" />}
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  error={errors.name}
+                  autoComplete="name"
+                />
 
-              <motion.div variants={itemVariants} className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-3 text-gray-400">or continue with</span>
-                </div>
-              </motion.div>
-
-              <motion.form variants={itemVariants} onSubmit={handleSubmit} className="space-y-5">
                 <Input
                   id="email"
                   name="email"
@@ -280,26 +300,21 @@ export default function LoginPage() {
                 />
 
                 <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                      Password
-                    </label>
-                    <button type="button" className="text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-700">
-                      Forgot password?
-                    </button>
-                  </div>
+                  <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
                   <div className="relative">
                     <Input
                       id="password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
+                      placeholder="Create a password"
                       icon={<Lock className="h-4 w-4" />}
                       value={formData.password}
                       onChange={handleInputChange}
                       error={errors.password}
                       className="pr-10"
-                      autoComplete="current-password"
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
@@ -312,16 +327,50 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <Button type="submit" variant="primary" isLoading={isLoading} icon={<LogIn className="h-4 w-4" />} className="mt-6 w-full">
-                  Sign In
+                <div>
+                  <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Confirm password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Re-enter your password"
+                      icon={<Lock className="h-4 w-4" />}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      error={errors.confirmPassword}
+                      className="pr-10"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                      aria-label={showConfirmPassword ? 'Hide confirmed password' : 'Show confirmed password'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  isLoading={isLoading}
+                  icon={<UserPlus className="h-4 w-4" />}
+                  className="mt-6 w-full"
+                >
+                  Create Account
                 </Button>
               </motion.form>
 
               <motion.div variants={itemVariants} className="mt-8 text-center">
                 <p className="text-sm text-gray-500">
-                  Don&apos;t have an account?{' '}
-                  <Link to="/signup" className="group inline-flex items-center gap-1 font-medium text-indigo-600 transition-colors hover:text-indigo-700">
-                    Sign up
+                  Already have an account?{' '}
+                  <Link to="/login" className="group inline-flex items-center gap-1 font-medium text-indigo-600 transition-colors hover:text-indigo-700">
+                    Sign in
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </p>
@@ -329,7 +378,7 @@ export default function LoginPage() {
 
               <motion.div variants={itemVariants} className="mt-8 border-t border-gray-100 pt-6">
                 <p className="text-center text-xs text-gray-400">
-                  By signing in, you agree to our{' '}
+                  By creating an account, you agree to our{' '}
                   <button className="text-gray-500 underline-offset-2 hover:text-gray-700 hover:underline" type="button">
                     Terms of Service
                   </button>{' '}

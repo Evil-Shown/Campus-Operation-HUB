@@ -35,6 +35,19 @@ export function AuthProvider({ children }) {
     setUser(demoUser)
   }
 
+  const signUpAsLeader = ({ name, email }) => {
+    const newUser = {
+      id: Date.now(),
+      name: name || 'New Team Leader',
+      role: 'leader',
+      email,
+    }
+
+    localStorage.setItem(TOKEN_KEY, 'demo-jwt-token')
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser))
+    setUser(newUser)
+  }
+
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
@@ -46,6 +59,7 @@ export function AuthProvider({ children }) {
       user,
       loading: false,
       loginAsLeader,
+      signUpAsLeader,
       logout,
       isAuthenticated: Boolean(user),
       token: localStorage.getItem(TOKEN_KEY),
