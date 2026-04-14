@@ -88,8 +88,8 @@ export default function DashboardPreview() {
             </div>
             <div className="p-4">
               <div className="grid grid-cols-7 gap-2 text-center mb-3">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-                  <div key={day} className="text-xs font-semibold text-slate-500">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                  <div key={`${day}-${index}`} className="text-xs font-semibold text-slate-500">
                     {day}
                   </div>
                 ))}
