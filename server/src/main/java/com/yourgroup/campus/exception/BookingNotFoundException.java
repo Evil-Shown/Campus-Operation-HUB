@@ -1,0 +1,7 @@
+package com.yourgroup.campus.exception;
+
+public class BookingNotFoundException extends RuntimeException {
+    public BookingNotFoundException(Long id) {
+        super("Booking with id " + id + " not found");
+    }
+}
