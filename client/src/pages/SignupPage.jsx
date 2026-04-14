@@ -80,10 +80,11 @@ function Button({ variant = 'primary', isLoading = false, icon, children, classN
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const { signUpAsLeader } = useAuth()
+  const { signup } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [formError, setFormError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -157,15 +158,20 @@ export default function SignupPage() {
     }
 
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 700))
+    setFormError('')
 
-    signUpAsLeader({
-      name: formData.name.trim(),
-      email: formData.email,
-    })
-
-    setIsLoading(false)
-    navigate('/app')
+    try {
+      await signup({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      })
+      navigate('/app')
+    } catch (error) {
+      setFormError(error.message || 'Unable to create account. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const containerVariants = {
@@ -273,6 +279,8 @@ export default function SignupPage() {
               </motion.div>
 
               <motion.form variants={itemVariants} onSubmit={handleSubmit} className="mt-8 space-y-5">
+                {formError ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{formError}</p> : null}
+
                 <Input
                   id="name"
                   name="name"

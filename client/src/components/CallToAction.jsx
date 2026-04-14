@@ -37,7 +37,7 @@ export default function CallToAction() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/app"
+              to="/signup"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-8 py-3.5 font-semibold text-white shadow-lg shadow-indigo-600/30 transition-all duration-300 hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-600/40"
             >
               Get Started

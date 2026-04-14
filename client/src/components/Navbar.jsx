@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutDashboard, LogIn, Menu, X } from 'lucide-react'
+import { LayoutDashboard, LogIn, Menu, UserPlus, X } from 'lucide-react'
 
 const navLinks = [
   { name: 'Features', href: '#features' },
@@ -64,10 +64,11 @@ export default function Navbar() {
               Login
             </Link>
             <Link
-              to="/app"
-              className="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-600/25 transition-all duration-300 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/35"
+              to="/signup"
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-600/25 transition-all duration-300 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/35"
             >
-              Get Started
+              <UserPlus className="h-4 w-4" />
+              Sign Up
             </Link>
           </div>
 
@@ -115,6 +116,13 @@ export default function Navbar() {
                   className="block rounded-lg bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
                 >
                   Get Started
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setIsOpen(false)}
+                  className="block rounded-lg border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  Sign Up
                 </Link>
               </div>
             </div>

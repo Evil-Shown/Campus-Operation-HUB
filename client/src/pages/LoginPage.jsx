@@ -80,9 +80,10 @@ function Button({ variant = 'primary', isLoading = false, icon, children, classN
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { loginAsLeader } = useAuth()
+  const { signin, apiBaseUrl } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [formError, setFormError] = useState('')
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({ email: '', password: '' })
 
@@ -126,18 +127,23 @@ export default function LoginPage() {
     }
 
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 700))
-    loginAsLeader()
-    setIsLoading(false)
-    navigate('/app')
+    setFormError('')
+
+    try {
+      await signin({
+        email: formData.email.trim(),
+        password: formData.password,
+      })
+      navigate('/app')
+    } catch (error) {
+      setFormError(error.message || 'Unable to sign in. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    loginAsLeader()
-    setIsLoading(false)
-    navigate('/app')
+    window.location.href = `${apiBaseUrl}/oauth2/authorization/google`
   }
 
   const containerVariants = {
@@ -266,6 +272,8 @@ export default function LoginPage() {
               </motion.div>
 
               <motion.form variants={itemVariants} onSubmit={handleSubmit} className="space-y-5">
+                {formError ? <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{formError}</p> : null}
+
                 <Input
                   id="email"
                   name="email"
