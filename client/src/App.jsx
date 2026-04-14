@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import Shell from './components/Shell'
-import LandingPage from './pages/LandingPage'
+import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import SectionPage from './pages/SectionPage'
 import './App.css'
@@ -33,73 +33,70 @@ const modulePages = {
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/app"
-          element={
-            <PrivateRoute>
-              <Shell>
-                <AdminDashboardPage />
-              </Shell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/catalogue"
-          element={
-            <PrivateRoute>
-              <Shell>
-                <SectionPage {...modulePages.catalogue} />
-              </Shell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/bookings"
-          element={
-            <PrivateRoute>
-              <Shell>
-                <SectionPage {...modulePages.bookings} />
-              </Shell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/tickets"
-          element={
-            <PrivateRoute>
-              <Shell>
-                <SectionPage {...modulePages.tickets} />
-              </Shell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <PrivateRoute>
-              <Shell>
-                <SectionPage {...modulePages.notifications} />
-              </Shell>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <PrivateRoute allowRoles={['leader']}>
-              <Shell>
-                <SectionPage {...modulePages.admin} />
-              </Shell>
-            </PrivateRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route
+        path="/app"
+        element={
+          <PrivateRoute>
+            <AdminDashboardPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/catalogue"
+        element={
+          <PrivateRoute>
+            <Shell>
+              <SectionPage {...modulePages.catalogue} />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/bookings"
+        element={
+          <PrivateRoute>
+            <Shell>
+              <SectionPage {...modulePages.bookings} />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/tickets"
+        element={
+          <PrivateRoute>
+            <Shell>
+              <SectionPage {...modulePages.tickets} />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <PrivateRoute>
+            <Shell>
+              <SectionPage {...modulePages.notifications} />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <PrivateRoute allowRoles={['leader']}>
+            <Shell>
+              <SectionPage {...modulePages.admin} />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 
