@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
 import Shell from './components/Shell'
-import LandingPage from './pages/LandingPage'
+import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import SectionPage from './pages/SectionPage'
@@ -35,7 +35,7 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route
           path="/app"
