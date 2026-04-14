@@ -34,6 +34,8 @@ GRANT ALL PRIVILEGES ON DATABASE campus_ops_test_db TO campus_ops_user;
 4. Copy client-id and client-secret into server/src/main/resources/application.properties
 5. Run: cd server && mvn spring-boot:run
 6. API available at: http://localhost:8080
+7. Swagger UI: http://localhost:8080/swagger-ui/index.html
+8. OpenAPI JSON: http://localhost:8080/v3/api-docs
 
 ## Frontend setup (done separately by team)
 cd client && npm install && npm run dev
