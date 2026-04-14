@@ -45,6 +45,7 @@ public class SecurityConfig {
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/resources", "/api/resources/**", "/api/health").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auth/**").permitAll()
+            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated());
         if (clientRegistrationRepository.getIfAvailable() != null) {
             http.oauth2Login(oauth -> oauth
