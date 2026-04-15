@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class BookingResponseDTO {
+
     private Long id;
     private Long resourceId;
     private String resourceName;

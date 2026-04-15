@@ -15,51 +15,70 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BookingNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleBookingNotFoundException(
-            BookingNotFoundException ex, HttpServletRequest request) {
+            BookingNotFoundException ex,
+            HttpServletRequest request
+    ) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
     @ExceptionHandler(BookingConflictException.class)
     public ResponseEntity<Map<String, Object>> handleBookingConflictException(
-            BookingConflictException ex, HttpServletRequest request) {
+            BookingConflictException ex,
+            HttpServletRequest request
+    ) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<Map<String, Object>> handleUnauthorizedException(
-            UnauthorizedException ex, HttpServletRequest request) {
+            UnauthorizedException ex,
+            HttpServletRequest request
+    ) {
         return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
-            IllegalArgumentException ex, HttpServletRequest request) {
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalStateException(
-            IllegalStateException ex, HttpServletRequest request) {
+            IllegalStateException ex,
+            HttpServletRequest request
+    ) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
-        String message = ex.getBindingResult().getFieldError() != null
-                ? ex.getBindingResult().getFieldError().getDefaultMessage()
-                : "Validation failed";
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request
+    ) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Validation failed");
+
         return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(
-            HttpStatus status, String message, HttpServletRequest request) {
-        return ResponseEntity.status(status).body(Map.of(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request
+    ) {
+        Map<String, Object> body = Map.of(
                 "timestamp", LocalDateTime.now().toString(),
                 "status", status.value(),
                 "error", status.getReasonPhrase(),
                 "message", message,
                 "path", request.getRequestURI()
-        ));
+        );
+
+        return ResponseEntity.status(status).body(body);
     }
 }
