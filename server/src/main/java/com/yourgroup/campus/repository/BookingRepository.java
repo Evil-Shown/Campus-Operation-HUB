@@ -16,20 +16,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
             SELECT b FROM Booking b
             WHERE b.resource.id = :resourceId
-              AND b.status = 'APPROVED'
+              AND b.status = :approved
               AND b.startTime < :endTime
               AND b.endTime > :startTime
             """)
     List<Booking> findConflictingBookings(
             @Param("resourceId") Long resourceId,
             @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
+            @Param("endTime") LocalDateTime endTime,
+            @Param("approved") BookingStatus approved
     );
 
     @Query("""
             SELECT b FROM Booking b
             WHERE b.resource.id = :resourceId
-              AND b.status = 'APPROVED'
+              AND b.status = :approved
               AND b.startTime < :endTime
               AND b.endTime > :startTime
               AND b.id <> :excludeId
@@ -38,10 +39,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("resourceId") Long resourceId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime,
-            @Param("excludeId") Long excludeId
+            @Param("excludeId") Long excludeId,
+            @Param("approved") BookingStatus approved
     );
 
-    List<Booking> findByUserIdOrderByStartTimeDesc(Long userId);
+    List<Booking> findByUser_IdOrderByStartTimeDesc(Long userId);
 
     List<Booking> findByResourceIdAndStatusOrderByStartTime(Long resourceId, BookingStatus status);
 

@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Package,
   Calendar,
-  User,
   Ticket,
   Users,
   ChevronLeft,
@@ -16,15 +15,14 @@ const Sidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, role }) =
   const userNavItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
     { icon: Package, label: 'Resources', path: '/catalogue' },
-    { icon: Calendar, label: 'Bookings', path: '/bookings' },
-    { icon: User, label: 'My Bookings', path: '/bookings' },
+    { icon: Calendar, label: 'My Bookings', path: '/bookings' },
     { icon: Ticket, label: 'Tickets', path: '/tickets' },
   ]
 
   const adminNavItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
     { icon: Package, label: 'Manage Resources', path: '/catalogue' },
-    { icon: Calendar, label: 'Manage Bookings', path: '/bookings' },
+    { icon: Calendar, label: 'Manage Bookings', path: '/bookings/admin' },
     { icon: Ticket, label: 'Manage Tickets', path: '/tickets' },
     { icon: Users, label: 'Users', path: '/admin' },
   ]

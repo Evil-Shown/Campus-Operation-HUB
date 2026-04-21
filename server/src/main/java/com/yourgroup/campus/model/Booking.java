@@ -57,12 +57,10 @@ public class Booking {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (status == null) {
-            status = BookingStatus.PENDING;
-        }
+        status = BookingStatus.PENDING;
     }
 
-    public static enum BookingStatus {
+    public enum BookingStatus {
         PENDING,
         APPROVED,
         REJECTED,

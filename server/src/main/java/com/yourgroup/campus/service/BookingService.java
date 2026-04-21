@@ -1,13 +1,13 @@
 package com.yourgroup.campus.service;
 
-import com.yourgroup.campus.dto.BookingRequestDTO;
-import com.yourgroup.campus.dto.BookingResponseDTO;
 import com.campusops.campus_ops_backend.exception.ResourceNotFoundException;
 import com.campusops.campus_ops_backend.model.Resource;
 import com.campusops.campus_ops_backend.model.User;
 import com.campusops.campus_ops_backend.repository.ResourceRepository;
 import com.campusops.campus_ops_backend.repository.UserRepository;
 import com.campusops.campus_ops_backend.service.NotificationService;
+import com.yourgroup.campus.dto.BookingRequestDTO;
+import com.yourgroup.campus.dto.BookingResponseDTO;
 import com.yourgroup.campus.exception.BookingConflictException;
 import com.yourgroup.campus.exception.BookingNotFoundException;
 import com.yourgroup.campus.exception.UnauthorizedException;
@@ -46,7 +46,8 @@ public class BookingService {
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
                 dto.getResourceId(),
                 dto.getStartTime(),
-                dto.getEndTime()
+                dto.getEndTime(),
+                BookingStatus.APPROVED
         );
         if (!conflicts.isEmpty()) {
             throw new BookingConflictException(
@@ -58,7 +59,7 @@ public class BookingService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Booking booking = Booking.builder()
                 .user(user)
@@ -76,7 +77,7 @@ public class BookingService {
 
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getMyBookings(Long userId) {
-        return bookingRepository.findByUserIdOrderByStartTimeDesc(userId).stream()
+        return bookingRepository.findByUser_IdOrderByStartTimeDesc(userId).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -89,8 +90,16 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingResponseDTO getBookingById(Long bookingId) {
-        return toDTO(findOrThrow(bookingId));
+    public BookingResponseDTO getBookingById(Long bookingId, Long userId) {
+        Booking booking = findOrThrow(bookingId);
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        boolean isOwner = booking.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == User.Role.ADMIN;
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedException("You are not allowed to view this booking");
+        }
+        return toDTO(booking);
     }
 
     @Transactional
@@ -105,7 +114,8 @@ public class BookingService {
                 booking.getResource().getId(),
                 booking.getStartTime(),
                 booking.getEndTime(),
-                bookingId
+                bookingId,
+                BookingStatus.APPROVED
         );
         if (!conflicts.isEmpty()) {
             throw new BookingConflictException(
@@ -145,7 +155,7 @@ public class BookingService {
                 "Your booking for "
                         + booking.getResource().getName()
                         + " was rejected."
-                        + (reason != null ? " Reason: " + reason : "")
+                        + (reason != null && !reason.isBlank() ? " Reason: " + reason : "")
         );
 
         return toDTO(savedBooking);

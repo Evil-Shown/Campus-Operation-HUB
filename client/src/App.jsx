@@ -6,6 +6,9 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import SectionPage from './pages/SectionPage'
+import BookingForm from './pages/bookings/BookingForm'
+import MyBookings from './pages/bookings/MyBookings'
+import AdminBookings from './pages/bookings/AdminBookings'
 import './App.css'
 
 const modulePages = {
@@ -13,17 +16,13 @@ const modulePages = {
     title: 'Catalogue',
     description: 'Basic landing area for resource browsing. Member-specific UI stays blank for now.',
   },
-  bookings: {
-    title: 'Bookings',
-    description: 'Reserved for the booking workflow later. This route is intentionally minimal.',
-  },
   tickets: {
     title: 'Tickets',
     description: 'Reserved for issue reporting and attachments later. No member-specific UI yet.',
   },
   notifications: {
     title: 'Notifications',
-    description: 'Leader notification center placeholder. Polling and bell UI can be added later.',
+    description: 'Reserved for the leader notification center placeholder.',
   },
   admin: {
     title: 'Admin Dashboard',
@@ -56,11 +55,31 @@ function App() {
         }
       />
       <Route
+        path="/bookings/new"
+        element={
+          <PrivateRoute>
+            <Shell>
+              <BookingForm />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/bookings"
         element={
           <PrivateRoute>
             <Shell>
-              <SectionPage {...modulePages.bookings} />
+              <MyBookings />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/bookings/admin"
+        element={
+          <PrivateRoute allowRoles={['leader']}>
+            <Shell>
+              <AdminBookings />
             </Shell>
           </PrivateRoute>
         }

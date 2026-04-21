@@ -24,15 +24,21 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<BookingResponseDTO> createBooking(
             @Valid @RequestBody BookingRequestDTO dto,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal(expression = "user.id") Long userId
     ) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.createBooking(dto, userId));
     }
 
     @GetMapping("/my")
     public ResponseEntity<List<BookingResponseDTO>> getMyBookings(
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal(expression = "user.id") Long userId
     ) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(bookingService.getMyBookings(userId));
     }
 
@@ -46,9 +52,13 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BookingResponseDTO> getBookingById(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "user.id") Long userId
     ) {
-        return ResponseEntity.ok(bookingService.getBookingById(id));
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(bookingService.getBookingById(id, userId));
     }
 
     @GetMapping("/resource/{resourceId}/availability")
@@ -78,8 +88,11 @@ public class BookingController {
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BookingResponseDTO> cancelBooking(
             @PathVariable Long id,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal(expression = "user.id") Long userId
     ) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(bookingService.cancelBooking(id, userId));
     }
 }
