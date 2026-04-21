@@ -8,7 +8,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.campusops.campus_ops_backend.dto.request.SigninRequestDTO;
@@ -22,23 +21,22 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/signup")
+    @PostMapping("/api/auth/signup")
     public ResponseEntity<AuthResponseDTO> signup(@Valid @RequestBody SignupRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.signup(request));
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/api/auth/signin")
     public ResponseEntity<AuthResponseDTO> signin(@Valid @RequestBody SigninRequestDTO request) {
         return ResponseEntity.ok(authService.signin(request));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/api/auth/me")
     public ResponseEntity<UserSummaryDTO> me(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -46,7 +44,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.getCurrentUser(principal.getUser().getId()).user());
     }
 
-    @GetMapping("/health")
+    @GetMapping("/api/health")
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("status", "ok", "service", "smart-campus-api"));
     }

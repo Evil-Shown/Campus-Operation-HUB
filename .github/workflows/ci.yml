@@ -15,9 +15,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: campus_ops_test_db
-          POSTGRES_USER: campus_ops_user
-          POSTGRES_PASSWORD: campus_ops123
+          POSTGRES_DB: campus_ops_test
+          POSTGRES_USER: campus_user
+          POSTGRES_PASSWORD: campus123
         ports:
           - 5432:5432
         options: >-
@@ -41,9 +41,9 @@ jobs:
       - name: Test
         run: mvn test -f server/pom.xml
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/campus_ops_test_db
-          SPRING_DATASOURCE_USERNAME: campus_ops_user
-          SPRING_DATASOURCE_PASSWORD: campus_ops123
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/campus_ops_test
+          SPRING_DATASOURCE_USERNAME: campus_user
+          SPRING_DATASOURCE_PASSWORD: campus123
           APP_JWT_SECRET: c21hcnRjYW1wdXNzdXBlcnNlY3JldGtleWZvcmphdmFzcHJpbmcyMDI2bG9uZ2Vub3VnaA==
           APP_JWT_EXPIRATION_MS: 86400000
           APP_UPLOAD_DIR: ./test-uploads
