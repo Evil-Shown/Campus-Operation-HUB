@@ -4,6 +4,7 @@ import com.yourgroup.campus.dto.BookingRequestDTO;
 import com.yourgroup.campus.dto.BookingResponseDTO;
 import com.yourgroup.campus.model.Booking.BookingStatus;
 import com.yourgroup.campus.service.BookingService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/bookings")
+@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class BookingController {
 

@@ -13,46 +13,60 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    @Query("""
-            SELECT b FROM Booking b
-            WHERE b.resource.id = :resourceId
-              AND b.status = :approved
-              AND b.startTime < :endTime
-              AND b.endTime > :startTime
-            """)
-    List<Booking> findConflictingBookings(
-            @Param("resourceId") Long resourceId,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime,
-            @Param("approved") BookingStatus approved
-    );
+        /**
+         * Find APPROVED bookings that overlap with the given time window.
+         * Used during booking creation to detect conflicts.
+         */
+        @Query("""
+                        SELECT b FROM Booking b
+                        WHERE b.resource.id = :resourceId
+                          AND b.status = com.yourgroup.campus.model.Booking.BookingStatus.APPROVED
+                          AND b.startTime < :endTime
+                          AND b.endTime > :startTime
+                        """)
+        List<Booking> findConflictingBookings(
+                        @Param("resourceId") Long resourceId,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime);
 
-    @Query("""
-            SELECT b FROM Booking b
-            WHERE b.resource.id = :resourceId
-              AND b.status = :approved
-              AND b.startTime < :endTime
-              AND b.endTime > :startTime
-              AND b.id <> :excludeId
-            """)
-    List<Booking> findConflictingBookingsExcluding(
-            @Param("resourceId") Long resourceId,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime,
-            @Param("excludeId") Long excludeId,
-            @Param("approved") BookingStatus approved
-    );
+        /**
+         * Find APPROVED bookings that overlap with the given time window,
+         * excluding a specific booking by id.
+         * Used during approval to re-check conflicts.
+         */
+        @Query("""
+                        SELECT b FROM Booking b
+                        WHERE b.resource.id = :resourceId
+                          AND b.status = com.yourgroup.campus.model.Booking.BookingStatus.APPROVED
+                          AND b.startTime < :endTime
+                          AND b.endTime > :startTime
+                          AND b.id <> :excludeId
+                        """)
+        List<Booking> findConflictingBookingsExcluding(
+                        @Param("resourceId") Long resourceId,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime,
+                        @Param("excludeId") Long excludeId);
 
-    List<Booking> findByUser_IdOrderByStartTimeDesc(Long userId);
+        /**
+         * Return all bookings, optionally filtered by status, ordered by createdAt
+         * DESC.
+         */
+        @Query("""
+                        SELECT b FROM Booking b
+                        WHERE (:status IS NULL OR b.status = :status)
+                        ORDER BY b.createdAt DESC
+                        """)
+        List<Booking> findAllWithOptionalStatus(@Param("status") BookingStatus status);
 
-    List<Booking> findByResourceIdAndStatusOrderByStartTime(Long resourceId, BookingStatus status);
+        /**
+         * Derived query: all bookings for a user, newest first by startTime.
+         */
+        List<Booking> findByUserIdOrderByStartTimeDesc(Long userId);
 
-    List<Booking> findByStatusOrderByCreatedAtAsc(BookingStatus status);
-
-    @Query("""
-            SELECT b FROM Booking b
-            WHERE (:status IS NULL OR b.status = :status)
-            ORDER BY b.createdAt DESC
-            """)
-    List<Booking> findAllByStatusOrAll(@Param("status") BookingStatus status);
+        /**
+         * Derived query: bookings for a resource with given status, ordered by
+         * startTime ASC.
+         */
+        List<Booking> findByResourceIdAndStatusOrderByStartTime(Long resourceId, BookingStatus status);
 }

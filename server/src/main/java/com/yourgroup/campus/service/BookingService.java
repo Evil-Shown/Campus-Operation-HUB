@@ -37,7 +37,8 @@ public class BookingService {
         }
 
         Resource resource = resourceRepository.findById(dto.getResourceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + dto.getResourceId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Resource not found with id: " + dto.getResourceId()));
 
         if (resource.getStatus() != Resource.ResourceStatus.ACTIVE) {
             throw new IllegalStateException("Resource is not available for booking");
@@ -46,47 +47,43 @@ public class BookingService {
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
                 dto.getResourceId(),
                 dto.getStartTime(),
-                dto.getEndTime(),
-                BookingStatus.APPROVED
-        );
+                dto.getEndTime());
         if (!conflicts.isEmpty()) {
             throw new BookingConflictException(
                     "This resource is already booked from "
                             + conflicts.get(0).getStartTime()
                             + " to "
-                            + conflicts.get(0).getEndTime()
-            );
+                            + conflicts.get(0).getEndTime());
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        String normalizedPurpose = dto.getPurpose() == null ? "" : dto.getPurpose().trim();
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Booking booking = Booking.builder()
                 .user(user)
                 .resource(resource)
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
-                .purpose(normalizedPurpose)
+                .purpose(dto.getPurpose())
                 .attendees(dto.getAttendees())
                 .status(BookingStatus.PENDING)
                 .build();
 
-        Booking savedBooking = bookingRepository.save(booking);
-        return toDTO(savedBooking);
+        return toDTO(bookingRepository.save(booking));
     }
 
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getMyBookings(Long userId) {
-        return bookingRepository.findByUser_IdOrderByStartTimeDesc(userId).stream()
+        return bookingRepository.findByUserIdOrderByStartTimeDesc(userId)
+                .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getAllBookings(BookingStatus status) {
-        return bookingRepository.findAllByStatusOrAll(status).stream()
+        return bookingRepository.findAllWithOptionalStatus(status)
+                .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -104,6 +101,15 @@ public class BookingService {
         return toDTO(booking);
     }
 
+    @Transactional(readOnly = true)
+    public List<BookingResponseDTO> getApprovedBookingsForResource(Long resourceId) {
+        return bookingRepository
+                .findByResourceIdAndStatusOrderByStartTime(resourceId, BookingStatus.APPROVED)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public BookingResponseDTO approveBooking(Long bookingId) {
         Booking booking = findOrThrow(bookingId);
@@ -116,27 +122,25 @@ public class BookingService {
                 booking.getResource().getId(),
                 booking.getStartTime(),
                 booking.getEndTime(),
-                bookingId,
-                BookingStatus.APPROVED
-        );
+                bookingId);
         if (!conflicts.isEmpty()) {
             throw new BookingConflictException(
-                    "A conflicting booking was approved while this was pending"
-            );
+                    "A conflicting booking was approved while this was pending");
         }
 
         booking.setStatus(BookingStatus.APPROVED);
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
 
         notificationService.create(
                 booking.getUser(),
                 "BOOKING_APPROVED",
                 "Your booking for "
                         + booking.getResource().getName()
-                        + " has been approved."
-        );
+                        + " on "
+                        + booking.getStartTime().toLocalDate()
+                        + " has been approved.");
 
-        return toDTO(savedBooking);
+        return toDTO(saved);
     }
 
     @Transactional
@@ -149,7 +153,7 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectReason(reason);
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
 
         notificationService.create(
                 booking.getUser(),
@@ -157,10 +161,9 @@ public class BookingService {
                 "Your booking for "
                         + booking.getResource().getName()
                         + " was rejected."
-                        + (reason != null && !reason.isBlank() ? " Reason: " + reason : "")
-        );
+                        + (reason != null && !reason.isBlank() ? " Reason: " + reason : ""));
 
-        return toDTO(savedBooking);
+        return toDTO(saved);
     }
 
     @Transactional
@@ -171,20 +174,13 @@ public class BookingService {
             throw new UnauthorizedException("You can only cancel your own bookings");
         }
 
-        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.APPROVED) {
+        if (booking.getStatus() != BookingStatus.PENDING
+                && booking.getStatus() != BookingStatus.APPROVED) {
             throw new IllegalStateException("Only PENDING or APPROVED bookings can be cancelled");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        Booking savedBooking = bookingRepository.save(booking);
-        return toDTO(savedBooking);
-    }
-
-    @Transactional(readOnly = true)
-    public List<BookingResponseDTO> getApprovedBookingsForResource(Long resourceId) {
-        return bookingRepository.findByResourceIdAndStatusOrderByStartTime(resourceId, BookingStatus.APPROVED).stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        return toDTO(bookingRepository.save(booking));
     }
 
     private Booking findOrThrow(Long id) {
