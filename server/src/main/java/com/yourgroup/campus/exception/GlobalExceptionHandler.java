@@ -1,6 +1,5 @@
 package com.yourgroup.campus.exception;
 
-import com.campusops.campus_ops_backend.exception.BookingConflictException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -89,5 +88,14 @@ public class GlobalExceptionHandler {
 
     private String formatFieldError(FieldError fieldError) {
         return fieldError.getField() + ": " + fieldError.getDefaultMessage();
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleUnhandledException(
+            Exception ex,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(status)
+                .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
     }
 }

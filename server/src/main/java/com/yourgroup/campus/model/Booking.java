@@ -38,7 +38,7 @@ public class Booking {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(name = "purpose", length = 500)
+    @Column(name = "purpose", nullable = false, length = 500)
     private String purpose;
 
     @Column(name = "attendees")
@@ -58,6 +58,9 @@ public class Booking {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         status = BookingStatus.PENDING;
+        if (purpose == null) {
+            purpose = "";
+        }
     }
 
     public enum BookingStatus {

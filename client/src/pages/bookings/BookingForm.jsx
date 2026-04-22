@@ -64,7 +64,7 @@ const BookingForm = () => {
       resourceId: Number(formData.resourceId),
       startTime: `${formData.date}T${formData.startTime}:00`,
       endTime: `${formData.date}T${formData.endTime}:00`,
-      purpose: formData.purpose || null,
+      purpose: formData.purpose?.trim() || "",
       attendees: formData.attendees ? Number(formData.attendees) : null,
     };
 
@@ -77,12 +77,17 @@ const BookingForm = () => {
       setFormData(INITIAL_FORM);
       setAvailabilityBookings([]);
     } catch (err) {
-      const status = err.response?.status
-      const msg = err.response?.data?.message
-      if (status === 409) {
-        setError(typeof msg === 'string' ? msg : err.message);
-      } else if (status === 400 && typeof msg === 'string') {
+      const status = err.response?.status;
+      const msg = err.response?.data?.message;
+
+      if (typeof msg === "string" && msg.trim()) {
         setError(msg);
+      } else if (status === 401) {
+        setError("You are not logged in. Please sign in and try again.");
+      } else if (status === 403) {
+        setError("You do not have permission to perform this action.");
+      } else if (status === 409) {
+        setError("This time slot conflicts with an existing approved booking.");
       } else {
         setError("Something went wrong. Please try again.");
       }

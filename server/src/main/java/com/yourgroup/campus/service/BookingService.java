@@ -61,12 +61,14 @@ public class BookingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        String normalizedPurpose = dto.getPurpose() == null ? "" : dto.getPurpose().trim();
+
         Booking booking = Booking.builder()
                 .user(user)
                 .resource(resource)
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
-                .purpose(dto.getPurpose())
+                .purpose(normalizedPurpose)
                 .attendees(dto.getAttendees())
                 .status(BookingStatus.PENDING)
                 .build();
