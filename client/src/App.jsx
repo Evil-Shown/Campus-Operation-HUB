@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminResourcesPage from './pages/admin/AdminResourcesPage'
 import AdminBookingsPage from './pages/admin/AdminBookingsPage'
 import Dashboard from './pages/Dashboard'
+import UserDashboard from './pages/UserDashboard'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -32,7 +33,9 @@ function App() {
           <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/dashboard" element={withProtectedLayout(<Dashboard role="user" />)} />
+          <Route path="/dashboard" element={withProtectedLayout(<UserDashboard />)} />
+          <Route path="/user-dashboard" element={withProtectedLayout(<UserDashboard />)} />
+          <Route path="/admin-dashboard" element={withProtectedLayout(<Dashboard role="admin" />, ['ADMIN'])} />
           <Route path="/resources/:id" element={withProtectedLayout(<ResourceDetailPage />)} />
           <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/my" element={withProtectedLayout(<MyBookingsPage />)} />

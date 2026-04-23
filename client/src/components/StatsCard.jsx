@@ -1,34 +1,41 @@
 import { motion } from 'framer-motion'
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
-const Motion = motion
-
-export default function StatsCard({ icon: Icon, title, value, trend, color = 'indigo' }) {
-  void Icon
-  const colorClasses = {
-    indigo: 'bg-indigo-50 text-indigo-600',
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    orange: 'bg-orange-50 text-orange-600',
-  }
+export default function StatsCard({ icon: Icon, title, value, trend, color = 'primary' }) {
+  const isPositive = trend > 0
 
   return (
     <motion.div
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+      whileHover={{ y: -5, scale: 1.02 }}
+      className="glass-card flex flex-col justify-between group transition-all duration-300"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="mb-1 text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {typeof trend === 'number' && (
-            <p className={`mt-2 text-xs ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {trend > 0 ? `+${trend}%` : `${trend}%`} from last month
-            </p>
-          )}
+      <div className="flex justify-between items-start">
+        <div className="p-3 rounded-2xl bg-primary-500/10 text-primary-500 group-hover:scale-110 transition-transform">
+          <Icon className="w-5 h-5" />
         </div>
-        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${colorClasses[color] ?? colorClasses.indigo}`}>
-          <Icon className="h-6 w-6" />
+        {typeof trend === 'number' && (
+          <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full ${
+            isPositive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+          }`}>
+            {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            {Math.abs(trend)}%
+          </div>
+        )}
+      </div>
+      
+      <div className="mt-5">
+        <p className="text-sm font-black text-slate-500 uppercase tracking-[0.15em] mb-1">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{value}</p>
         </div>
+      </div>
+      
+      <div className="mt-4 h-1 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: '65%' }}
+          className="h-full bg-primary-500 rounded-full"
+        />
       </div>
     </motion.div>
   )
