@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, School, Sparkles, ShieldCheck, BarChart3, ArrowRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, School, Sparkles, ShieldCheck, BarChart3, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api/axios'
 
 function readLoginErrorMessage(err) {
-  if (err?.response?.data?.message) {
-    return err.response.data.message
-  }
-
-  if (err?.code === 'ERR_NETWORK') {
-    return 'Cannot reach the backend API. Start the server on http://localhost:8080 and try again.'
-  }
-
-  return 'Unable to sign in right now. Please try again.'
+  if (err?.response?.data?.message) return err.response.data.message
+  if (err?.code === 'ERR_NETWORK') return 'API connection lost. Please check your internet or server status.'
+  return 'Authentication failed. Please check your credentials.'
 }
 
 export default function LoginPage() {
@@ -30,79 +24,46 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { user, setSession } = useAuth()
 
-  const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin' : '/dashboard')
-
-  // Check for session expiration message
   useEffect(() => {
     const message = sessionStorage.getItem('logoutMessage')
     if (message) {
       setSessionExpired(true)
       sessionStorage.removeItem('logoutMessage')
-      // Clear message after 8 seconds
       const timer = setTimeout(() => setSessionExpired(false), 8000)
       return () => clearTimeout(timer)
     }
   }, [])
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate(getDashboardPath(user.role), { replace: true })
+      const path = user.role === 'ADMIN' ? '/admin' : '/dashboard'
+      navigate(path, { replace: true })
     }
   }, [navigate, user])
 
   const validateForm = () => {
     const errors = {}
-
-    if (!email) {
-      errors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Please enter a valid email'
-    }
-
-    if (!password) {
-      errors.password = 'Password is required'
-    } else if (password.length < 6) {
-      errors.password = 'Password must be at least 6 characters'
-    }
-
-    if (!isLogin) {
-      if (!name) {
-        errors.name = 'Full name is required'
-      } else if (name.length < 2) {
-        errors.name = 'Name must be at least 2 characters'
-      }
-    }
-
+    if (!email) errors.email = 'Email required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = 'Invalid email format'
+    if (!password) errors.password = 'Password required'
+    else if (password.length < 6) errors.password = 'Min 6 characters'
+    if (!isLogin && !name) errors.name = 'Full name required'
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
     if (!validateForm()) return
-
-    setLoading(true)
-    setError('')
-
+    setLoading(true); setError('')
     try {
       const endpoint = isLogin ? '/auth/signin' : '/auth/signup'
-      const payload = isLogin
-        ? { email, password }
-        : { name, email, password }
-
+      const payload = isLogin ? { email, password } : { name, email, password }
       const response = await api.post(endpoint, payload)
       const data = response.data
-
-      if (!data?.token) {
-        setError('Authentication failed: token missing from server response')
-        return
-      }
-
-      // Store token and update app auth state immediately
+      if (!data?.token) throw new Error('Token missing')
       setSession(data.token, data.user ?? null)
-      navigate(getDashboardPath(data?.user?.role), { replace: true })
+      navigate(data?.user?.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true })
     } catch (err) {
       setError(readLoginErrorMessage(err))
     } finally {
@@ -110,293 +71,241 @@ export default function LoginPage() {
     }
   }
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin)
-    setError('')
-    setValidationErrors({})
-  }
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.15 },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 18 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
-  }
-
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-cyan-50 to-orange-50 text-slate-900">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-28 left-1/4 h-[28rem] w-[28rem] rounded-full bg-cyan-300/35 blur-[120px]" />
-        <div className="absolute -bottom-32 right-1/4 h-[26rem] w-[26rem] rounded-full bg-orange-300/30 blur-[120px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(100,116,139,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(100,116,139,0.14)_1px,transparent_1px)] bg-[size:26px_26px] [mask-image:radial-gradient(circle_at_center,white,transparent_75%)]" />
+    <div className="relative min-h-screen w-full overflow-hidden bg-slate-950 font-sans text-slate-50 selection:bg-primary-500/30">
+      {/* Background Orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-primary-600/20 blur-[120px] animate-pulse-slow" />
+        <div className="absolute top-[20%] -right-[10%] w-[35%] h-[35%] rounded-full bg-indigo-600/20 blur-[120px] animate-pulse-slow [animation-delay:2s]" />
+        <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] rounded-full bg-violet-600/20 blur-[120px] animate-pulse-slow [animation-delay:4s]" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1320px] items-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid w-full overflow-hidden rounded-3xl border border-white/15 bg-slate-900/50 shadow-[0_25px_80px_-25px_rgba(0,0,0,0.75)] backdrop-blur-2xl lg:grid-cols-2">
+      <div className="relative z-10 flex min-h-screen flex-col lg:flex-row">
+        {/* Banner Section */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-slate-900/40 backdrop-blur-3xl border-r border-white/5">
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="relative hidden overflow-hidden border-r border-white/10 p-10 lg:flex lg:flex-col"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/18 via-emerald-500/10 to-transparent" />
-            <div className="relative">
-              <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-slate-200">
-                <Sparkles className="h-4 w-4 text-cyan-300" />
-                Campus Command Layer
-              </div>
-
-              <div className="mb-10 max-w-md space-y-4">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/20 bg-white/10">
-                  <School className="h-6 w-6 text-cyan-300" />
-                </div>
-                <h1 className="text-4xl font-black leading-tight text-white xl:text-5xl">Orchestrate Every Campus Workflow</h1>
-                <p className="text-base leading-relaxed text-slate-300">
-                  One intelligent hub for requests, incidents, approvals, and resource allocation across your institution.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Automation</p>
-                  <p className="mt-2 text-2xl font-bold text-white">92%</p>
-                  <p className="mt-1 text-xs text-slate-400">Recurring tasks streamlined</p>
-                </div>
-                <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Response Time</p>
-                  <p className="mt-2 text-2xl font-bold text-white">2.4h</p>
-                  <p className="mt-1 text-xs text-slate-400">Average ticket turnaround</p>
-                </div>
-              </div>
-
-              <div className="mt-8 space-y-3">
-                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
-                  <ShieldCheck className="h-4 w-4 text-cyan-300" />
-                  Role-aware security and access governance
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
-                  <BarChart3 className="h-4 w-4 text-orange-300" />
-                  Live metrics for facilities and operations
-                </div>
-              </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 shadow-lg shadow-primary-500/20">
+              <School className="text-white h-7 w-7" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-white leading-none">SmartCampus</h2>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-primary-400 font-bold">Operations Hub</span>
             </div>
           </motion.div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="relative p-6 sm:p-8 lg:p-10"
-          >
-            <motion.div variants={itemVariants} className="mb-6">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">
-                <Sparkles className="h-3.5 w-3.5" />
-                Secure Access Portal
-              </div>
-              <h2 className="text-3xl font-extrabold tracking-tight text-white">
-                {isLogin ? 'Welcome back' : 'Create your account'}
-              </h2>
-              <p className="mt-2 text-sm text-slate-300">
-                {isLogin ? 'Sign in to continue managing your campus operations.' : 'Join the platform and start coordinating resources smarter.'}
+          <div className="max-w-md">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h1 className="text-5xl font-extrabold text-white leading-tight mb-6">
+                Next-Gen <span className="text-gradient">Campus</span> Management
+              </h1>
+              <p className="text-lg text-slate-400 leading-relaxed mb-10">
+                Streamlining institutional workflows with intelligent automation and real-time operational insights.
               </p>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-white/5 p-1.5">
-              <button
-                type="button"
-                onClick={() => !isLogin && toggleMode()}
-                className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
-                  isLogin ? 'bg-white text-slate-900 shadow-md' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => isLogin && toggleMode()}
-                className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
-                  !isLogin ? 'bg-white text-slate-900 shadow-md' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                Sign Up
-              </button>
-            </motion.div>
+            <div className="space-y-6">
+              {[
+                { icon: ShieldCheck, text: "Enterprise-grade security standards", color: "text-emerald-400" },
+                { icon: BarChart3, text: "Real-time resource analytics", color: "text-primary-400" },
+                { icon: Sparkles, text: "AI-driven request orchestration", color: "text-amber-400" }
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + (idx * 0.1) }}
+                  className="flex items-center gap-4 group"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors">
+                    <item.icon className={`h-5 w-5 ${item.color}`} />
+                  </div>
+                  <span className="text-slate-300 font-medium">{item.text}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
 
-            <motion.form variants={itemVariants} onSubmit={handleSubmit} className="space-y-4">
-              {sessionExpired && (
-                <div className="flex items-center gap-3 rounded-xl border border-orange-400/50 bg-orange-400/10 p-3">
-                  <AlertCircle className="h-5 w-5 shrink-0 text-orange-300" />
-                  <p className="text-sm text-orange-100">Your session expired due to inactivity. Please sign in again.</p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-sm text-slate-500 font-medium"
+          >
+            &copy; 2026 SmartCampus Infrastructure &bull; SLIIT Faculty of Computing
+          </motion.div>
+        </div>
+
+        {/* Form Section */}
+        <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12 relative overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[440px]"
+          >
+            {/* Mobile Logo */}
+            <div className="lg:hidden flex justify-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
+                  <School className="text-white h-6 w-6" />
                 </div>
-              )}
+                <h2 className="text-xl font-bold text-white">SmartCampus</h2>
+              </div>
+            </div>
 
-              {!isLogin && (
+            <div className="glass-card !bg-slate-900/60 p-8 sm:p-10 border-white/10 shadow-2xl">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  {isLogin ? 'Welcome Back' : 'Create Account'}
+                </h2>
+                <p className="text-slate-400 text-sm">
+                  {isLogin 
+                    ? 'Enter your credentials to access the command center.' 
+                    : 'Get started with your institution account today.'}
+                </p>
+              </div>
+
+              {/* Toggle */}
+              <div className="flex p-1 bg-slate-950/50 rounded-xl mb-8 border border-white/5">
+                <button
+                  onClick={() => !isLogin && setIsLogin(true)}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${isLogin ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => isLogin && setIsLogin(false)}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${!isLogin ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <AnimatePresence mode="wait">
+                  {sessionExpired && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs font-medium"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      Session expired. Please sign in again.
+                    </motion.div>
+                  )}
+
+                  {!isLogin && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">Full Name</label>
+                      <div className="relative group">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Professor John Doe"
+                          className={`input-field pl-11 !bg-slate-950/50 !border-white/10 focus:!border-primary-500/50 text-sm ${validationErrors.name ? '!border-red-500/50' : ''}`}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-200">Full Name</label>
-                  <div className="relative">
-                    <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">Email Address</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
                     <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => {
-                        setName(e.target.value)
-                        if (validationErrors.name) {
-                          setValidationErrors({ ...validationErrors, name: '' })
-                        }
-                      }}
-                      placeholder="John Doe"
-                      className={`w-full rounded-xl border bg-slate-950/45 py-3 pl-10 pr-4 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 ${
-                        validationErrors.name
-                          ? 'border-red-400/60 focus:border-red-400 focus:ring-red-400/20'
-                          : 'border-white/15 focus:border-cyan-300/70 focus:ring-cyan-300/20'
-                      }`}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@university.edu"
+                      className={`input-field pl-11 !bg-slate-950/50 !border-white/10 focus:!border-primary-500/50 text-sm ${validationErrors.email ? '!border-red-500/50' : ''}`}
                     />
                   </div>
-                  {validationErrors.name && (
-                    <p className="mt-1.5 flex items-center gap-1 text-xs text-red-300">
-                      <AlertCircle className="h-3.5 w-3.5" />
-                      {validationErrors.name}
-                    </p>
-                  )}
                 </div>
-              )}
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-200">Email Address</label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      if (validationErrors.email) {
-                        setValidationErrors({ ...validationErrors, email: '' })
-                      }
-                    }}
-                    placeholder="you@university.edu"
-                    className={`w-full rounded-xl border bg-slate-950/45 py-3 pl-10 pr-4 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 ${
-                      validationErrors.email
-                        ? 'border-red-400/60 focus:border-red-400 focus:ring-red-400/20'
-                        : 'border-white/15 focus:border-cyan-300/70 focus:ring-cyan-300/20'
-                    }`}
-                  />
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">Password</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`input-field pl-11 pr-11 !bg-slate-950/50 !border-white/10 focus:!border-primary-500/50 text-sm ${validationErrors.password ? '!border-red-500/50' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
-                {validationErrors.email && (
-                  <p className="mt-1.5 flex items-center gap-1 text-xs text-red-300">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    {validationErrors.email}
-                  </p>
-                )}
-              </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-200">Password</label>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value)
-                      if (validationErrors.password) {
-                        setValidationErrors({ ...validationErrors, password: '' })
-                      }
-                    }}
-                    placeholder="Enter your password"
-                    className={`w-full rounded-xl border bg-slate-950/45 py-3 pl-10 pr-11 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 ${
-                      validationErrors.password
-                        ? 'border-red-400/60 focus:border-red-400 focus:ring-red-400/20'
-                        : 'border-white/15 focus:border-cyan-300/70 focus:ring-cyan-300/20'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-200"
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold flex items-center gap-2"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {validationErrors.password && (
-                  <p className="mt-1.5 flex items-center gap-1 text-xs text-red-300">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    {validationErrors.password}
-                  </p>
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    {error}
+                  </motion.div>
                 )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full h-12 flex items-center justify-center gap-2 group overflow-hidden"
+                >
+                  {loading ? (
+                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>{isLogin ? 'Sign In to Portal' : 'Create My Account'}</span>
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+                <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold"><span className="bg-slate-900 px-3 text-slate-500">Identity Providers</span></div>
               </div>
 
-              {error && (
-                <div className="flex items-center gap-3 rounded-xl border border-red-400/50 bg-red-400/10 p-3">
-                  <AlertCircle className="h-5 w-5 shrink-0 text-red-300" />
-                  <p className="text-sm text-red-100">{error}</p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-500 to-orange-400 px-4 py-3 font-semibold text-slate-950 shadow-[0_14px_35px_-14px_rgba(34,211,238,0.65)] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              <a
+                href={isLogin ? '/oauth2/authorization/google' : '/oauth2/authorization/google?signup=true'}
+                className="flex items-center justify-center gap-3 w-full h-12 rounded-xl bg-white text-slate-950 font-bold text-sm hover:bg-slate-100 transition-colors shadow-xl"
               >
-                {loading ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-900" />
-                    {isLogin ? 'Signing in...' : 'Creating account...'}
-                  </>
-                ) : (
-                  <>
-                    {isLogin ? 'Enter Command Center' : 'Create Account'}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </>
-                )}
-              </button>
-            </motion.form>
-
-            <motion.div variants={itemVariants} className="my-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/15" />
-              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">or continue with</span>
-              <div className="h-px flex-1 bg-white/15" />
-            </motion.div>
-
-            <motion.a
-              variants={itemVariants}
-              href={isLogin ? '/oauth2/authorization/google' : '/oauth2/authorization/google?signup=true'}
-              className="group flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
-            >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Continue with Google
-            </motion.a>
-
-            <motion.p variants={itemVariants} className="mt-6 text-center text-xs text-slate-400">
-              SLIIT Faculty of Computing | IT3030
-            </motion.p>
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continue with Google
+              </a>
+            </div>
           </motion.div>
         </div>
       </div>
-
     </div>
   )
 }

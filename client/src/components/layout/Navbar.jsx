@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { LogOut, User, Clock, Search, ChevronDown, Mail, ShieldCheck } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { LogOut, User, Clock, Search, ChevronDown, Mail, ShieldCheck, GraduationCap, Settings, Bell } from 'lucide-react'
 import NotificationBell from '../notifications/NotificationBell'
 import { useAuth } from '../../context/AuthContext'
 
@@ -31,7 +31,6 @@ export default function Navbar() {
         setIsDropdownOpen(false)
       }
     }
-
     document.addEventListener('mousedown', onClickOutside)
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
@@ -44,88 +43,108 @@ export default function Navbar() {
 
   return (
     <>
-      {logoutMessage && (
-        <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-3">
-          <Clock className="w-4 h-4 text-orange-600" />
-          <p className="text-sm text-orange-800">{logoutMessage}</p>
-        </div>
-      )}
+      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-indigo-600 shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-transform">
+              <GraduationCap className="text-white h-5 w-5" />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">SmartCampus</p>
+              <p className="text-[10px] uppercase tracking-widest text-primary-500 font-bold">Ops Hub</p>
+            </div>
+          </Link>
 
-      <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white/85 px-6 backdrop-blur">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Operations Center</p>
-          <p className="text-lg font-semibold text-slate-900">Smart Campus</p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 md:flex">
+          <div className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/50 dark:bg-slate-800/50 px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all">
             <Search className="h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search resources, users, tickets"
-              className="w-64 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+              placeholder="Quick search..."
+              className="w-48 lg:w-64 bg-transparent text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none"
             />
           </div>
+        </div>
 
-          <NotificationBell />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <button className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors">
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
 
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 transition hover:border-slate-300 hover:shadow-sm"
+              className="group flex items-center gap-2.5 p-1 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-600 text-sm font-semibold text-white">
-                {userInitial}
-              </span>
-              <ChevronDown className="h-4 w-4 text-slate-500" />
+              <div className="relative">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30 text-sm font-bold text-primary-600 dark:text-primary-400 ring-2 ring-transparent group-hover:ring-primary-500/20 transition-all">
+                  {userInitial}
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[100px]">{userName}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Standard User</p>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-900 px-4 py-4 text-white">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">User Account</p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 text-sm font-semibold ring-1 ring-white/30">
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className="absolute right-0 mt-3 w-72 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-2xl z-50"
+              >
+                <div className="bg-gradient-to-br from-primary-600 to-indigo-700 p-5 text-white">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-lg font-bold ring-2 ring-white/30 backdrop-blur-sm">
                       {userInitial}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">{userName}</p>
-                      <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[11px] font-medium text-emerald-200">
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                        Active Session
-                      </div>
+                      <p className="text-sm font-bold truncate max-w-[160px]">{userName}</p>
+                      <p className="text-xs text-white/70 truncate max-w-[160px]">{userEmail}</p>
                     </div>
                   </div>
-                </div>
-
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <div className="inline-flex items-center gap-2 text-xs text-slate-500">
-                    <Mail className="h-3.5 w-3.5" />
-                    <span className="max-w-[220px] truncate">{userEmail}</span>
+                  <div className="flex items-center gap-1.5 rounded-lg bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
+                    <ShieldCheck className="h-3 w-3" />
+                    Verified Institution Account
                   </div>
                 </div>
 
-                <div className="p-2">
-                  <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-50">
+                <div className="p-2 space-y-1">
+                  <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                     <User className="w-4 h-4" />
-                    Profile
+                    Profile Settings
+                  </button>
+                  <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    <Clock className="w-4 h-4" />
+                    Recent Activity
                   </button>
                 </div>
 
-                <div className="border-t border-slate-100 p-2">
+                <div className="p-2 border-t border-slate-100 dark:border-white/5 capitalize">
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
-                    Sign Out
+                    Terminate Session
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
       </header>
+      {logoutMessage && (
+        <div className="bg-amber-500 text-white text-center py-2 text-xs font-bold animate-pulse">
+          {logoutMessage}
+        </div>
+      )}
     </>
   )
 }
