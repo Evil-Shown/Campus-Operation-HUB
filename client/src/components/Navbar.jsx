@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { LayoutDashboard, LogIn, Menu, UserPlus, X } from 'lucide-react'
 
+const Motion = motion
+
 const navLinks = [
   { name: 'Features', href: '#features' },
   { name: 'How It Works', href: '#how-it-works' },

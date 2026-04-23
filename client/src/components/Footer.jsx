@@ -47,7 +47,9 @@ export default function Footer() {
               Smart campus operations management platform for modern educational institutions.
             </p>
             <div className="flex gap-3">
-              {socialLinks.map(({ icon: Icon, href, label }) => (
+              {socialLinks.map(({ icon: Icon, href, label }) => {
+                void Icon
+                return (
                 <a
                   key={label}
                   href={href}
@@ -56,7 +58,8 @@ export default function Footer() {
                 >
                   <Icon className="h-4 w-4" />
                 </a>
-              ))}
+                )
+              })}
             </div>
           </div>
 
