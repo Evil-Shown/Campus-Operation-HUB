@@ -2,6 +2,8 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Search, CalendarCheck, CheckCircle, AlertTriangle } from 'lucide-react'
 
+const Motion = motion
+
 const steps = [
   {
     icon: Search,

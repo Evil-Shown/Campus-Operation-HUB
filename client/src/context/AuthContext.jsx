@@ -1,4 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import api from '../api/axios'
 
@@ -10,6 +11,23 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const inactivityTimerRef = useRef(null)
 
+  const persistSession = (authPayload) => {
+    const normalizedUser = normalizeUser(authPayload.user)
+    localStorage.setItem(TOKEN_KEY, authPayload.token)
+    localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+    setUser(normalizedUser)
+    return normalizedUser
+  }
+
+  const signin = useCallback(async ({ email, password }) => {
+    setLoading(true)
+    try {
+      const payload = await postAuth('/api/auth/signin', { email, password })
+      return persistSession(payload)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
   useEffect(() => {
     let isMounted = true
 
@@ -43,11 +61,21 @@ export function AuthProvider({ children }) {
 
     bootstrapAuth()
 
+  const signup = useCallback(async ({ name, email, password }) => {
+    setLoading(true)
+    try {
+      const payload = await postAuth('/api/auth/signup', { name, email, password })
+      return persistSession(payload)
+    } finally {
+      setLoading(false)
     return () => {
       isMounted = false
     }
   }, [])
 
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
   // Setup inactivity timeout
   useEffect(() => {
     if (!user) return
@@ -90,6 +118,7 @@ export function AuthProvider({ children }) {
   const logout = (message = '') => {
     localStorage.removeItem('token')
     setUser(null)
+  }, [])
     if (inactivityTimerRef.current) {
       window.clearTimeout(inactivityTimerRef.current)
     }
@@ -106,7 +135,7 @@ export function AuthProvider({ children }) {
       setSession,
       logout,
     }),
-    [loading, user],
+    [loading, logout, signin, signup, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
