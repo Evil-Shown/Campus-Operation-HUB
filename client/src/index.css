@@ -8,6 +8,7 @@
   :root {
     --primary: 139 92 246;
     --primary-foreground: 255 255 255;
+    --border: 226 232 240;
   }
 
   * {
@@ -25,6 +26,10 @@
 
   .dark body {
     @apply bg-slate-950 text-slate-50;
+  }
+
+  .dark {
+    --border: 51 65 85;
   }
 }
 
@@ -81,8 +86,38 @@
       radial-gradient(at 0% 100%, rgba(167, 139, 250, 0.15) 0px, transparent 50%);
   }
 
+  .cyber-glow {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3), 0 0 40px rgba(124, 58, 237, 0.1);
+  }
+
+  .scanline {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanline::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(124, 58, 237, 0.05) 50%,
+      transparent
+    );
+    height: 100px;
+    width: 100%;
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes scan {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(500%); }
+  }
+
   .scrollbar-refined::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   .scrollbar-refined::-webkit-scrollbar-track {
@@ -90,10 +125,6 @@
   }
 
   .scrollbar-refined::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
-  }
-
-  .dark .scrollbar-refined::-webkit-scrollbar-thumb {
-    @apply bg-slate-700 hover:bg-slate-600;
+    @apply bg-slate-800 rounded-full hover:bg-slate-700 transition-colors;
   }
 }
