@@ -11,7 +11,11 @@
   }
 
   * {
-    @apply border-border;
+    @apply border-slate-200;
+  }
+
+  .dark * {
+    @apply border-slate-700;
   }
 
   html {
