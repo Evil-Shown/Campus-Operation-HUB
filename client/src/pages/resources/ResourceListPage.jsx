@@ -9,18 +9,37 @@ export default function ResourceListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  //data retrive function from backend (Function)
+  // data retrive function from Backend  (Function)
   const loadResources = async (filters = {}) => {
     try {
       setLoading(true);
       setError(null);
-      // හsend to the Api only filters that have values (non-empty)
+      
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, value]) => value !== '')
       );
       
       const data = await resourceApi.getAll(cleanFilters);
-      setResources(data);
+      
+      // to check data
+      console.log("Backend Response:", data);
+
+      // (Safety Check)
+      if (Array.isArray(data)) {
+        // if data is already an array, then directly set it to resources
+        setResources(data);
+      } else if (data && data.data && Array.isArray(data.data)) {
+        // maybe data on the backend is wrapped in a 'data' field, then come to 'data'
+        setResources(data.data);
+      } else if (data && data.content && Array.isArray(data.content)) {
+        // if use Spring Boot Pagination  ,then come to 'content'
+        setResources(data.content);
+      } else {
+        // If the structure is unexpected, log it for debugging
+        console.error("Expected an array but received:", typeof data, data);
+        setResources([]);
+      }
+
     } catch (err) {
       console.error("Error fetching resources:", err);
       setError("Failed to load resources. Please ensure the server is running.");
@@ -29,7 +48,7 @@ export default function ResourceListPage() {
     }
   };
 
-  //  automatically load resources when the component mounts (useEffect)
+  // automatically load resources when the component mounts (useEffect)
   useEffect(() => {
     loadResources();
   }, []);
@@ -46,7 +65,7 @@ export default function ResourceListPage() {
         <p className="text-sm text-slate-600">Browse available campus resources, search by type or capacity, and view key details.</p>
       </div>
 
-      {/* 1.  (Filter Component) */}
+      {/* 1. (Filter Component) */}
       <FacilityFilter onFilterChange={handleFilterChange} />
 
       {/* 2. Show loading and Error msgs */}
