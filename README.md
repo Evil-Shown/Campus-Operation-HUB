@@ -198,9 +198,19 @@ GRANT ALL PRIVILEGES ON DATABASE campus_op_hub TO campus_user;
 For CI-like test runs, a dedicated database is commonly used:
 
 ```sql
-CREATE USER campus_ops_user WITH PASSWORD 'campus_ops123';
-CREATE DATABASE campus_ops_test_db OWNER campus_ops_user;
-GRANT ALL PRIVILEGES ON DATABASE campus_ops_test_db TO campus_ops_user;
+CREATE USER campus_user WITH PASSWORD 'campus123';
+CREATE DATABASE campus_ops_test OWNER campus_user;
+GRANT ALL PRIVILEGES ON DATABASE campus_ops_test TO campus_user;
+```
+
+If you only have one local database (for example `campus_op_hub`), override test datasource values when running tests:
+
+```powershell
+$env:SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/campus_op_hub"
+$env:SPRING_DATASOURCE_USERNAME="campus_user"
+$env:SPRING_DATASOURCE_PASSWORD="campus123"
+cd server
+.\mvnw.cmd test
 ```
 
 ### Google OAuth2 setup

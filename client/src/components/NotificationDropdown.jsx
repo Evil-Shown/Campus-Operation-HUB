@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle, Clock, MessageCircle, XCircle } from 'lucide-react'
 
+const Motion = motion
+
 const notifications = [
   {
     id: 1,

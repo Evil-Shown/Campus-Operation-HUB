@@ -1,114 +1,200 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import api from '../api/axios'
 
 const AuthContext = createContext(null)
-const TOKEN_KEY = 'campusops_token'
-const USER_KEY = 'campusops_user'
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '')
 
-function readStoredUser() {
-  try {
-    const rawUser = localStorage.getItem(USER_KEY)
-    return rawUser ? JSON.parse(rawUser) : null
-  } catch {
-    return null
-  }
+const TOKEN_KEY = 'token'
+const USER_KEY = 'user'
+const INACTIVITY_TIMEOUT = 20 * 60 * 1000
+
+function normalizeUser(nextUser) {
+  return nextUser ?? null
 }
 
-function normalizeUser(user) {
-  if (!user) {
-    return null
-  }
-
-  const role = user.role === 'ADMIN' || user.role === 'leader' ? 'leader' : 'user'
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    pictureUrl: user.pictureUrl,
-    role,
-  }
-}
-
-function readErrorMessage(payload, fallback) {
-  if (payload && typeof payload.message === 'string' && payload.message.trim()) {
-    return payload.message
-  }
-
-  return fallback
-}
-
-async function postAuth(path, body) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-
-  const payload = await response.json().catch(() => null)
-
-  if (!response.ok) {
-    throw new Error(readErrorMessage(payload, 'Authentication request failed'))
-  }
-
-  return payload
+function getErrorMessage(error) {
+  return error?.response?.data?.message || error?.message || 'Authentication failed'
 }
 
 export function AuthProvider({ children }) {
-  const [loading, setLoading] = useState(false)
-  const [user, setUser] = useState(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
-    const storedUser = readStoredUser()
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [loading, setLoading] = useState(true)
+  const inactivityTimerRef = useRef(null)
 
-    return token && storedUser ? storedUser : null
-  })
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
 
-  const persistSession = (authPayload) => {
-    const normalizedUser = normalizeUser(authPayload.user)
-    localStorage.setItem(TOKEN_KEY, authPayload.token)
-    localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+  const setSession = useCallback((nextToken, nextUser) => {
+    if (nextToken) {
+      localStorage.setItem(TOKEN_KEY, nextToken)
+      setToken(nextToken)
+    } else {
+      localStorage.removeItem(TOKEN_KEY)
+      setToken(null)
+    }
+
+    const normalizedUser = normalizeUser(nextUser)
+    if (normalizedUser) {
+      localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+    } else {
+      localStorage.removeItem(USER_KEY)
+    }
     setUser(normalizedUser)
-    return normalizedUser
-  }
+  }, [])
 
-  const signin = async ({ email, password }) => {
-    setLoading(true)
-    try {
-      const payload = await postAuth('/api/auth/signin', { email, password })
-      return persistSession(payload)
-    } finally {
-      setLoading(false)
+  const logout = useCallback(
+    (message = '') => {
+      setSession(null, null)
+
+      if (inactivityTimerRef.current) {
+        window.clearTimeout(inactivityTimerRef.current)
+      }
+
+      if (message) {
+        sessionStorage.setItem('logoutMessage', message)
+      }
+    },
+    [setSession],
+  )
+
+  const signin = useCallback(
+    async ({ email, password }) => {
+      setLoading(true)
+      try {
+        const response = await api.post('/auth/signin', { email, password })
+        const payload = response.data
+
+        if (!payload?.token) {
+          throw new Error('Authentication token missing from server response')
+        }
+
+        const normalizedUser = normalizeUser(payload.user)
+        setSession(payload.token, normalizedUser)
+        return normalizedUser
+      } catch (error) {
+        throw new Error(getErrorMessage(error))
+      } finally {
+        setLoading(false)
+      }
+    },
+    [setSession],
+  )
+
+  const signup = useCallback(
+    async ({ name, email, password }) => {
+      setLoading(true)
+      try {
+        const response = await api.post('/auth/signup', { name, email, password })
+        const payload = response.data
+
+        if (!payload?.token) {
+          throw new Error('Authentication token missing from server response')
+        }
+
+        const normalizedUser = normalizeUser(payload.user)
+        setSession(payload.token, normalizedUser)
+        return normalizedUser
+      } catch (error) {
+        throw new Error(getErrorMessage(error))
+      } finally {
+        setLoading(false)
+      }
+    },
+    [setSession],
+  )
+
+  useEffect(() => {
+    let isMounted = true
+
+    const bootstrapAuth = async () => {
+      const storedToken = localStorage.getItem(TOKEN_KEY)
+      const storedUser = localStorage.getItem(USER_KEY)
+
+      if (!storedToken) {
+        if (isMounted) {
+          setLoading(false)
+        }
+        return
+      }
+
+      if (isMounted) {
+        setToken(storedToken)
+      }
+
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser)
+          if (isMounted) {
+            setUser(normalizeUser(parsedUser))
+          }
+        } catch {
+          localStorage.removeItem(USER_KEY)
+        }
+      }
+
+      try {
+        const response = await api.get('/auth/me')
+        if (isMounted) {
+          setSession(storedToken, response.data)
+        }
+      } catch {
+        if (isMounted) {
+          setSession(null, null)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
     }
-  }
 
-  const signup = async ({ name, email, password }) => {
-    setLoading(true)
-    try {
-      const payload = await postAuth('/api/auth/signup', { name, email, password })
-      return persistSession(payload)
-    } finally {
-      setLoading(false)
+    bootstrapAuth()
+
+    return () => {
+      isMounted = false
     }
-  }
+  }, [setSession])
 
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    setUser(null)
-  }
+  useEffect(() => {
+    if (!user) {
+      return undefined
+    }
+
+    const resetTimer = () => {
+      if (inactivityTimerRef.current) {
+        window.clearTimeout(inactivityTimerRef.current)
+      }
+
+      inactivityTimerRef.current = window.setTimeout(() => {
+        logout('Session expired due to inactivity')
+      }, INACTIVITY_TIMEOUT)
+    }
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click', 'mousemove']
+    events.forEach((event) => window.addEventListener(event, resetTimer))
+
+    resetTimer()
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, resetTimer))
+      if (inactivityTimerRef.current) {
+        window.clearTimeout(inactivityTimerRef.current)
+      }
+    }
+  }, [logout, user])
 
   const value = useMemo(
     () => ({
       user,
+      token,
       loading,
+      apiBaseUrl,
       signin,
       signup,
+      setSession,
       logout,
-      isAuthenticated: Boolean(user),
-      token: localStorage.getItem(TOKEN_KEY),
-      apiBaseUrl: API_BASE_URL,
     }),
-    [loading, user],
+    [apiBaseUrl, loading, logout, setSession, signin, signup, token, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

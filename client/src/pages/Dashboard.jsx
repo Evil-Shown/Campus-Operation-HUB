@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 import StatsCard from '../components/StatsCard'
 
+const Motion = motion
+
 export default function Dashboard({ role }) {
   const stats = [
     { icon: Calendar, title: 'Total Bookings', value: '1,284', trend: 12, color: 'indigo' },

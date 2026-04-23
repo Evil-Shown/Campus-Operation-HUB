@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
+const Motion = motion
+
 function Input({ label, error, icon, className = '', id, ...props }) {
   const [isFocused, setIsFocused] = useState(false)
 

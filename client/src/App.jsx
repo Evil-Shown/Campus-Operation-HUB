@@ -1,102 +1,51 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import PrivateRoute from './components/PrivateRoute'
-import Shell from './components/Shell'
-import HomePage from './pages/HomePage'
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
-import AdminDashboardPage from './pages/AdminDashboardPage'
-import SectionPage from './pages/SectionPage'
-import './App.css'
-
-const modulePages = {
-  catalogue: {
-    title: 'Catalogue',
-    description: 'Basic landing area for resource browsing. Member-specific UI stays blank for now.',
-  },
-  bookings: {
-    title: 'Bookings',
-    description: 'Reserved for the booking workflow later. This route is intentionally minimal.',
-  },
-  tickets: {
-    title: 'Tickets',
-    description: 'Reserved for issue reporting and attachments later. No member-specific UI yet.',
-  },
-  notifications: {
-    title: 'Notifications',
-    description: 'Leader notification center placeholder. Polling and bell UI can be added later.',
-  },
-  admin: {
-    title: 'Admin Dashboard',
-    description: 'Leader-only admin shell for future role controls and setup tasks.',
-  },
-}
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import PrivateRoute from './components/common/PrivateRoute'
+import Layout from './components/layout/Layout'
+import RootPage from './pages/RootPage'
+import LoginPage from './pages/auth/LoginPage'
+import AuthCallback from './pages/auth/AuthCallback'
+import ResourceListPage from './pages/resources/ResourceListPage'
+import ResourceDetailPage from './pages/resources/ResourceDetailPage'
+import BookingFormPage from './pages/bookings/BookingFormPage'
+import MyBookingsPage from './pages/bookings/MyBookingsPage'
+import TicketListPage from './pages/tickets/TicketListPage'
+import TicketCreatePage from './pages/tickets/TicketCreatePage'
+import TicketDetailPage from './pages/tickets/TicketDetailPage'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminResourcesPage from './pages/admin/AdminResourcesPage'
+import AdminBookingsPage from './pages/admin/AdminBookingsPage'
+import Dashboard from './pages/Dashboard'
+import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
+  const withProtectedLayout = (page, allowedRoles) => (
+    <PrivateRoute allowedRoles={allowedRoles}>
+      <Layout>{page}</Layout>
+    </PrivateRoute>
+  )
+
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
-      <Route
-        path="/app"
-        element={
-          <PrivateRoute>
-            <AdminDashboardPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/catalogue"
-        element={
-          <PrivateRoute>
-            <Shell>
-              <SectionPage {...modulePages.catalogue} />
-            </Shell>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/bookings"
-        element={
-          <PrivateRoute>
-            <Shell>
-              <SectionPage {...modulePages.bookings} />
-            </Shell>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/tickets"
-        element={
-          <PrivateRoute>
-            <Shell>
-              <SectionPage {...modulePages.tickets} />
-            </Shell>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/notifications"
-        element={
-          <PrivateRoute>
-            <Shell>
-              <SectionPage {...modulePages.notifications} />
-            </Shell>
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute allowRoles={['leader']}>
-            <Shell>
-              <SectionPage {...modulePages.admin} />
-            </Shell>
-          </PrivateRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<RootPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/dashboard" element={withProtectedLayout(<Dashboard role="user" />)} />
+          <Route path="/resources/:id" element={withProtectedLayout(<ResourceDetailPage />)} />
+          <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
+          <Route path="/bookings/my" element={withProtectedLayout(<MyBookingsPage />)} />
+          <Route path="/tickets" element={withProtectedLayout(<TicketListPage />)} />
+          <Route path="/tickets/new" element={withProtectedLayout(<TicketCreatePage />)} />
+          <Route path="/tickets/:id" element={withProtectedLayout(<TicketDetailPage />)} />
+          <Route path="/admin" element={withProtectedLayout(<AdminDashboardPage />, ['ADMIN'])} />
+          <Route path="/admin/resources" element={withProtectedLayout(<AdminResourcesPage />, ['ADMIN'])} />
+          <Route path="/admin/bookings" element={withProtectedLayout(<AdminBookingsPage />, ['ADMIN'])} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

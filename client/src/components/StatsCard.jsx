@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion'
 
+const Motion = motion
+
 export default function StatsCard({ icon: Icon, title, value, trend, color = 'indigo' }) {
+  void Icon
   const colorClasses = {
     indigo: 'bg-indigo-50 text-indigo-600',
     blue: 'bg-blue-50 text-blue-600',
