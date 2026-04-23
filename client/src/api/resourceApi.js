@@ -1,15 +1,4 @@
-
 import api from './axios';
-//give full springboot server URL to avoid CORS issue(proxy issue fix)
-const API_URL = 'http://localhost:8081/api/resources';
-
-//if have token then add to header for authentication
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-
 
 
 
