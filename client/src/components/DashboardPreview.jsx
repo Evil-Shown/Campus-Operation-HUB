@@ -2,6 +2,8 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Calendar, ChevronRight, AlertCircle, Users, TrendingUp } from 'lucide-react'
 
+const Motion = motion
+
 const tickets = [
   { title: 'Broken AC in Library', priority: 'High', priorityClass: 'text-red-600 bg-red-50', dotClass: 'bg-red-500' },
   { title: 'Projector not working', priority: 'Medium', priorityClass: 'text-orange-600 bg-orange-50', dotClass: 'bg-orange-500' },
