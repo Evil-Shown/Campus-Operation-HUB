@@ -8,14 +8,11 @@
   :root {
     --primary: 139 92 246;
     --primary-foreground: 255 255 255;
+    --border: 226 232 240;
   }
 
   * {
-    @apply border-slate-200;
-  }
-
-  .dark * {
-    @apply border-slate-700;
+    @apply border-border;
   }
 
   html {
@@ -29,6 +26,10 @@
 
   .dark body {
     @apply bg-slate-950 text-slate-50;
+  }
+
+  .dark {
+    --border: 51 65 85;
   }
 }
 
