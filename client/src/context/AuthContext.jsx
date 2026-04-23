@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 const AuthContext = createContext(null)
 const TOKEN_KEY = 'campusops_token'
@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
     return normalizedUser
   }
 
-  const signin = async ({ email, password }) => {
+  const signin = useCallback(async ({ email, password }) => {
     setLoading(true)
     try {
       const payload = await postAuth('/api/auth/signin', { email, password })
@@ -79,9 +79,9 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const signup = async ({ name, email, password }) => {
+  const signup = useCallback(async ({ name, email, password }) => {
     setLoading(true)
     try {
       const payload = await postAuth('/api/auth/signup', { name, email, password })
@@ -89,13 +89,13 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     setUser(null)
-  }
+  }, [])
 
   const value = useMemo(
     () => ({
@@ -108,7 +108,7 @@ export function AuthProvider({ children }) {
       token: localStorage.getItem(TOKEN_KEY),
       apiBaseUrl: API_BASE_URL,
     }),
-    [loading, user],
+    [loading, logout, signin, signup, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
