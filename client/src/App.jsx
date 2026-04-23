@@ -6,6 +6,8 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import SectionPage from './pages/SectionPage'
+import TicketsPage from './pages/TicketsPage'
+import TicketDetailPage from './pages/TicketDetailPage'
 import './App.css'
 
 const modulePages = {
@@ -70,7 +72,17 @@ function App() {
         element={
           <PrivateRoute>
             <Shell>
-              <SectionPage {...modulePages.tickets} />
+              <TicketsPage />
+            </Shell>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/tickets/:id"
+        element={
+          <PrivateRoute>
+            <Shell>
+              <TicketDetailPage />
             </Shell>
           </PrivateRoute>
         }
