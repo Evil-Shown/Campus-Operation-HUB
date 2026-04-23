@@ -5,28 +5,25 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     private Map<String, Object> errorBody(HttpStatus status, String error, String message, HttpServletRequest request) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", Instant.now().toString());
-        body.put("status", status.value());
-        body.put("error", error);
-        body.put("message", message);
-        body.put("path", request.getRequestURI());
-        return body;
+        return Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", status.value(),
+                "error", error,
+                "message", message == null ? "" : message,
+                "path", request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(BookingNotFoundException.class)
@@ -80,14 +77,11 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::formatFieldError)
-                .collect(Collectors.joining(", "));
+                .findFirst()
+                .map(fieldError -> fieldError.getDefaultMessage() == null ? "Validation failed" : fieldError.getDefaultMessage())
+                .orElse("Validation failed");
         return ResponseEntity.status(status)
                 .body(errorBody(status, status.getReasonPhrase(), message, request));
-    }
-
-    private String formatFieldError(FieldError fieldError) {
-        return fieldError.getField() + ": " + fieldError.getDefaultMessage();
     }
 
     @ExceptionHandler(Exception.class)

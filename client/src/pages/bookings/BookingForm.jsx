@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import api from "../../api/api";
 import BookingFormFields from "../../components/bookings/BookingFormFields";
 import AvailabilityViewer from "../../components/bookings/AvailabilityViewer";
@@ -14,8 +14,9 @@ const INITIAL_FORM = {
 };
 
 const BookingForm = () => {
+  const { resourceId } = useParams();
   const [resources, setResources] = useState([]);
-  const [formData, setFormData] = useState(INITIAL_FORM);
+  const [formData, setFormData] = useState({ ...INITIAL_FORM, resourceId: resourceId || "" });
   const [availabilityBookings, setAvailabilityBookings] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -108,7 +109,7 @@ const BookingForm = () => {
           </p>
         </div>
         <Link
-          to="/bookings"
+          to="/bookings/my"
           className="text-sm text-purple-600 hover:text-purple-700 
             hover:underline flex items-center gap-1"
         >

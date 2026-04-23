@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '')
-const TOKEN_KEY = 'campusops_token'
+const TOKEN_KEY = 'token'
 
 /**
  * Shared Axios instance for all API calls.

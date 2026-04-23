@@ -25,6 +25,23 @@ public class PlatformGlobalExceptionHandler {
                 .body(new ApiErrorDTO(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorDTO> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorDTO> handleValidationException(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation failed");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorDTO(HttpStatus.BAD_REQUEST.value(), message));
+    }
+
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<ApiErrorDTO> handleUnauthorizedActionException(UnauthorizedActionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)

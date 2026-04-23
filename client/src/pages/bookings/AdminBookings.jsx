@@ -11,7 +11,7 @@ const AdminBookings = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (authLoading || user?.role !== "leader") return;
+    if (authLoading || user?.role !== "ADMIN") return;
     api
       .get("/bookings?status=PENDING")
       .then((res) => setBookings(res.data))
@@ -26,8 +26,8 @@ const AdminBookings = () => {
       </div>
     );
   }
-  if (user?.role !== "leader") {
-    return <Navigate to="/app" replace />;
+  if (user?.role !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleApprove = async (id) => {
@@ -159,8 +159,7 @@ const AdminBookings = () => {
                 <tr
                   key={b.id}
                   className={`border-b border-gray-50 hover:bg-gray-50 
-                    transition-colors ${
-                      i === bookings.length - 1 ? "border-0" : ""
+                    transition-colors ${i === bookings.length - 1 ? "border-0" : ""
                     }`}
                 >
                   <td className="px-5 py-4 font-semibold text-gray-800">

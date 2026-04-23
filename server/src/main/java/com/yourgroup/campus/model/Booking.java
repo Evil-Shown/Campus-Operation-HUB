@@ -73,7 +73,7 @@ public class Booking {
         }
     }
 
-    public enum BookingStatus {
+    public static enum BookingStatus {
         PENDING,
         APPROVED,
         REJECTED,

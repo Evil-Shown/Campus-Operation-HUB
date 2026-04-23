@@ -82,23 +82,15 @@ public class BookingService {
 
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getAllBookings(BookingStatus status) {
-        return bookingRepository.findAllWithOptionalStatus(status)
+        return bookingRepository.findAllByStatusOrAll(status)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public BookingResponseDTO getBookingById(Long bookingId, Long userId) {
-        Booking booking = findOrThrow(bookingId);
-        User currentUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        boolean isOwner = booking.getUser().getId().equals(currentUser.getId());
-        boolean isAdmin = currentUser.getRole() == User.Role.ADMIN;
-        if (!isOwner && !isAdmin) {
-            throw new UnauthorizedException("You are not allowed to view this booking");
-        }
-        return toDTO(booking);
+    public BookingResponseDTO getBookingById(Long bookingId) {
+        return toDTO(findOrThrow(bookingId));
     }
 
     @Transactional(readOnly = true)
