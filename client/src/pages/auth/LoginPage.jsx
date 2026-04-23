@@ -4,6 +4,18 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api/axios'
 
+function readLoginErrorMessage(err) {
+  if (err?.response?.data?.message) {
+    return err.response.data.message
+  }
+
+  if (err?.code === 'ERR_NETWORK') {
+    return 'Cannot reach the backend API. Start the server on http://localhost:8080 and try again.'
+  }
+
+  return 'Unable to sign in right now. Please try again.'
+}
+
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
@@ -91,8 +103,7 @@ export default function LoginPage() {
       setSession(data.token, data.user ?? null)
       navigate(getDashboardPath(data?.user?.role), { replace: true })
     } catch (err) {
-      const message = err?.response?.data?.message || 'An error occurred. Please try again.'
-      setError(message)
+      setError(readLoginErrorMessage(err))
     } finally {
       setLoading(false)
     }
