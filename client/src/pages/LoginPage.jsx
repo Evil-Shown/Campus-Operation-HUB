@@ -132,11 +132,17 @@ export default function LoginPage() {
     setFormError('')
 
     try {
-      await signin({
+      const user = await signin({
         email: formData.email.trim(),
         password: formData.password,
       })
-      navigate('/app')
+      
+      // Redirect based on user role
+      if (user?.role === 'ADMIN') {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (error) {
       setFormError(error.message || 'Unable to sign in. Please try again.')
     } finally {

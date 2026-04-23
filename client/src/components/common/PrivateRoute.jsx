@@ -17,7 +17,12 @@ export default function PrivateRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />
+    // If user is not admin, redirect to user dashboard
+    if (user.role !== 'ADMIN') {
+      return <Navigate to="/dashboard" replace />
+    }
+    // If user is admin but trying to access non-admin route, redirect to admin dashboard
+    return <Navigate to="/admin" replace />
   }
 
   return children
