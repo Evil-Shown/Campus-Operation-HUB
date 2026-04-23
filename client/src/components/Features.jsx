@@ -2,6 +2,8 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { AlertTriangle, Bell, Building2, CalendarRange, ShieldCheck } from 'lucide-react'
 
+const Motion = motion
+
 const features = [
   {
     icon: Building2,
