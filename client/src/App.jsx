@@ -4,6 +4,7 @@ import PrivateRoute from './components/common/PrivateRoute'
 import Layout from './components/layout/Layout'
 import RootPage from './pages/RootPage'
 import LoginPage from './pages/auth/LoginPage'
+import SignupPage from './pages/SignupPage'
 import AuthCallback from './pages/auth/AuthCallback'
 import ResourceListPage from './pages/resources/ResourceListPage'
 import ResourceDetailPage from './pages/resources/ResourceDetailPage'
@@ -14,8 +15,9 @@ import TicketCreatePage from './pages/tickets/TicketCreatePage'
 import TicketDetailPage from './pages/tickets/TicketDetailPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminResourcesPage from './pages/admin/AdminResourcesPage'
-import AdminBookingsPage from './pages/bookings/AdminBookings'
-import Dashboard from './pages/Dashboard'
+import AdminBookingsPage from './pages/admin/AdminBookingsPage'
+import UserDashboard from './pages/UserDashboard'
+import NotificationsPage from './pages/NotificationsPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -31,8 +33,12 @@ function App() {
         <Routes>
           <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/dashboard" element={withProtectedLayout(<Dashboard role="user" />)} />
+          <Route path="/dashboard" element={withProtectedLayout(<UserDashboard />, ['USER'])} />
+          <Route path="/user-dashboard" element={withProtectedLayout(<UserDashboard />, ['USER'])} />
+          <Route path="/notifications" element={withProtectedLayout(<NotificationsPage />)} />
+          <Route path="/admin-dashboard" element={withProtectedLayout(<AdminDashboardPage />, ['ADMIN'])} />
           <Route path="/resources/:id" element={withProtectedLayout(<ResourceDetailPage />)} />
           <Route path="/bookings/new" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
