@@ -8,8 +8,24 @@ const TOKEN_KEY = 'token'
 const USER_KEY = 'user'
 const INACTIVITY_TIMEOUT = 20 * 60 * 1000
 
+function normalizeRole(role) {
+  if (!role || typeof role !== 'string') {
+    return role
+  }
+
+  const upperRole = role.toUpperCase()
+  return upperRole.startsWith('ROLE_') ? upperRole.slice(5) : upperRole
+}
+
 function normalizeUser(nextUser) {
-  return nextUser ?? null
+  if (!nextUser) {
+    return null
+  }
+
+  return {
+    ...nextUser,
+    role: normalizeRole(nextUser.role),
+  }
 }
 
 function getErrorMessage(error) {

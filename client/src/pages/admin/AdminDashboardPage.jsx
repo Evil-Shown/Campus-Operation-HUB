@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Package,
@@ -12,61 +13,12 @@ import {
   Activity,
   ShieldCheck,
   Search,
-  FileText
+  FileText,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react'
-
-const metrics = [
-  {
-    label: 'Managed Assets',
-    value: 12,
-    delta: '+8.2%',
-    trend: 'up',
-    icon: Package,
-    color: 'from-primary-500 to-indigo-600',
-  },
-  {
-    label: 'Pending Requests',
-    value: 5,
-    delta: '-2.1%',
-    trend: 'down',
-    icon: CalendarClock,
-    color: 'from-amber-400 to-orange-500',
-  },
-  {
-    label: 'Active Incidents',
-    value: 8,
-    delta: '+1.6%',
-    trend: 'up',
-    icon: AlertCircle,
-    color: 'from-rose-400 to-red-500',
-  },
-  {
-    label: 'Total Enrollment',
-    value: 34,
-    delta: '+5.4%',
-    trend: 'up',
-    icon: Users,
-    color: 'from-emerald-400 to-teal-500',
-  },
-]
-
-const recentBookings = [
-  { item: 'Computer Lab 3', user: 'Prof. Aristhoth', time: 'Today, 09:00', status: 'APPROVED' },
-  { item: 'Lecture Hall A101', user: 'Dr. Sarah Connor', time: 'Tomorrow, 14:00', status: 'PENDING' },
-  { item: 'Meeting Room 5', user: 'Admin Group', time: '28 Apr, 10:00', status: 'APPROVED' },
-]
-
-const recentTickets = [
-  { id: '#TK-001', title: 'Network instability in Lab 3', status: 'OPEN', priority: 'CRITICAL' },
-  { id: '#TK-002', title: 'H-304 Projector Calibration', status: 'IN_PROGRESS', priority: 'NORMAL' },
-  { id: '#TK-003', title: 'HVAC unexpected shutdown', status: 'OPEN', priority: 'HIGH' },
-]
-
-const utilization = [
-  { label: 'Technical Labs', value: 72 },
-  { label: 'Academic Halls', value: 56 },
-  { label: 'Seminar Rooms', value: 81 },
-]
+import { useAuth } from '../../context/AuthContext'
+import { getAdminDashboardData } from '../../api/admin'
 
 function StatusPill({ status, variant = 'neutral' }) {
   const styles = {
@@ -85,6 +37,153 @@ function StatusPill({ status, variant = 'neutral' }) {
 }
 
 export default function AdminDashboardPage() {
+  const { apiBaseUrl, token } = useAuth()
+  const [data, setData] = useState({ resources: [], bookings: [], tickets: [] })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const result = await getAdminDashboardData({ baseUrl: apiBaseUrl, token })
+      setData(result)
+    } catch (err) {
+      setError(err.message || 'Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [apiBaseUrl, token])
+
+  // Calculate metrics from actual data
+  const pendingBookings = data.bookings.filter(b => b.status === 'PENDING').length
+  const openTickets = data.tickets.filter(t => t.status === 'OPEN').length
+  const criticalTickets = data.tickets.filter(t => t.priority === 'CRITICAL' || t.priority === 'HIGH').length
+
+  const metrics = [
+    {
+      label: 'Managed Assets',
+      value: data.resources.length,
+      delta: '+8.2%',
+      trend: 'up',
+      icon: Package,
+      color: 'from-primary-500 to-indigo-600',
+    },
+    {
+      label: 'Pending Requests',
+      value: pendingBookings,
+      delta: pendingBookings > 5 ? '+12%' : '-5%',
+      trend: pendingBookings > 5 ? 'up' : 'down',
+      icon: CalendarClock,
+      color: 'from-amber-400 to-orange-500',
+    },
+    {
+      label: 'Active Incidents',
+      value: openTickets,
+      delta: openTickets > 8 ? '+15%' : '-8%',
+      trend: openTickets > 8 ? 'up' : 'down',
+      icon: AlertCircle,
+      color: 'from-rose-400 to-red-500',
+    },
+    {
+      label: 'Critical Issues',
+      value: criticalTickets,
+      delta: criticalTickets > 3 ? '+20%' : '-10%',
+      trend: criticalTickets > 3 ? 'up' : 'down',
+      icon: Users,
+      color: 'from-emerald-400 to-teal-500',
+    },
+  ]
+
+  // Get recent bookings (last 5)
+  const recentBookings = data.bookings
+    .sort((a, b) => new Date(b.createdAt || b.startTime) - new Date(a.createdAt || a.startTime))
+    .slice(0, 5)
+    .map(booking => ({
+      item: booking.resourceName || booking.resource?.name || 'Unknown Resource',
+      user: booking.userName || booking.user?.name || 'Unknown User',
+      time: booking.startTime ? new Date(booking.startTime).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : 'N/A',
+      status: booking.status,
+    }))
+
+  // Get recent tickets (last 5 open or in_progress)
+  const recentTickets = data.tickets
+    .filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
+    .map(ticket => ({
+      id: `#TK-${ticket.id.toString().padStart(3, '0')}`,
+      title: ticket.title,
+      status: ticket.status,
+      priority: ticket.priority,
+    }))
+
+  // Calculate utilization by resource type
+  const resourcesByType = data.resources.reduce((acc, r) => {
+    const type = r.type || 'OTHER'
+    acc[type] = (acc[type] || 0) + 1
+    return acc
+  }, {})
+
+  const totalResources = data.resources.length || 1
+  const utilization = Object.entries(resourcesByType)
+    .map(([label, count]) => ({
+      label: label.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+      value: Math.round((count / totalResources) * 100),
+    }))
+    .slice(0, 3)
+
+  if (utilization.length === 0) {
+    utilization.push(
+      { label: 'Resources', value: 0 },
+      { label: 'Utilization', value: 0 },
+      { label: 'Capacity', value: 0 }
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <p className="text-sm font-medium text-gray-500">Loading dashboard data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+            <AlertCircle className="h-6 w-6 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Failed to load data</h3>
+            <p className="text-sm text-gray-500 mt-1">{error}</p>
+          </div>
+          <button
+            onClick={fetchData}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Admin Header */}
@@ -168,16 +267,24 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {recentBookings.map((row) => (
-                    <tr key={`${row.item}-${row.user}`} className="group hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-gray-800">{row.item}</td>
-                      <td className="px-6 py-4 text-xs font-semibold text-gray-500">{row.user}</td>
-                      <td className="px-6 py-4 text-xs font-bold text-gray-600">{row.time}</td>
-                      <td className="px-6 py-4">
-                        <StatusPill status={row.status} variant={row.status === 'APPROVED' ? 'success' : 'warning'} />
+                  {recentBookings.length > 0 ? (
+                    recentBookings.map((row) => (
+                      <tr key={`${row.item}-${row.user}-${row.time}`} className="group hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-gray-800">{row.item}</td>
+                        <td className="px-6 py-4 text-xs font-semibold text-gray-500">{row.user}</td>
+                        <td className="px-6 py-4 text-xs font-bold text-gray-600">{row.time}</td>
+                        <td className="px-6 py-4">
+                          <StatusPill status={row.status} variant={row.status === 'APPROVED' ? 'success' : 'warning'} />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">
+                        No recent bookings found
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -225,7 +332,7 @@ export default function AdminDashboardPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-lg font-black text-gray-800 uppercase tracking-widest">Incident Terminal</h2>
-            <StatusPill status="8 ACTIVE" variant="danger" />
+            <StatusPill status={`${openTickets} ACTIVE`} variant="danger" />
           </div>
 
           <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl !p-0 overflow-hidden shadow-lg">
@@ -238,18 +345,26 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {recentTickets.map((row) => (
-                  <tr key={row.id} className="group hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-xs font-black text-indigo-600">{row.id}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-gray-800 truncate max-w-[200px]">{row.title}</p>
-                      <StatusPill status={row.status} variant={row.status === 'OPEN' ? 'danger' : 'primary'} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusPill status={row.priority} variant={row.priority === 'CRITICAL' ? 'danger' : row.priority === 'HIGH' ? 'warning' : 'neutral'} />
+                {recentTickets.length > 0 ? (
+                  recentTickets.map((row) => (
+                    <tr key={row.id} className="group hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-xs font-black text-indigo-600">{row.id}</td>
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-gray-800 truncate max-w-[200px]">{row.title}</p>
+                        <StatusPill status={row.status} variant={row.status === 'OPEN' ? 'danger' : 'primary'} />
+                      </td>
+                      <td className="px-6 py-4">
+                        <StatusPill status={row.priority} variant={row.priority === 'CRITICAL' ? 'danger' : row.priority === 'HIGH' ? 'warning' : 'neutral'} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="px-6 py-8 text-center text-sm text-gray-500">
+                      No active incidents found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

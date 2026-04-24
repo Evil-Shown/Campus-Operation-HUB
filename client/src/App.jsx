@@ -4,6 +4,7 @@ import PrivateRoute from './components/common/PrivateRoute'
 import Layout from './components/layout/Layout'
 import RootPage from './pages/RootPage'
 import LoginPage from './pages/auth/LoginPage'
+import SignupPage from './pages/SignupPage'
 import AuthCallback from './pages/auth/AuthCallback'
 import ResourceListPage from './pages/resources/ResourceListPage'
 import ResourceDetailPage from './pages/resources/ResourceDetailPage'
@@ -32,6 +33,7 @@ function App() {
         <Routes>
           <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/dashboard" element={withProtectedLayout(<UserDashboard />, ['USER'])} />
           <Route path="/user-dashboard" element={withProtectedLayout(<UserDashboard />, ['USER'])} />

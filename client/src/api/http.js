@@ -26,8 +26,25 @@ async function parseJsonSafe(response) {
   return response.json().catch(() => null)
 }
 
-export async function apiJson({ baseUrl, token, path, method = 'GET', body, query }) {
-  const url = new URL(`${baseUrl.replace(/\/$/, '')}${path}`)
+function buildApiUrl({ baseUrl, path, query }) {
+  const rawBase = (baseUrl || '/api').trim() || '/api'
+  const hasAbsoluteBase = /^https?:\/\//i.test(rawBase)
+  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost'
+  const resolvedBase = hasAbsoluteBase ? rawBase : `${origin}${rawBase.startsWith('/') ? rawBase : `/${rawBase}`}`
+  const baseWithoutTrailingSlash = resolvedBase.replace(/\/+$/, '')
+
+  let normalizedPath = path || '/'
+  if (!normalizedPath.startsWith('/')) {
+    normalizedPath = `/${normalizedPath}`
+  }
+
+  // Avoid accidental /api/api duplication when baseUrl already contains /api.
+  if (baseWithoutTrailingSlash.toLowerCase().endsWith('/api') && normalizedPath.toLowerCase().startsWith('/api/')) {
+    normalizedPath = normalizedPath.slice(4)
+  }
+
+  const url = new URL(normalizedPath, `${baseWithoutTrailingSlash}/`)
+
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
       if (value === undefined || value === null || value === '') {
@@ -36,6 +53,12 @@ export async function apiJson({ baseUrl, token, path, method = 'GET', body, quer
       url.searchParams.set(key, String(value))
     })
   }
+
+  return url
+}
+
+export async function apiJson({ baseUrl, token, path, method = 'GET', body, query }) {
+  const url = buildApiUrl({ baseUrl, path, query })
 
   const response = await fetch(url.toString(), {
     method,
@@ -60,15 +83,7 @@ export async function apiJson({ baseUrl, token, path, method = 'GET', body, quer
 }
 
 export async function apiFormData({ baseUrl, token, path, method = 'POST', formData, query }) {
-  const url = new URL(`${baseUrl.replace(/\/$/, '')}${path}`)
-  if (query) {
-    Object.entries(query).forEach(([key, value]) => {
-      if (value === undefined || value === null || value === '') {
-        return
-      }
-      url.searchParams.set(key, String(value))
-    })
-  }
+  const url = buildApiUrl({ baseUrl, path, query })
 
   const response = await fetch(url.toString(), {
     method,
