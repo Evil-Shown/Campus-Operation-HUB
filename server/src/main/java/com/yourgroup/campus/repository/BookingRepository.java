@@ -13,6 +13,10 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+        /**
+         * Find APPROVED bookings that overlap with the given time window.
+         * Used during booking creation to detect conflicts.
+         */
     @Query("""
             SELECT b FROM Booking b
             WHERE b.resource.id = :resourceId
@@ -23,9 +27,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findConflictingBookings(
             @Param("resourceId") Long resourceId,
             @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
-    );
+            @Param("endTime") LocalDateTime endTime);
 
+        /**
+         * Find APPROVED bookings that overlap with the given time window,
+         * excluding a specific booking by id.
+         * Used during approval to re-check conflicts.
+         */
     @Query("""
             SELECT b FROM Booking b
             WHERE b.resource.id = :resourceId
@@ -38,19 +46,29 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("resourceId") Long resourceId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime,
-            @Param("excludeId") Long excludeId
-    );
+            @Param("excludeId") Long excludeId);
 
-    List<Booking> findByUserIdOrderByStartTimeDesc(Long userId);
-
-    List<Booking> findByResourceIdAndStatusOrderByStartTime(Long resourceId, BookingStatus status);
-
-    List<Booking> findByStatusOrderByCreatedAtAsc(BookingStatus status);
-
+        /**
+         * Return all bookings, optionally filtered by status, ordered by createdAt
+         * DESC.
+         */
     @Query("""
             SELECT b FROM Booking b
             WHERE (:status IS NULL OR b.status = :status)
             ORDER BY b.createdAt DESC
             """)
     List<Booking> findAllByStatusOrAll(@Param("status") BookingStatus status);
+
+        /**
+         * Derived query: all bookings for a user, newest first by startTime.
+         */
+    List<Booking> findByUserIdOrderByStartTimeDesc(Long userId);
+
+        /**
+         * Derived query: bookings for a resource with given status, ordered by
+         * startTime ASC.
+         */
+    List<Booking> findByResourceIdAndStatusOrderByStartTime(Long resourceId, BookingStatus status);
+
+    List<Booking> findByStatusOrderByCreatedAtAsc(BookingStatus status);
 }
