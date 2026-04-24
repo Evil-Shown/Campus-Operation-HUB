@@ -64,6 +64,7 @@ export default function TicketsPage() {
     contactInfo: user?.email || '',
   })
   const [files, setFiles] = useState([])
+  const isDescriptionValid = form.description.trim().length >= 10
 
   const canSeeAll = user?.role === 'leader'
   const canCreate = Boolean(token)
@@ -299,12 +300,17 @@ export default function TicketsPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={creating || form.description.length < 10}
+                  disabled={creating || !isDescriptionValid}
                   className="btn-primary py-3 px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 disabled:opacity-50"
                 >
                   {creating ? 'Synchronizing...' : 'Initialize Ticket'}
                 </button>
               </div>
+              {!isDescriptionValid ? (
+                <p className="md:col-span-2 text-xs font-bold text-amber-600">
+                  Description must be at least 10 characters to enable ticket creation.
+                </p>
+              ) : null}
             </form>
           </motion.div>
         )}

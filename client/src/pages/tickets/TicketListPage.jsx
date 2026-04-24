@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const tickets = [
   {
     id: '#1',
@@ -25,9 +27,12 @@ export default function TicketListPage() {
           <h1 className="text-2xl font-bold text-slate-900">Incident Tickets</h1>
           <p className="text-sm text-slate-600">View and track reported campus incidents.</p>
         </div>
-        <button type="button" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+        <Link
+          to="/tickets/new"
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
           Report an Issue
-        </button>
+        </Link>
       </div>
 
       <div className="w-full max-w-xs">
