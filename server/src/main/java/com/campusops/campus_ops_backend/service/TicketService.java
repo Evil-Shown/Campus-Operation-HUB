@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -167,9 +168,13 @@ public class TicketService {
     }
 
     @Transactional
-    public void deleteComment(Long commentId, User currentUser) {
+    public void deleteComment(Long ticketId, Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+        if (comment.getTicket() == null || !comment.getTicket().getId().equals(ticketId)) {
+            throw new ResourceNotFoundException(
+                    "Comment not found with id: " + commentId + " for ticket id: " + ticketId);
+        }
         boolean isAdmin = currentUser.getRole() == User.Role.ADMIN;
         boolean isAuthor = comment.getAuthor() != null && comment.getAuthor().getId().equals(currentUser.getId());
         if (!isAuthor && !isAdmin) {
@@ -181,7 +186,26 @@ public class TicketService {
     @Transactional
     public void delete(Long ticketId, User admin) {
         Ticket ticket = findTicket(ticketId);
+        deleteTicketDirectory(ticket.getId());
         ticketRepository.delete(ticket);
+    }
+
+    private void deleteTicketDirectory(Long ticketId) {
+        Path ticketDirectory = Paths.get(uploadDir, String.valueOf(ticketId));
+        if (!Files.exists(ticketDirectory)) {
+            return;
+        }
+        try (var paths = Files.walk(ticketDirectory)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException ex) {
+                    throw new FileStorageException("Failed to delete ticket attachments for ticket id: " + ticketId, ex);
+                }
+            });
+        } catch (IOException ex) {
+            throw new FileStorageException("Failed to delete ticket attachments for ticket id: " + ticketId, ex);
+        }
     }
 
     private Ticket findTicket(Long id) {

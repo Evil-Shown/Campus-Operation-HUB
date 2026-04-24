@@ -105,7 +105,7 @@ public class TicketController {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        ticketService.deleteComment(commentId, principal.getUser());
+        ticketService.deleteComment(ticketId, commentId, principal.getUser());
         return ResponseEntity.noContent().build();
     }
 
