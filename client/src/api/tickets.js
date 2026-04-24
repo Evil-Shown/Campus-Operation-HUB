@@ -48,6 +48,19 @@ export function addTicketComment({ baseUrl, token, ticketId, body }) {
   })
 }
 
+export function listTicketComments({ baseUrl, token, ticketId }) {
+  return apiJson({
+    baseUrl,
+    token,
+    path: `/api/tickets/${ticketId}/comments`,
+  })
+}
+
+export function getTicketAttachmentUrl({ baseUrl, ticketId, fileName }) {
+  const root = String(baseUrl || '').replace(/\/$/, '')
+  return `${root}/api/tickets/${ticketId}/attachments/${encodeURIComponent(fileName)}`
+}
+
 export async function deleteTicketComment({ baseUrl, token, ticketId, commentId }) {
   await apiJson({
     baseUrl,

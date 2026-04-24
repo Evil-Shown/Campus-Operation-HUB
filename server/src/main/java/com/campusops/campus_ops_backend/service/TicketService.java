@@ -174,6 +174,50 @@ public class TicketService {
         return CommentResponseDTO.from(saved);
     }
 
+    @Transactional(readOnly = true)
+    public List<CommentResponseDTO> getComments(Long ticketId, User currentUser) {
+        Ticket ticket = findTicket(ticketId);
+        if (!canAccessTicket(ticket, currentUser)) {
+            throw new UnauthorizedActionException("You are not allowed to view comments for this ticket");
+        }
+        return commentRepository.findByTicketIdOrderByCreatedAtAsc(ticketId).stream()
+                .map(CommentResponseDTO::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TicketAttachmentFileDTO getAttachmentFile(Long ticketId, String fileName, User currentUser) {
+        Ticket ticket = findTicket(ticketId);
+        if (!canAccessTicket(ticket, currentUser)) {
+            throw new UnauthorizedActionException("You are not allowed to access attachments for this ticket");
+        }
+
+        List<TicketAttachment> attachments = ticketAttachmentRepository.findByTicketId(ticketId);
+        TicketAttachment matchingAttachment = attachments.stream()
+                .filter(attachment -> {
+                    String filePath = attachment.getFilePath();
+                    if (filePath == null) {
+                        return false;
+                    }
+                    Path path = Paths.get(filePath);
+                    Path name = path.getFileName();
+                    return name != null && name.toString().equals(fileName);
+                })
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found for ticket id: " + ticketId));
+
+        Path filePath = Paths.get(matchingAttachment.getFilePath());
+        if (!Files.exists(filePath)) {
+            throw new ResourceNotFoundException("Attachment file missing for ticket id: " + ticketId);
+        }
+        try {
+            return new TicketAttachmentFileDTO(Files.readAllBytes(filePath), matchingAttachment.getMimeType(),
+                    matchingAttachment.getOriginalFileName());
+        } catch (IOException ex) {
+            throw new FileStorageException("Failed to load ticket attachment", ex);
+        }
+    }
+
     @Transactional
     public void deleteComment(Long ticketId, Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
@@ -230,5 +274,8 @@ public class TicketService {
         boolean isReporter = ticket.getReporter() != null && ticket.getReporter().getId().equals(currentUser.getId());
         boolean isAssignee = ticket.getAssignee() != null && ticket.getAssignee().getId().equals(currentUser.getId());
         return isReporter || isAssignee;
+    }
+
+    public record TicketAttachmentFileDTO(byte[] content, String mimeType, String originalFileName) {
     }
 }

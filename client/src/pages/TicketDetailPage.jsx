@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { addTicketComment, assignTicket, deleteTicket, deleteTicketComment, getTicket, updateTicketStatus } from '../api/tickets'
+import {
+  addTicketComment,
+  assignTicket,
+  deleteTicket,
+  deleteTicketComment,
+  getTicket,
+  getTicketAttachmentUrl,
+  listTicketComments,
+  updateTicketStatus,
+} from '../api/tickets'
 import { useAuth } from '../context/AuthContext'
 
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED']
@@ -59,11 +68,15 @@ export default function TicketDetailPage() {
       setLoading(true)
       setError('')
       try {
-        const data = await getTicket({ baseUrl: apiBaseUrl, token, id })
+        const [data, comments] = await Promise.all([
+          getTicket({ baseUrl: apiBaseUrl, token, id }),
+          listTicketComments({ baseUrl: apiBaseUrl, token, ticketId: id }),
+        ])
         if (ignore) {
           return
         }
         setTicket(data)
+        setLocalComments(Array.isArray(comments) ? comments : [])
         setStatus(data?.status || '')
         setResolutionNote(data?.resolutionNote || '')
       } catch (err) {
@@ -250,7 +263,7 @@ export default function TicketDetailPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-slate-700">Attachments</h2>
-                <p className="mt-1 text-xs text-slate-500">Backend stores local file paths; download UI requires a file-serving endpoint.</p>
+                <p className="mt-1 text-xs text-slate-500">Open uploaded files directly from secure ticket attachment links.</p>
               </div>
             </div>
 
@@ -258,7 +271,14 @@ export default function TicketDetailPage() {
               <ul className="mt-3 space-y-2 text-sm text-slate-700">
                 {ticket.attachmentPaths.map((path) => (
                   <li key={path} className="rounded-lg bg-slate-50 px-3 py-2">
-                    {path}
+                    <a
+                      href={getTicketAttachmentUrl({ baseUrl: apiBaseUrl, ticketId: ticket.id, fileName: path })}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-indigo-600 hover:underline"
+                    >
+                      {path}
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -269,7 +289,7 @@ export default function TicketDetailPage() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-700">Comments</h2>
-            <p className="mt-1 text-xs text-slate-500">Backend currently supports add/delete, but does not expose a “list comments” endpoint. New comments will appear here.</p>
+            <p className="mt-1 text-xs text-slate-500">Full comment history is loaded from the ticket conversation.</p>
 
             <form className="mt-3 flex flex-col gap-2" onSubmit={handleAddComment}>
               <textarea

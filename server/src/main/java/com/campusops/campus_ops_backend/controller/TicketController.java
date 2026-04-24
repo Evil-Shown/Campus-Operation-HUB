@@ -3,6 +3,7 @@ package com.campusops.campus_ops_backend.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -106,6 +107,32 @@ public class TicketController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.addComment(ticketId, dto, principal.getUser()));
+    }
+
+    @GetMapping("/{ticketId}/comments")
+    public ResponseEntity<List<CommentResponseDTO>> getComments(@PathVariable @Positive Long ticketId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ticketService.getComments(ticketId, principal.getUser()));
+    }
+
+    @GetMapping("/{ticketId}/attachments/{fileName}")
+    public ResponseEntity<byte[]> getAttachment(@PathVariable @Positive Long ticketId,
+            @PathVariable String fileName,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        TicketService.TicketAttachmentFileDTO file = ticketService.getAttachmentFile(ticketId, fileName, principal.getUser());
+        String safeFileName = file.originalFileName() == null || file.originalFileName().isBlank()
+                ? "attachment"
+                : file.originalFileName();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.mimeType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : file.mimeType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + safeFileName + "\"")
+                .body(file.content());
     }
 
     @DeleteMapping("/{ticketId}/comments/{commentId}")
