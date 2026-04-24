@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { addTicketComment, deleteTicket, getTicket, updateTicketStatus } from '../api/tickets'
+import { addTicketComment, assignTicket, deleteTicket, deleteTicketComment, getTicket, updateTicketStatus } from '../api/tickets'
 import { useAuth } from '../context/AuthContext'
 
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED']
@@ -36,6 +36,9 @@ export default function TicketDetailPage() {
   const [resolutionNote, setResolutionNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [assigneeId, setAssigneeId] = useState('')
+  const [assigning, setAssigning] = useState(false)
+  const [assignError, setAssignError] = useState('')
 
   const [commentBody, setCommentBody] = useState('')
   const [commenting, setCommenting] = useState(false)
@@ -48,6 +51,7 @@ export default function TicketDetailPage() {
   }, [user?.role])
 
   const canDeleteTicket = useMemo(() => normalizeRole(user?.role) === 'leader', [user?.role])
+  const canAssignTicket = useMemo(() => normalizeRole(user?.role) === 'leader', [user?.role])
 
   useEffect(() => {
     let ignore = false
@@ -118,6 +122,37 @@ export default function TicketDetailPage() {
       navigate('/tickets')
     } catch (err) {
       setError(err?.message || 'Failed to delete ticket')
+    }
+  }
+
+  const handleAssign = async () => {
+    if (!canAssignTicket || !assigneeId) {
+      return
+    }
+    setAssigning(true)
+    setAssignError('')
+    try {
+      const updated = await assignTicket({
+        baseUrl: apiBaseUrl,
+        token,
+        id,
+        assigneeId: Number(assigneeId),
+      })
+      setTicket(updated)
+      setAssigneeId('')
+    } catch (err) {
+      setAssignError(err?.message || 'Failed to assign ticket')
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deleteTicketComment({ baseUrl: apiBaseUrl, token, ticketId: id, commentId })
+      setLocalComments((prev) => prev.filter((comment) => comment.id !== commentId))
+    } catch (err) {
+      setCommentError(err?.message || 'Failed to delete comment')
     }
   }
 
@@ -264,6 +299,17 @@ export default function TicketDetailPage() {
                       <span>{formatDate(comment.createdAt)}</span>
                     </div>
                     <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{comment.body}</p>
+                    {(canDeleteTicket || comment.author?.id === user?.id) ? (
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="rounded border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -316,6 +362,29 @@ export default function TicketDetailPage() {
               >
                 {saving ? 'Saving…' : 'Save status'}
               </button>
+
+              {canAssignTicket ? (
+                <div className="grid gap-2 border-t border-slate-100 pt-3">
+                  <label className="grid gap-1 text-sm font-medium text-slate-700">
+                    Assign to user ID
+                    <input
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal"
+                      value={assigneeId}
+                      onChange={(e) => setAssigneeId(e.target.value.replace(/[^\d]/g, ''))}
+                      placeholder="e.g. 5"
+                    />
+                  </label>
+                  {assignError ? <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{assignError}</p> : null}
+                  <button
+                    type="button"
+                    onClick={handleAssign}
+                    disabled={assigning || !assigneeId}
+                    className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {assigning ? 'Assigning…' : 'Assign ticket'}
+                  </button>
+                </div>
+              ) : null}
 
               {!canEditStatus ? <p className="text-xs text-slate-500">Only Admin/Technician can update ticket status.</p> : null}
             </div>
