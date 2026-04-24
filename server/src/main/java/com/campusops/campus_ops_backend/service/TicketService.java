@@ -108,8 +108,12 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public TicketResponseDTO getById(Long id) {
-        return TicketResponseDTO.from(findTicket(id));
+    public TicketResponseDTO getById(Long id, User currentUser) {
+        Ticket ticket = findTicket(id);
+        if (!canAccessTicket(ticket, currentUser)) {
+            throw new UnauthorizedActionException("You are not allowed to view this ticket");
+        }
+        return TicketResponseDTO.from(ticket);
     }
 
     @Transactional(readOnly = true)
@@ -152,6 +156,9 @@ public class TicketService {
     @Transactional
     public CommentResponseDTO addComment(Long ticketId, CommentRequestDTO dto, User author) {
         Ticket ticket = findTicket(ticketId);
+        if (!canAccessTicket(ticket, author)) {
+            throw new UnauthorizedActionException("You are not allowed to comment on this ticket");
+        }
         Comment comment = Comment.builder()
                 .ticket(ticket)
                 .author(author)
@@ -211,5 +218,17 @@ public class TicketService {
     private Ticket findTicket(Long id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id: " + id));
+    }
+
+    private boolean canAccessTicket(Ticket ticket, User currentUser) {
+        if (currentUser == null) {
+            return false;
+        }
+        if (currentUser.getRole() == User.Role.ADMIN || currentUser.getRole() == User.Role.TECHNICIAN) {
+            return true;
+        }
+        boolean isReporter = ticket.getReporter() != null && ticket.getReporter().getId().equals(currentUser.getId());
+        boolean isAssignee = ticket.getAssignee() != null && ticket.getAssignee().getId().equals(currentUser.getId());
+        return isReporter || isAssignee;
     }
 }

@@ -53,6 +53,7 @@ public class TicketController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
     public ResponseEntity<List<TicketResponseDTO>> all(@RequestParam(required = false) Ticket.TicketStatus status) {
         return ResponseEntity.ok(ticketService.getAll(status));
     }
@@ -66,8 +67,12 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TicketResponseDTO> getById(@PathVariable @Positive Long id) {
-        return ResponseEntity.ok(ticketService.getById(id));
+    public ResponseEntity<TicketResponseDTO> getById(@PathVariable @Positive Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ticketService.getById(id, principal.getUser()));
     }
 
     @PatchMapping("/{id}/status")
