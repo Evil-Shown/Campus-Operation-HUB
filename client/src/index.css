@@ -21,7 +21,12 @@
 
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-primary-500/30;
+    font-family: 'Inter', sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
   }
 
   .dark body {

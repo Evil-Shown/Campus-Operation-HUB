@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import api from '../api/axios'
 
-const AuthContext = createContext(null)
+export const AuthContext = createContext(null)
 
 const TOKEN_KEY = 'token'
 const USER_KEY = 'user'
