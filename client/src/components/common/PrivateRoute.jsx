@@ -1,3 +1,7 @@
+<<<<<<< feature/facilities
+export default function PrivateRoute({ children }) {
+  // TODO: check user from AuthContext and redirect to /login if null
+=======
 import { useAuth } from '../../context/AuthContext'
 import { Navigate, useLocation } from 'react-router-dom'
 
@@ -51,5 +55,6 @@ export default function PrivateRoute({ children, allowedRoles }) {
   }
 
   console.log('Access granted')
+>>>>>>> development
   return children
 }

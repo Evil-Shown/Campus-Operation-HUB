@@ -1,18 +1,5 @@
-import { motion } from 'framer-motion'
-import { 
-  History, 
-  Calendar, 
-  Clock, 
-  Building2, 
-  CheckCircle2, 
-  Timer, 
-  XSquare, 
-  Trash2,
-  ChevronRight,
-  ShieldCheck,
-  Zap,
-  BookOpen
-} from 'lucide-react'
+<<<<<<< feature/facilities
+import Badge from '../../components/common/Badge'
 
 const rows = [
   {
@@ -21,7 +8,7 @@ const rows = [
     time: '09:00-11:00',
     purpose: 'Project work',
     status: 'PENDING',
-    action: 'TERMINATE',
+    action: 'Cancel',
   },
   {
     resource: 'Lecture Hall A101',
@@ -33,122 +20,190 @@ const rows = [
   },
 ]
 
-function StatusPill({ status }) {
-  const styles = {
-    PENDING: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    APPROVED: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    REJECTED: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-  }
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${styles[status]}`}>
-      <div className={`h-1 w-1 rounded-full ${status === 'APPROVED' ? 'bg-emerald-500' : status === 'PENDING' ? 'bg-amber-500' : 'bg-rose-500'}`} />
-      {status}
-    </span>
-  )
+const statusColors = {
+  PENDING: 'yellow',
+  APPROVED: 'green',
+  REJECTED: 'red',
 }
 
 export default function MyBookingsPage() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Header Section */}
-      <section className="flex flex-col lg:flex-row lg:items-center lg:justify-between px-2 gap-6">
-        <div className="flex items-center gap-5">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-indigo-500/10 border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
-            <BookOpen className="h-8 w-8 text-indigo-500" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-3.5 h-3.5 text-primary-500" />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary-500">Booking Management Portal</span>
-            </div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Personal Schedule</h1>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Track institutional resource allocations and approval sequences.</p>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">My Bookings</h1>
+        <p className="text-sm text-slate-600">Track booking requests and their current approval status.</p>
+      </div>
 
-        <div className="flex gap-3">
-          <div className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-white/5 flex flex-col items-end">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Requests</span>
-            <span className="text-xl font-black text-slate-900 dark:text-white">02</span>
-          </div>
-          <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col items-end">
-            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Approved Slots</span>
-            <span className="text-xl font-black text-emerald-500">14</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Bookings Table */}
-      <div className="glass-card !p-0 overflow-hidden border-white/5">
-        <div className="bg-slate-50 dark:bg-white/5 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
-          <div className="flex items-center gap-3">
-            <History className="w-4 h-4 text-slate-400" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Institutional Allocation Logs</h3>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resource Reference</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Temporal Signature</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Purpose</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-slate-50 text-slate-700">
+            <tr>
+              <th className="px-4 py-3">Resource</th>
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Time</th>
+              <th className="px-4 py-3">Purpose</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={`${row.resource}-${row.date}`} className="border-t border-slate-100">
+                <td className="px-4 py-3">{row.resource}</td>
+                <td className="px-4 py-3">{row.date}</td>
+                <td className="px-4 py-3">{row.time}</td>
+                <td className="px-4 py-3">{row.purpose}</td>
+                <td className="px-4 py-3">
+                  <Badge text={row.status} color={statusColors[row.status]} />
+                </td>
+                <td className="px-4 py-3">
+                  {row.action ? (
+                    <button type="button" className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700">
+                      {row.action}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-400">-</span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {rows.map((row, idx) => (
-                <motion.tr 
-                  key={idx}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                >
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary-500/10 text-primary-500">
-                        <Building2 className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-black text-slate-900 dark:text-slate-200 uppercase tracking-tight">{row.resource}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400">
-                        <Calendar className="w-3.5 h-3.5" /> {row.date}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] font-black text-primary-500 uppercase tracking-widest">
-                        <Clock className="w-3.5 h-3.5" /> {row.time}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 max-w-[200px] truncate uppercase">{row.purpose}</p>
-                  </td>
-                  <td className="px-6 py-5 text-center">
-                    <StatusPill status={row.status} />
-                  </td>
-                  <td className="px-6 py-5 text-right">
-                    {row.action ? (
-                      <button className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <div className="flex justify-end gap-2 pr-2">
-                        <div className="h-8 w-1 bg-emerald-500/30 rounded-full" />
-                        <ShieldCheck className="w-5 h-5 text-emerald-500/50" />
-                      </div>
-                    )}
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
+=======
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  History, 
+  Calendar, 
+  ShieldCheck, 
+  Zap, 
+  BookOpen,
+  Filter,
+  Search,
+  CheckCircle2,
+  Clock3
+} from 'lucide-react';
+import useBookings from '../../hooks/useBookings';
+import bookingApi from '../../api/bookingApi';
+import PageHeader from '../../components/common/PageHeader';
+import Card from '../../components/common/Card';
+import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
+import EmptyState from '../../components/common/EmptyState';
+import BookingCard from '../../components/bookings/BookingCard';
+
+export default function MyBookingsPage() {
+  const { bookings, loading, error, refresh } = useBookings('mine');
+
+  const handleCancel = async (id) => {
+    if (window.confirm('TERMINATE ALLOCATION PROTOCOL? This action cannot be reversed.')) {
+      try {
+        await bookingApi.cancelBooking(id);
+        refresh();
+      } catch (err) {
+        alert('System: Termination sequence failed.');
+      }
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <div className="p-10"><ErrorMessage message={error} /></div>;
+
+  const stats = {
+    pending: bookings.filter(b => b.status === 'PENDING').length,
+    approved: bookings.filter(b => b.status === 'APPROVED' || b.status === 'CONFIRMED').length,
+    cancelled: bookings.filter(b => b.status === 'CANCELLED' || b.status === 'REJECTED').length
+  };
+
+  return (
+    <div className="space-y-12 pb-24">
+      <PageHeader 
+        title="Personal Schedule" 
+        subtitle="Tracking institutional resource allocations and approval sequences."
+        action={
+          <div className="flex gap-4">
+             <div className="px-6 py-3 rounded-2xl bg-white border border-slate-100 flex flex-col items-end shadow-sm">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Pending</span>
+                <span className="text-xl font-black text-amber-500 leading-none">{stats.pending}</span>
+             </div>
+             <div className="px-6 py-3 rounded-2xl bg-emerald-50/50 border border-emerald-100 flex flex-col items-end shadow-sm">
+                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest leading-none mb-1">Approved</span>
+                <span className="text-xl font-black text-emerald-600 leading-none">{stats.approved}</span>
+             </div>
+          </div>
+        }
+      />
+
+      <Card className="!p-4 flex flex-col md:flex-row items-center gap-4 bg-white/50 border-slate-100 shadow-lg">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-violet-600 transition-colors" />
+          <input
+            type="text"
+            placeholder="Search allocation matrix by resource or purpose..."
+            className="w-full bg-white border border-slate-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:border-violet-200 focus:ring-4 focus:ring-violet-500/5 outline-none transition-all"
+          />
+        </div>
+        <div className="flex gap-3">
+          <div className="h-14 w-[1px] bg-slate-100 mx-1 hidden md:block" />
+          <Button variant="secondary" icon={History} className="h-14 rounded-2xl">
+            Audit Logs
+          </Button>
+        </div>
+      </Card>
+
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 px-2">
+           <div className="h-5 w-1 bg-violet-600 rounded-full" />
+           <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Institutional Allocation Queue</h3>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {bookings.length > 0 ? (
+            <div className="space-y-4">
+              {bookings.map((booking, i) => (
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  idx={i} 
+                  onCancel={handleCancel}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState 
+              icon={Clock3}
+              title="Schedule Grid Empty" 
+              message="No active or historical reservations detected for your identity node."
+              action={<Button icon={Zap}>Initiate First Booking</Button>}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* System Integrity Sub-Display */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-10 border-t border-slate-100">
+         {[
+           { label: 'Security Level', value: 'Protocol Alpha', icon: ShieldCheck, color: 'text-violet-500' },
+           { label: 'Approval Latency', value: 'Avg 2.4 hrs', icon: History, color: 'text-blue-500' },
+           { label: 'Grid Integrity', value: 'Institutional-S2', icon: CheckCircle2, color: 'text-emerald-500' }
+         ].map((item, i) => (
+           <div key={i} className="flex items-center gap-5 p-6 rounded-3xl bg-slate-50/50 border border-slate-100 group hover:bg-white hover:shadow-xl transition-all duration-500">
+              <div className={`h-12 w-12 rounded-xl bg-white flex items-center justify-center ${item.color} shadow-sm group-hover:scale-110 transition-transform`}>
+                 <item.icon size={20} />
+              </div>
+              <div>
+                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">{item.label}</p>
+                 <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{item.value}</p>
+              </div>
+           </div>
+         ))}
+      </div>
+    </div>
+  );
+>>>>>>> development
 }
