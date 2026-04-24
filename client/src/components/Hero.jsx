@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Calendar, CheckCircle2, Users, Zap, Play } from 'lucide-react'
 
+const Motion = motion
+
 const upcomingBookings = [
   { name: 'Conference Room A', time: 'Today, 2:00 PM', dotClass: 'bg-indigo-500' },
   { name: 'Sports Complex', time: 'Tomorrow, 10:00 AM', dotClass: 'bg-purple-500' },

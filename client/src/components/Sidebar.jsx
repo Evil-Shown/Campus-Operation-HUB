@@ -12,26 +12,26 @@ import {
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
-const Sidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, role }) => {
-  const userNavItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
-    { icon: Package, label: 'Resources', path: '/catalogue' },
-    { icon: Calendar, label: 'Bookings', path: '/bookings' },
-    { icon: User, label: 'My Bookings', path: '/bookings' },
-    { icon: Ticket, label: 'Tickets', path: '/tickets' },
-  ]
+const Motion = motion
 
-  const adminNavItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
-    { icon: Package, label: 'Manage Resources', path: '/catalogue' },
-    { icon: Calendar, label: 'Manage Bookings', path: '/bookings' },
-    { icon: Ticket, label: 'Manage Tickets', path: '/tickets' },
-    { icon: Users, label: 'Users', path: '/admin' },
-  ]
+const userNavItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
+  { icon: Package, label: 'Resources', path: '/catalogue' },
+  { icon: Calendar, label: 'Bookings', path: '/bookings' },
+  { icon: User, label: 'My Bookings', path: '/bookings' },
+  { icon: Ticket, label: 'Tickets', path: '/tickets' },
+]
 
-  const navItems = role === 'admin' ? adminNavItems : userNavItems
+const adminNavItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/app' },
+  { icon: Package, label: 'Manage Resources', path: '/catalogue' },
+  { icon: Calendar, label: 'Manage Bookings', path: '/bookings' },
+  { icon: Ticket, label: 'Manage Tickets', path: '/tickets' },
+  { icon: Users, label: 'Users', path: '/admin' },
+]
 
-  const SidebarContent = () => (
+function SidebarContent({ collapsed, navItems, setCollapsed, setMobileOpen }) {
+  return (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={`flex items-center h-16 px-4 border-b border-gray-200 ${collapsed ? 'justify-center' : 'justify-between'}`}>
@@ -92,6 +92,10 @@ const Sidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, role }) =
       )}
     </div>
   )
+}
+
+const Sidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, role }) => {
+  const navItems = role === 'admin' ? adminNavItems : userNavItems
 
   return (
     <>
@@ -101,7 +105,7 @@ const Sidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, role }) =
         animate={{ width: collapsed ? 80 : 256 }}
         className="hidden lg:block fixed left-0 top-0 h-full bg-white border-r border-gray-200 z-30 overflow-hidden"
       >
-        <SidebarContent />
+        <SidebarContent collapsed={collapsed} navItems={navItems} setCollapsed={setCollapsed} setMobileOpen={setMobileOpen} />
       </motion.aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -119,7 +123,7 @@ const Sidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, role }) =
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
-        <SidebarContent />
+        <SidebarContent collapsed={collapsed} navItems={navItems} setCollapsed={setCollapsed} setMobileOpen={setMobileOpen} />
       </motion.aside>
     </>
   )

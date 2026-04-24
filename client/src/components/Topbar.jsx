@@ -4,6 +4,8 @@ import { Menu, Search, Bell, User, Settings, LogOut } from 'lucide-react'
 import NotificationDropdown from './NotificationDropdown'
 import { useAuth } from '../context/AuthContext'
 
+const Motion = motion
+
 const Topbar = ({ setMobileMenuOpen, role, toggleRole }) => {
   const [showNotifications, setShowNotifications] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)

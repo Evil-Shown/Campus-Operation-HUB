@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, LogIn } from 'lucide-react'
 
+const Motion = motion
+
 export default function CallToAction() {
   return (
     <section id="contact" className="relative overflow-hidden py-20 md:py-28 bg-white">
