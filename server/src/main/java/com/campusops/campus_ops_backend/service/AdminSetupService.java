@@ -27,11 +27,13 @@ public class AdminSetupService {
     public AuthResponseDTO setupAdmin(SetupAdminDTO dto) {
         String normalizedEmail = dto.email().trim().toLowerCase();
 
-        // Check if any admin already exists (prevent re-setup)
-        boolean adminExists = userRepository.findAll().stream()
-                .anyMatch(u -> u.getRole() == User.Role.ADMIN);
+        // Allow recovery when the same admin email is used; block creating a second distinct admin.
+        User existingAdmin = userRepository.findAll().stream()
+                .filter(u -> u.getRole() == User.Role.ADMIN)
+                .findFirst()
+                .orElse(null);
 
-        if (adminExists) {
+        if (existingAdmin != null && !existingAdmin.getEmail().equalsIgnoreCase(normalizedEmail)) {
             throw new IllegalStateException("Admin user already exists. Setup is disabled.");
         }
 
