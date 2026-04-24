@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { LogOut, User, Clock, Search, ChevronDown, Mail, ShieldCheck, School, Settings, Bell, Zap, Activity } from 'lucide-react'
+import { LogOut, User, Clock, Search, ChevronDown, Mail, ShieldCheck, School, Settings, Bell, Zap, Activity, Grid } from 'lucide-react'
 import NotificationBell from '../notifications/NotificationBell'
 import { useAuth } from '../../context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [logoutMessage, setLogoutMessage] = useState('')
   const menuRef = useRef(null)
   const { logout, user } = useAuth()
   const navigate = useNavigate()
@@ -16,16 +15,6 @@ export default function Navbar() {
   const userEmail = user?.email || 'operator@smartcampus.local'
   const userInitial = userName.charAt(0).toUpperCase()
   const userRole = user?.role || 'OPERATOR'
-
-  useEffect(() => {
-    const message = sessionStorage.getItem('logoutMessage')
-    if (message) {
-      setLogoutMessage(message)
-      sessionStorage.removeItem('logoutMessage')
-      const timer = setTimeout(() => setLogoutMessage(''), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [])
 
   useEffect(() => {
     const onClickOutside = (event) => {
@@ -44,151 +33,115 @@ export default function Navbar() {
   }
 
   return (
-    <>
-      <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-[#020617]/80 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 px-6 h-18 flex items-center justify-between">
-        <div className="flex items-center gap-10">
+    <header className="sticky top-0 z-40 w-full bg-white/70 backdrop-blur-3xl border-b border-slate-100 px-8 h-24 flex items-center justify-between">
+      {/* Search Protocol */}
+      <div className="flex items-center gap-12 flex-1">
+        <div className="relative group hidden lg:block">
+           <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+             <Search size={18} className="text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+           </div>
+           <input 
+              type="text" 
+              placeholder="GLOBAL COMMAND SEARCH..." 
+              className="bg-slate-50/50 border border-slate-100 rounded-[1.5rem] pl-14 pr-10 py-3.5 w-96 text-[10px] font-black uppercase tracking-widest placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-200 transition-all shadow-sm"
+           />
+           <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none">
+              <span className="text-[9px] font-black text-slate-300 border border-slate-200 px-2 py-0.5 rounded-md">CMD + K</span>
+           </div>
+        </div>
+      </div>
 
-          <div className="hidden md:flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-2 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500/50 transition-all group">
-            <Search className="h-4 w-4 text-gray-400 group-focus-within:text-indigo-500" />
-            <input
-              type="text"
-              placeholder="Command search..."
-              className="w-48 lg:w-80 bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none font-medium"
-            />
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-200 border border-gray-300 text-[9px] font-black text-gray-500">
-              <span className="opacity-70">CMD</span>
-              <span>K</span>
-            </div>
-          </div>
+      {/* Control Pane */}
+      <div className="flex items-center gap-8">
+        <div className="hidden xl:flex items-center gap-6 px-6 py-2.5 bg-slate-50 border border-slate-100 rounded-full">
+           <div className="flex items-center gap-3">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Grid Uplink: Active</span>
+           </div>
+           <div className="h-4 w-px bg-slate-200" />
+           <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">SLIIT-FC-NODE-01</p>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="hidden lg:flex items-center gap-6 mr-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 border border-emerald-200 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              System Online
+        <div className="flex items-center gap-4">
+           <button className="h-12 w-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all shadow-sm">
+             <Bell size={20} />
+           </button>
+           <button className="h-12 w-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all shadow-sm">
+             <Grid size={20} />
+           </button>
+        </div>
+
+        <div className="h-10 w-px bg-slate-100" />
+
+        {/* Identity Token */}
+        <div className="relative" ref={menuRef}>
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="group flex items-center gap-4 pl-1.5 pr-4 py-1.5 rounded-2xl bg-slate-900 shadow-xl hover:shadow-2xl transition-all duration-300"
+          >
+            <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-sm font-black text-slate-900 shadow-inner group-hover:scale-105 transition-transform">
+               {userInitial}
             </div>
-          </div>
+            <div className="hidden sm:block text-left text-white pr-2">
+               <p className="text-[10px] font-black uppercase tracking-tighter leading-tight truncate max-w-[100px]">{userName}</p>
+               <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-tight italic">{userRole}</p>
+            </div>
+            <ChevronDown className={`h-4 w-4 text-white/50 transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <button className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-              <Activity className="w-5 h-5" />
-            </button>
-            <button className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="h-8 w-px bg-gray-200 mx-2" />
-
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="group flex items-center gap-3 p-1 rounded-2xl hover:bg-gray-50 transition-all"
-            >
-              <div className="relative">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 border border-indigo-100 text-sm font-black text-white shadow-xl ring-2 ring-transparent group-hover:ring-indigo-300 transition-all">
-                  {userInitial}
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-xs font-black text-gray-800 leading-tight truncate max-w-[120px] uppercase tracking-tighter">{userName}</p>
-                <p className="text-[9px] text-indigo-600 font-black uppercase tracking-widest mt-0.5">{userRole}</p>
-              </div>
-              <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            <AnimatePresence>
-              {isDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: "circOut" }}
-                  className="absolute right-0 mt-4 w-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] z-50 px-2 py-2"
-                >
-                  <div className="relative rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-500 p-6 text-white overflow-hidden mb-2">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16" />
-                    <div className="flex items-center gap-4 mb-5 relative z-10">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-xl font-black ring-1 ring-white/20 backdrop-blur-md shadow-2xl">
+          <AnimatePresence>
+            {isDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                className="absolute right-0 mt-4 w-72 bg-white rounded-[2rem] border border-slate-100 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] overflow-hidden p-3"
+              >
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-2">
+                   <div className="flex items-center gap-4 mb-4">
+                      <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-lg">
                         {userInitial}
                       </div>
                       <div className="overflow-hidden">
-                        <p className="text-base font-black truncate tracking-tight">{userName}</p>
-                        <p className="text-xs text-white/50 truncate font-medium">{userEmail}</p>
+                        <p className="text-sm font-black text-slate-900 uppercase tracking-tight truncate">{userName}</p>
+                        <p className="text-[10px] font-bold text-slate-400 truncate tracking-wide lowercase">{userEmail}</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-lg bg-emerald-100/20 border border-emerald-200/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-200">
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      SECURE COMMAND ACCESS
-                    </div>
-                  </div>
+                   </div>
+                   <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-full">
+                      <ShieldCheck className="h-3 w-3 text-indigo-500" />
+                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] italic">Secure Portal Link</span>
+                   </div>
+                </div>
 
-                  <div className="space-y-1">
-                    <button className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all group">
-                      <div className="flex items-center gap-3">
-                        <User className="w-4 h-4" />
-                        Operator Profile
-                      </div>
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                    <button className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all group">
-                      <div className="flex items-center gap-3">
-                        <Activity className="w-4 h-4" />
-                        Operation Logs
-                      </div>
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  </div>
-
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <button
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-black text-rose-600 hover:bg-rose-50 transition-all uppercase tracking-widest"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Terminate Link
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                <div className="space-y-1">
+                   {[
+                     { label: 'System Settings', icon: Settings },
+                     { label: 'Cloud Activity', icon: Activity }
+                   ].map((item, i) => (
+                     <button key={i} className="w-full flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition-all group">
+                        <div className="flex items-center gap-3">
+                           <item.icon size={16} className="text-slate-400 group-hover:text-indigo-600" />
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{item.label}</span>
+                        </div>
+                        <ChevronDown size={14} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-opacity" />
+                     </button>
+                   ))}
+                   
+                   <div className="h-px bg-slate-100 mx-2 my-2" />
+                   
+                   <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl text-rose-500 hover:bg-rose-50 transition-all font-black uppercase tracking-widest text-[10px]"
+                   >
+                      <LogOut size={16} />
+                      Logout Sequence
+                   </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </header>
-      <AnimatePresence>
-        {logoutMessage && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="bg-amber-500 text-white text-center py-2 text-xs font-black uppercase tracking-[0.2em] shadow-lg"
-          >
-            {logoutMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  )
-}
-
-function ChevronRight(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
+      </div>
+    </header>
   )
 }
