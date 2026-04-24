@@ -137,13 +137,18 @@ export default function LoginPage() {
         password: formData.password,
       })
       
+      console.log('Login successful, user role:', user?.role)
+      
       // Redirect based on user role
       if (user?.role === 'ADMIN') {
+        console.log('Redirecting to /admin')
         navigate('/admin')
       } else {
+        console.log('Redirecting to /dashboard')
         navigate('/dashboard')
       }
     } catch (error) {
+      console.error('Login error:', error)
       setFormError(error.message || 'Unable to sign in. Please try again.')
     } finally {
       setIsLoading(false)
