@@ -222,9 +222,11 @@ export default function TicketDetailPage() {
             ← Back
           </Link>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">Ticket #{ticket.id}</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {ticket.category} • {ticket.priority} • Created {formatDate(ticket.createdAt)}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">{ticket.category}</span>
+            <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-700">{ticket.priority}</span>
+            <span className="text-slate-500">Created {formatDate(ticket.createdAt)}</span>
+          </div>
         </div>
         {canDeleteTicket ? (
           <button
@@ -239,7 +241,7 @@ export default function TicketDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-700">Description</h2>
             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{ticket.description}</p>
 
@@ -259,7 +261,7 @@ export default function TicketDetailPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-slate-700">Attachments</h2>
@@ -287,7 +289,7 @@ export default function TicketDetailPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-700">Comments</h2>
             <p className="mt-1 text-xs text-slate-500">Full comment history is loaded from the ticket conversation.</p>
 
@@ -340,7 +342,7 @@ export default function TicketDetailPage() {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-700">Status</h2>
             <p className="mt-1 text-xs text-slate-500">Current: {ticket.status}</p>
 
