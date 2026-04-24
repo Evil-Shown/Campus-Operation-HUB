@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Package,
   Calendar,
-  User,
   Ticket,
   Users,
   ChevronLeft,

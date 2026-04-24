@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { School, ShieldCheck, Database, Zap, LayoutDashboard } from 'lucide-react'
+import { School, ShieldCheck, Database, Zap, LayoutDashboard, Activity, Cpu, Server } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function RootPage() {
