@@ -31,7 +31,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.signup(request));
     }
 
-    @PostMapping({ "/api/auth/signin", "/api/auth/login" })
+    @PostMapping("/api/auth/signin")
     public ResponseEntity<AuthResponseDTO> signin(@Valid @RequestBody SigninRequestDTO request) {
         return ResponseEntity.ok(authService.signin(request));
     }
