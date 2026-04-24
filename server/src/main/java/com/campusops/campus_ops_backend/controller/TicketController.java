@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.validation.annotation.Validated;
 
 import com.campusops.campus_ops_backend.dto.request.CommentRequestDTO;
 import com.campusops.campus_ops_backend.dto.request.TicketRequestDTO;
@@ -28,11 +29,15 @@ import com.campusops.campus_ops_backend.security.UserPrincipal;
 import com.campusops.campus_ops_backend.service.TicketService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
+@Validated
 public class TicketController {
 
     private final TicketService ticketService;
@@ -61,15 +66,15 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TicketResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<TicketResponseDTO> getById(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(ticketService.getById(id));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
-    public ResponseEntity<TicketResponseDTO> updateStatus(@PathVariable Long id,
-            @RequestParam Ticket.TicketStatus status,
-            @RequestParam(required = false) String resolutionNote,
+    public ResponseEntity<TicketResponseDTO> updateStatus(@PathVariable @Positive Long id,
+            @RequestParam @NotNull Ticket.TicketStatus status,
+            @RequestParam(required = false) @Size(max = 2000) String resolutionNote,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -79,8 +84,8 @@ public class TicketController {
 
     @PatchMapping("/{id}/assign")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<TicketResponseDTO> assign(@PathVariable Long id,
-            @RequestParam Long assigneeId,
+    public ResponseEntity<TicketResponseDTO> assign(@PathVariable @Positive Long id,
+            @RequestParam @Positive Long assigneeId,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -89,7 +94,7 @@ public class TicketController {
     }
 
     @PostMapping("/{ticketId}/comments")
-    public ResponseEntity<CommentResponseDTO> addComment(@PathVariable Long ticketId,
+    public ResponseEntity<CommentResponseDTO> addComment(@PathVariable @Positive Long ticketId,
             @Valid @RequestBody CommentRequestDTO dto,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
@@ -99,8 +104,8 @@ public class TicketController {
     }
 
     @DeleteMapping("/{ticketId}/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long ticketId,
-            @PathVariable Long commentId,
+    public ResponseEntity<Void> deleteComment(@PathVariable @Positive Long ticketId,
+            @PathVariable @Positive Long commentId,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -111,7 +116,7 @@ public class TicketController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id,
+    public ResponseEntity<Void> delete(@PathVariable @Positive Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
