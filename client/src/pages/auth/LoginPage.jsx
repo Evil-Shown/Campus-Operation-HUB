@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, School, Sparkles, ShieldCheck, BarChart3, ArrowRight, Cpu, Network, Globe } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import api from '../../api/axios'
 
 function readLoginErrorMessage(err) {
   if (err?.response?.data?.message) return err.response.data.message
@@ -49,7 +48,12 @@ export default function LoginPage() {
   const [validationErrors, setValidationErrors] = useState({})
   const [sessionExpired, setSessionExpired] = useState(false)
   const navigate = useNavigate()
-  const { user, setSession } = useAuth()
+  const { user, signin, signup } = useAuth()
+
+  const getDashboardPath = (role) => {
+    const normalizedRole = (role || '').toString().trim().toUpperCase()
+    return normalizedRole === 'ADMIN' ? '/admin' : '/dashboard'
+  }
 
   useEffect(() => {
     const message = sessionStorage.getItem('logoutMessage')
@@ -63,7 +67,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      const path = user.role === 'ADMIN' ? '/admin' : '/dashboard'
+      const path = getDashboardPath(user.role)
       navigate(path, { replace: true })
     }
   }, [navigate, user])
@@ -84,13 +88,11 @@ export default function LoginPage() {
     if (!validateForm()) return
     setLoading(true); setError('')
     try {
-      const endpoint = isLogin ? '/auth/signin' : '/auth/signup'
-      const payload = isLogin ? { email, password } : { name, email, password }
-      const response = await api.post(endpoint, payload)
-      const data = response.data
-      if (!data?.token) throw new Error('Token missing')
-      setSession(data.token, data.user ?? null)
-      navigate(data?.user?.role === 'ADMIN' ? '/admin' : '/dashboard', { replace: true })
+      const authenticatedUser = isLogin
+        ? await signin({ email: email.trim(), password })
+        : await signup({ name: name.trim(), email: email.trim(), password })
+
+      navigate(getDashboardPath(authenticatedUser?.role), { replace: true })
     } catch (err) {
       setError(readLoginErrorMessage(err))
     } finally {
