@@ -62,7 +62,7 @@ public class TicketService {
                 .reporter(reporter)
                 .resource(resource)
                 .category(dto.getCategory())
-                .description(dto.getDescription())
+                .description(dto.getDescription().trim() + "\n\nResource/Location: " + dto.getResourceLocation().trim())
                 .priority(dto.getPriority())
                 .contactInfo(dto.getContactInfo())
                 .build();
@@ -148,6 +148,9 @@ public class TicketService {
         Ticket ticket = findTicket(ticketId);
         User assignee = userRepository.findById(assigneeId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + assigneeId));
+        if (assignee.getRole() != User.Role.TECHNICIAN) {
+            throw new IllegalArgumentException("Ticket can only be assigned to a technician");
+        }
         ticket.setAssignee(assignee);
         if (ticket.getStatus() == Ticket.TicketStatus.OPEN) {
             ticket.setStatus(Ticket.TicketStatus.IN_PROGRESS);
@@ -158,9 +161,6 @@ public class TicketService {
     @Transactional
     public CommentResponseDTO addComment(Long ticketId, CommentRequestDTO dto, User author) {
         Ticket ticket = findTicket(ticketId);
-        if (!canAccessTicket(ticket, author)) {
-            throw new UnauthorizedActionException("You are not allowed to comment on this ticket");
-        }
         Comment comment = Comment.builder()
                 .ticket(ticket)
                 .author(author)

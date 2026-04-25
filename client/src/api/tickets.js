@@ -67,8 +67,18 @@ export function listTicketComments({ baseUrl, token, ticketId }) {
 }
 
 export function getTicketAttachmentUrl({ baseUrl, ticketId, fileName }) {
-  const root = String(baseUrl || '').replace(/\/$/, '')
-  return `${root}/api/tickets/${ticketId}/attachments/${encodeURIComponent(fileName)}`
+  const rawBase = (baseUrl || '/api').trim() || '/api'
+  const hasAbsoluteBase = /^https?:\/\//i.test(rawBase)
+  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost'
+  const resolvedBase = hasAbsoluteBase ? rawBase : `${origin}${rawBase.startsWith('/') ? rawBase : `/${rawBase}`}`
+  const baseWithoutTrailingSlash = resolvedBase.replace(/\/+$/, '')
+
+  let normalizedPath = `/api/tickets/${ticketId}/attachments/${encodeURIComponent(fileName)}`
+  if (baseWithoutTrailingSlash.toLowerCase().endsWith('/api') && normalizedPath.toLowerCase().startsWith('/api/')) {
+    normalizedPath = normalizedPath.slice(5)
+  }
+
+  return new URL(normalizedPath, `${baseWithoutTrailingSlash}/`).toString()
 }
 
 export async function deleteTicketComment({ baseUrl, token, ticketId, commentId }) {
