@@ -23,7 +23,7 @@ export default function Sidebar() {
     { label: 'Command Center', href: isAdmin ? '/admin' : '/dashboard', icon: LayoutDashboard },
     { label: 'Asset Matrix', href: '/resources/1', icon: Boxes },
     { label: 'Reservations', href: '/bookings/my', icon: CalendarCheck2 },
-    { label: 'Support Terminal', href: '/tickets', icon: AlertCircle },
+    { label: 'Maintenance & Incident Ticketing', href: '/tickets', icon: AlertCircle },
     ...(isAdmin ? [{ label: 'Admin Protocol', href: '/admin/resources', icon: ShieldCheck }] : []),
   ]
 
