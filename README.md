@@ -403,7 +403,7 @@ For complete contracts, use Swagger UI.
 
 GitHub Actions workflow: `.github/workflows/ci.yml`
 
-- Triggers on pushes to `main`, `develop`, and `feature/**`
+- Triggers on pushes to `main`, `development`, and `feature/**`
 - Runs backend compile + tests
 - Provisions PostgreSQL 15 service in CI
 - Injects test-specific environment variables at runtime
@@ -469,7 +469,7 @@ Use the team workflow documented in `CONTRIBUTING.md`.
 
 Recommended flow:
 
-1. Branch from `development` (or your active integration branch).
+1. Branch from `development`.
 2. Keep commits focused and descriptive.
 3. Rebase/merge frequently from integration branch.
 4. Open PR with test results and scope summary.

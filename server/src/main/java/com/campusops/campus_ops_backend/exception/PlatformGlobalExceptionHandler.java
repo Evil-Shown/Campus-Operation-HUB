@@ -1,37 +1,28 @@
 package com.campusops.campus_ops_backend.exception;
 
-import java.util.stream.Collectors;
-
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.campusops.campus_ops_backend.dto.response.ApiErrorDTO;
 
+/**
+ * Fallback API exception handling. Booking-specific types with structured JSON
+ * are handled in {@code com.yourgroup.campus.exception.GlobalExceptionHandler}.
+ */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+@Order(Ordered.LOWEST_PRECEDENCE)
+public class PlatformGlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorDTO> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiErrorDTO(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
-    }
-
-    @ExceptionHandler(BookingConflictException.class)
-    public ResponseEntity<ApiErrorDTO> handleBookingConflictException(BookingConflictException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiErrorDTO(HttpStatus.CONFLICT.value(), ex.getMessage()));
-    }
-
-    @ExceptionHandler(UnauthorizedActionException.class)
-    public ResponseEntity<ApiErrorDTO> handleUnauthorizedActionException(UnauthorizedActionException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ApiErrorDTO(HttpStatus.FORBIDDEN.value(), ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -40,19 +31,21 @@ public class GlobalExceptionHandler {
                 .body(new ApiErrorDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiErrorDTO> handleIllegalStateException(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiErrorDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorDTO> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorDTO> handleValidationException(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::formatFieldError)
-                .collect(Collectors.joining(", "));
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation failed");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiErrorDTO(HttpStatus.BAD_REQUEST.value(), message));
+    }
+
+    @ExceptionHandler(UnauthorizedActionException.class)
+    public ResponseEntity<ApiErrorDTO> handleUnauthorizedActionException(UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiErrorDTO(HttpStatus.FORBIDDEN.value(), ex.getMessage()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
@@ -71,9 +64,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorDTO> handleException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiErrorDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error"));
-    }
-
-    private String formatFieldError(FieldError fieldError) {
-        return fieldError.getField() + ": " + fieldError.getDefaultMessage();
     }
 }

@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package,
   CalendarClock,
@@ -8,259 +10,263 @@ import {
   ArrowDownRight,
   Clock3,
   CheckCircle2,
-} from 'lucide-react'
+  Activity,
+  ShieldCheck,
+  Search,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Terminal,
+  Cpu,
+  Globe,
+  Database,
+  History,
+  Info
+} from 'lucide-react';
+import useAuth from '../../hooks/useAuth';
+import adminApi from '../../api/adminApi';
+import resourceApi from '../../api/resourceApi';
+import bookingApi from '../../api/bookingApi';
+import ticketApi from '../../api/ticketApi';
+import PageHeader from '../../components/common/PageHeader';
+import Card from '../../components/common/Card';
+import Badge from '../../components/common/Badge';
+import Button from '../../components/common/Button';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ErrorMessage from '../../components/common/ErrorMessage';
 
-const metrics = [
-  {
-    label: 'Total Resources',
-    value: 12,
-    delta: '+8.2%',
-    trend: 'up',
-    icon: Package,
-    tint: 'cyan',
-  },
-  {
-    label: 'Pending Bookings',
-    value: 5,
-    delta: '-2.1%',
-    trend: 'down',
-    icon: CalendarClock,
-    tint: 'amber',
-  },
-  {
-    label: 'Open Tickets',
-    value: 8,
-    delta: '+1.6%',
-    trend: 'up',
-    icon: AlertCircle,
-    tint: 'rose',
-  },
-  {
-    label: 'Total Users',
-    value: 34,
-    delta: '+5.4%',
-    trend: 'up',
-    icon: Users,
-    tint: 'indigo',
-  },
-]
-
-const recentBookings = [
-  { item: 'Computer Lab 3', user: 'User A', time: '2026-05-01 09:00', status: 'APPROVED' },
-  { item: 'Lecture Hall A101', user: 'User B', time: '2026-04-28 14:00', status: 'PENDING' },
-  { item: 'Meeting Room 5', user: 'User C', time: '2026-04-29 10:00', status: 'APPROVED' },
-]
-
-const recentTickets = [
-  { id: '#1', title: 'Projector not working', status: 'OPEN', priority: 'HIGH' },
-  { id: '#2', title: 'Flickering lights', status: 'IN_PROGRESS', priority: 'MEDIUM' },
-  { id: '#3', title: 'Leaking tap', status: 'OPEN', priority: 'LOW' },
-]
-
-const utilization = [
-  { label: 'Labs', value: 72 },
-  { label: 'Lecture Halls', value: 56 },
-  { label: 'Meeting Rooms', value: 81 },
-]
-
-const toneMap = {
-  cyan: 'from-cyan-500/20 to-cyan-100 border-cyan-200 text-cyan-900',
-  amber: 'from-amber-500/20 to-amber-100 border-amber-200 text-amber-900',
-  rose: 'from-rose-500/20 to-rose-100 border-rose-200 text-rose-900',
-  indigo: 'from-indigo-500/20 to-indigo-100 border-indigo-200 text-indigo-900',
-}
-
-function Pill({ children, variant = 'neutral' }) {
-  const styles = {
-    neutral: 'bg-slate-100 text-slate-700',
-    success: 'bg-emerald-100 text-emerald-700',
-    warning: 'bg-amber-100 text-amber-700',
-    danger: 'bg-rose-100 text-rose-700',
-    info: 'bg-cyan-100 text-cyan-700',
-  }
-
-  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${styles[variant]}`}>{children}</span>
-}
+const AdminStat = ({ icon: Icon, label, value, delta, trend, color, idx }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: idx * 0.1 }}
+    className="group"
+  >
+    <Card className="relative overflow-hidden group">
+      <div className={`absolute top-0 right-0 w-32 h-32 ${color}/5 blur-3xl -mr-16 -mt-16 group-hover:${color}/10 transition-all`} />
+      <div className="flex items-start justify-between relative z-10 mb-8">
+        <div className={`h-14 w-14 rounded-2xl ${color}/10 border border-${color.split('-')[1]}-100 flex items-center justify-center text-${color.split('-')[1]}-600 group-hover:scale-110 transition-transform`}>
+          <Icon size={24} />
+        </div>
+        <div className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${
+          trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+        }`}>
+           {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+           {delta}
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1 italic">{label}</p>
+        <h3 className="text-4xl font-black text-slate-900 leading-none tracking-tighter uppercase">{value}</h3>
+      </div>
+    </Card>
+  </motion.div>
+);
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ resources: [], bookings: [], tickets: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [res, bkf, tkt] = await Promise.all([
+        resourceApi.listResources(),
+        bookingApi.listBookings(),
+        ticketApi.listTickets()
+      ]);
+      setStats({
+        resources: res.data || [],
+        bookings: bkf.data || [],
+        tickets: tkt.data || []
+      });
+    } catch (err) {
+      setError('System: Administrative data bridge failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <div className="p-10"><ErrorMessage message={error} /></div>;
+
+  const pendingBookings = stats.bookings.filter(b => b.status === 'PENDING').length;
+  const criticalTickets = stats.tickets.filter(t => t.priority === 'CRITICAL' && t.status !== 'RESOLVED').length;
+
+  const metrics = [
+    { label: 'Grid Assets', value: stats.resources.length, delta: '+2.4%', trend: 'up', icon: Package, color: 'bg-indigo-600' },
+    { label: 'Waitlist', value: pendingBookings, delta: '+12.1%', trend: 'up', icon: CalendarClock, color: 'bg-amber-600' },
+    { label: 'Active Incidents', value: stats.tickets.filter(t => t.status !== 'RESOLVED').length, delta: '-5.2%', trend: 'down', icon: AlertCircle, color: 'bg-rose-600' },
+    { label: 'Managed Nodes', value: '1.4k', delta: '+8.0%', trend: 'up', icon: Globe, color: 'bg-violet-600' },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-900 p-6 text-white shadow-sm">
-        <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Operational Intelligence</p>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm text-slate-200">Overview of resources, bookings, tickets, and users.</p>
+    <div className="space-y-12 pb-24">
+      <PageHeader 
+        title="Admin Terminal" 
+        subtitle="Executing high-level institutional oversight and resource orchestration."
+        action={
+          <div className="flex gap-4">
+             <Button variant="secondary" icon={FileText}>Audit Matrix</Button>
+             <Button icon={Activity}>Live Deploy</Button>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-3.5 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/20">
-            <TrendingUp className="h-4 w-4" />
-            Export Weekly Report
-          </button>
-        </div>
+        }
+      />
+
+      {/* Primary Analytics Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {metrics.map((m, i) => <AdminStat key={i} {...m} idx={i} />)}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <div
-            key={metric.label}
-            className={`rounded-2xl border bg-gradient-to-b p-4 shadow-sm ${toneMap[metric.tint]}`}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm opacity-80">{metric.label}</p>
-                <p className="mt-1 text-3xl font-bold">{metric.value}</p>
-              </div>
-              <div className="rounded-xl bg-white/60 p-2">
-                <metric.icon className="h-5 w-5" />
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Reservation Queue Terminal */}
+        <div className="lg:col-span-8 space-y-10">
+          <Card className="!p-0 overflow-hidden shadow-2xl relative border-slate-100">
+            <div className="absolute top-0 right-0 p-8 text-slate-50 opacity-10 pointer-events-none grayscale">
+               <History size={200} className="-mr-20 -mt-20" />
             </div>
-
-            <div className="mt-4 inline-flex items-center gap-1 rounded-lg bg-white/60 px-2 py-1 text-xs font-semibold">
-              {metric.trend === 'up' ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-              {metric.delta} from last week
+            <div className="bg-slate-900 p-8 flex items-center justify-between text-white border-b border-white/5">
+               <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-white ring-1 ring-white/10">
+                     <CalendarClock size={20} />
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-[0.3em]">Institutional Reservation Queue</h3>
+               </div>
+               <Badge className="bg-violet-600 text-white border-none shadow-lg shadow-violet-500/30">Active Refresh</Badge>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Bookings</h2>
-            <Pill variant="info">Live Queue</Pill>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500">
-                  <th className="py-2.5 font-medium">Resource</th>
-                  <th className="py-2.5 font-medium">User</th>
-                  <th className="py-2.5 font-medium">Date & Time</th>
-                  <th className="py-2.5 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentBookings.map((row) => (
-                  <tr key={`${row.item}-${row.user}`} className="border-b border-slate-50 last:border-0">
-                    <td className="py-3.5 font-medium text-slate-800">{row.item}</td>
-                    <td className="py-3.5 text-slate-600">{row.user}</td>
-                    <td className="py-3.5 text-slate-600">{row.time}</td>
-                    <td className="py-3.5">
-                      <Pill variant={row.status === 'APPROVED' ? 'success' : 'warning'}>{row.status}</Pill>
-                    </td>
+            
+            <div className="overflow-x-auto overflow-y-auto max-h-[500px] scrollbar-refined">
+              <table className="min-w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Target Node</th>
+                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Identity</th>
+                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Schedule</th>
+                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {stats.bookings.slice(0, 10).map((row, i) => (
+                    <motion.tr 
+                      key={i} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="group hover:bg-slate-50 transition-all duration-300 cursor-pointer"
+                    >
+                      <td className="px-10 py-6">
+                         <div className="flex items-center gap-4">
+                            <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-violet-600 shadow-inner group-hover:shadow-sm transition-all italic font-black text-[10px]">
+                               {i+1}
+                            </div>
+                            <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{row.resource?.name || 'Asset Node'}</span>
+                         </div>
+                      </td>
+                      <td className="px-10 py-6">
+                        <div className="flex flex-col gap-0.5">
+                           <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{row.user?.name || 'Operator'}</span>
+                           <span className="text-[9px] font-bold text-slate-400 italic">{row.user?.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-10 py-6">
+                         <div className="flex flex-col gap-0.5">
+                            <span className="text-xs font-black text-slate-600">{new Date(row.startTime).toLocaleDateString()}</span>
+                            <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest">{new Date(row.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                         </div>
+                      </td>
+                      <td className="px-10 py-6">
+                         <Badge color={row.status === 'APPROVED' ? 'emerald' : 'amber'}>{row.status}</Badge>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Space Utilization</h2>
-          <p className="mt-1 text-sm text-slate-500">Current occupancy rates by category</p>
-
-          <div className="mt-4 space-y-4">
-            {utilization.map((item) => (
-              <div key={item.label}>
-                <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="text-slate-700">{item.label}</span>
-                  <span className="font-semibold text-slate-900">{item.value}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div
-                    className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-sky-500"
-                    style={{ width: `${item.value}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Tickets</h2>
-            <Pill variant="warning">Needs Attention</Pill>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500">
-                  <th className="py-2.5 font-medium">ID</th>
-                  <th className="py-2.5 font-medium">Issue</th>
-                  <th className="py-2.5 font-medium">Status</th>
-                  <th className="py-2.5 font-medium">Priority</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTickets.map((row) => (
-                  <tr key={row.id} className="border-b border-slate-50 last:border-0">
-                    <td className="py-3.5 font-medium text-slate-800">{row.id}</td>
-                    <td className="py-3.5 text-slate-700">{row.title}</td>
-                    <td className="py-3.5">
-                      <Pill variant={row.status === 'OPEN' ? 'danger' : 'info'}>{row.status}</Pill>
-                    </td>
-                    <td className="py-3.5">
-                      <Pill
-                        variant={
-                          row.priority === 'HIGH'
-                            ? 'danger'
-                            : row.priority === 'MEDIUM'
-                            ? 'warning'
-                            : 'neutral'
-                        }
-                      >
-                        {row.priority}
-                      </Pill>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Operations Timeline</h2>
-          <p className="mt-1 text-sm text-slate-500">Latest facility and support activity</p>
-
-          <div className="mt-4 space-y-4">
-            <div className="flex gap-3">
-              <div className="mt-1 rounded-full bg-emerald-100 p-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              </div>
+        {/* Secondary Modules: Node Topology & Support Pulse */}
+        <div className="lg:col-span-4 space-y-10">
+           {/* Node Topology */}
+           <Card className="!p-10 shadow-xl border-slate-100 flex flex-col justify-between h-[450px]">
               <div>
-                <p className="text-sm font-medium text-slate-800">Booking approved for Computer Lab 3</p>
-                <p className="text-xs text-slate-500">2 minutes ago</p>
+                 <div className="flex items-center justify-between mb-10">
+                    <h4 className="text-[11px] font-black text-violet-600 uppercase tracking-[0.4em] border-b border-violet-100 pb-4">Asset Topology</h4>
+                    <Database size={18} className="text-slate-200" />
+                 </div>
+                 <div className="space-y-8">
+                    {[
+                      { label: 'Core Infrastructure', value: 82, color: 'bg-indigo-600' },
+                      { label: 'Technical Labs', value: 64, color: 'bg-emerald-600' },
+                      { label: 'Meeting Hubs', value: 45, color: 'bg-blue-600' }
+                    ].map((item, i) => (
+                      <div key={i} className="group cursor-pointer">
+                         <div className="flex items-center justify-between mb-3 px-1">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                            <span className="text-sm font-black text-slate-900">{item.value}%</span>
+                         </div>
+                         <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden p-[1px]">
+                            <motion.div 
+                               initial={{ width: 0 }}
+                               animate={{ width: `${item.value}%` }}
+                               transition={{ duration: 1.5, delay: i * 0.2 }}
+                               className={`h-full ${item.color} rounded-full shadow-lg group-hover:brightness-110 transition-all`}
+                            />
+                         </div>
+                      </div>
+                    ))}
+                 </div>
               </div>
-            </div>
+              <div className="p-6 rounded-3xl bg-slate-900 text-white flex items-center justify-between group hover:shadow-2xl transition-all duration-700 cursor-pointer">
+                 <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center">
+                       <Zap size={20} className="text-violet-400" />
+                    </div>
+                    <div>
+                       <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Optimize Grid</p>
+                       <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest italic">Run heuristic audit</p>
+                    </div>
+                 </div>
+                 <ArrowUpRight size={18} className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+              </div>
+           </Card>
 
-            <div className="flex gap-3">
-              <div className="mt-1 rounded-full bg-amber-100 p-1.5">
-                <Clock3 className="h-4 w-4 text-amber-600" />
+           {/* Support Sentinel Pulse */}
+           <Card className="bg-rose-600 !p-10 text-white shadow-2xl relative overflow-hidden group h-[400px] flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-8 text-white opacity-10">
+                 <Terminal size={140} className="grayscale" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-800">Ticket #2 moved to IN_PROGRESS</p>
-                <p className="text-xs text-slate-500">17 minutes ago</p>
+              <div className="relative z-10">
+                 <div className="flex items-center justify-between mb-10">
+                    <h3 className="text-2xl font-black uppercase tracking-tighter">Support Alpha</h3>
+                    <Badge className="bg-white/20 text-white border-white/20 backdrop-blur-md shadow-lg">{criticalTickets} Critical</Badge>
+                 </div>
+                 <div className="space-y-4">
+                    {stats.tickets.slice(0, 3).map((t, i) => (
+                      <div key={i} className="p-4 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-between group/ticket hover:bg-white/20 transition-all">
+                         <div className="flex items-center gap-4">
+                            <AlertCircle size={16} className={t.priority === 'CRITICAL' ? 'text-rose-200 animate-pulse' : 'text-white/40'} />
+                            <span className="text-[11px] font-black truncate max-w-[150px] uppercase tracking-widest">{t.title}</span>
+                         </div>
+                         <ArrowRight size={14} className="opacity-0 group-hover/ticket:opacity-100 group-hover/ticket:translate-x-1 transition-all" />
+                      </div>
+                    ))}
+                 </div>
               </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="mt-1 rounded-full bg-cyan-100 p-1.5">
-                <Users className="h-4 w-4 text-cyan-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-800">3 new users onboarded</p>
-                <p className="text-xs text-slate-500">42 minutes ago</p>
-              </div>
-            </div>
-          </div>
+              <Link to="/tickets">
+                 <button className="relative z-10 w-full h-16 rounded-2xl bg-white text-slate-900 text-[11px] font-black uppercase tracking-[0.4em] shadow-2xl hover:translate-y-[-4px] transition-all duration-300">
+                    Sentinel Matrix
+                 </button>
+              </Link>
+           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }
