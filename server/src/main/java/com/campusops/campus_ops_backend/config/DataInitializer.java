@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class DataInitializer implements ApplicationRunner {
 
     private final ResourceRepository resourceRepository;
