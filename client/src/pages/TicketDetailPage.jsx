@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { addTicketComment, deleteTicket, getTicket, updateTicketStatus } from '../api/tickets'
+import {
+  addTicketComment,
+  assignTicket,
+  deleteTicket,
+  deleteTicketComment,
+  getTicket,
+  getTicketAttachmentUrl,
+  listTicketComments,
+  updateTicketComment,
+  updateTicketStatus,
+} from '../api/tickets'
 import { useAuth } from '../context/AuthContext'
 
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED']
@@ -36,11 +46,18 @@ export default function TicketDetailPage() {
   const [resolutionNote, setResolutionNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [assigneeId, setAssigneeId] = useState('')
+  const [assigning, setAssigning] = useState(false)
+  const [assignError, setAssignError] = useState('')
 
   const [commentBody, setCommentBody] = useState('')
   const [commenting, setCommenting] = useState(false)
   const [commentError, setCommentError] = useState('')
   const [localComments, setLocalComments] = useState([])
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingBody, setEditingBody] = useState('')
+  const [editingComment, setEditingComment] = useState(false)
+  const [attachmentError, setAttachmentError] = useState('')
 
   const canEditStatus = useMemo(() => {
     const role = normalizeRole(user?.role)
@@ -48,6 +65,7 @@ export default function TicketDetailPage() {
   }, [user?.role])
 
   const canDeleteTicket = useMemo(() => normalizeRole(user?.role) === 'leader', [user?.role])
+  const canAssignTicket = useMemo(() => normalizeRole(user?.role) === 'leader', [user?.role])
 
   useEffect(() => {
     let ignore = false
@@ -55,11 +73,15 @@ export default function TicketDetailPage() {
       setLoading(true)
       setError('')
       try {
-        const data = await getTicket({ baseUrl: apiBaseUrl, token, id })
+        const [data, comments] = await Promise.all([
+          getTicket({ baseUrl: apiBaseUrl, token, id }),
+          listTicketComments({ baseUrl: apiBaseUrl, token, ticketId: id }),
+        ])
         if (ignore) {
           return
         }
         setTicket(data)
+        setLocalComments(Array.isArray(comments) ? comments : [])
         setStatus(data?.status || '')
         setResolutionNote(data?.resolutionNote || '')
       } catch (err) {
@@ -121,6 +143,72 @@ export default function TicketDetailPage() {
     }
   }
 
+  const handleAssign = async () => {
+    if (!canAssignTicket || !assigneeId) {
+      return
+    }
+    setAssigning(true)
+    setAssignError('')
+    try {
+      const updated = await assignTicket({
+        baseUrl: apiBaseUrl,
+        token,
+        id,
+        assigneeId: Number(assigneeId),
+      })
+      setTicket(updated)
+      setAssigneeId('')
+    } catch (err) {
+      setAssignError(err?.message || 'Failed to assign ticket')
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deleteTicketComment({ baseUrl: apiBaseUrl, token, ticketId: id, commentId })
+      setLocalComments((prev) => prev.filter((comment) => comment.id !== commentId))
+    } catch (err) {
+      setCommentError(err?.message || 'Failed to delete comment')
+    }
+  }
+
+  const handleStartEditComment = (comment) => {
+    setCommentError('')
+    setEditingCommentId(comment.id)
+    setEditingBody(comment.body || '')
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingBody('')
+  }
+
+  const handleSaveEditComment = async (commentId) => {
+    if (!editingBody.trim()) {
+      setCommentError('Comment body cannot be empty')
+      return
+    }
+    setEditingComment(true)
+    setCommentError('')
+    try {
+      const updated = await updateTicketComment({
+        baseUrl: apiBaseUrl,
+        token,
+        ticketId: id,
+        commentId,
+        body: editingBody.trim(),
+      })
+      setLocalComments((prev) => prev.map((comment) => (comment.id === commentId ? updated : comment)))
+      handleCancelEditComment()
+    } catch (err) {
+      setCommentError(err?.message || 'Failed to edit comment')
+    } finally {
+      setEditingComment(false)
+    }
+  }
+
   const handleAddComment = async (e) => {
     e.preventDefault()
     if (!commentBody.trim()) {
@@ -140,13 +228,34 @@ export default function TicketDetailPage() {
     }
   }
 
+  const handleOpenAttachment = async (fileName) => {
+    setAttachmentError('')
+    try {
+      const url = getTicketAttachmentUrl({ baseUrl: apiBaseUrl, ticketId: ticket.id, fileName })
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      if (!response.ok) {
+        throw new Error(`Failed to open attachment (${response.status})`)
+      }
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      window.open(objectUrl, '_blank', 'noopener,noreferrer')
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+    } catch (err) {
+      setAttachmentError(err?.message || 'Failed to open attachment')
+    }
+  }
+
   if (loading) {
-    return <div className="mx-auto w-full max-w-5xl px-1 py-8 text-sm text-slate-600">Loading ticket…</div>
+    return <div className="mx-auto w-full max-w-5xl px-2 py-8 text-sm text-slate-600">Loading ticket…</div>
   }
 
   if (error) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-4 px-1 py-8">
+      <div className="mx-auto w-full max-w-5xl space-y-4 px-2 py-8">
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
         <Link to="/tickets" className="text-sm font-semibold text-indigo-600 hover:underline">
           Back to tickets
@@ -157,7 +266,7 @@ export default function TicketDetailPage() {
 
   if (!ticket) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-4 px-1 py-8">
+      <div className="mx-auto w-full max-w-5xl space-y-4 px-2 py-8">
         <p className="text-sm text-slate-600">Ticket not found.</p>
         <Link to="/tickets" className="text-sm font-semibold text-indigo-600 hover:underline">
           Back to tickets
@@ -167,22 +276,28 @@ export default function TicketDetailPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-2 py-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link to="/tickets" className="text-sm font-semibold text-indigo-600 hover:underline">
-            ← Back
+          <Link
+            to="/tickets"
+            className="btn-secondary inline-flex w-fit items-center gap-2 !px-4 !py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+          >
+            <span aria-hidden="true">←</span>
+            <span>Back to tickets</span>
           </Link>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">Ticket #{ticket.id}</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {ticket.category} • {ticket.priority} • Created {formatDate(ticket.createdAt)}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">{ticket.category}</span>
+            <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-700">{ticket.priority}</span>
+            <span className="text-slate-500">Created {formatDate(ticket.createdAt)}</span>
+          </div>
         </div>
         {canDeleteTicket ? (
           <button
             type="button"
             onClick={handleDelete}
-            className="rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+            className="btn-secondary !border-rose-200 !text-rose-700 hover:!bg-rose-50"
           >
             Delete ticket
           </button>
@@ -191,7 +306,7 @@ export default function TicketDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="glass-card !p-5">
             <h2 className="text-sm font-semibold text-slate-700">Description</h2>
             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{ticket.description}</p>
 
@@ -200,7 +315,7 @@ export default function TicketDetailPage() {
                 <span className="font-semibold text-slate-600">Reporter:</span> {ticket.reporter?.email || '—'}
               </div>
               <div>
-                <span className="font-semibold text-slate-600">Contact:</span> {ticket.contactInfo || '—'}
+                <span className="font-semibold text-slate-600">Preferred contact details:</span> {ticket.contactInfo || '—'}
               </div>
               <div>
                 <span className="font-semibold text-slate-600">Assignee:</span> {ticket.assignee?.email || '—'}
@@ -211,11 +326,11 @@ export default function TicketDetailPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="glass-card !p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-slate-700">Attachments</h2>
-                <p className="mt-1 text-xs text-slate-500">Backend stores local file paths; download UI requires a file-serving endpoint.</p>
+                <p className="mt-1 text-xs text-slate-500">Open uploaded files directly from secure ticket attachment links.</p>
               </div>
             </div>
 
@@ -223,22 +338,33 @@ export default function TicketDetailPage() {
               <ul className="mt-3 space-y-2 text-sm text-slate-700">
                 {ticket.attachmentPaths.map((path) => (
                   <li key={path} className="rounded-lg bg-slate-50 px-3 py-2">
-                    {path}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAttachment(path)}
+                      className="break-all font-medium text-indigo-600 hover:underline"
+                    >
+                      {path}
+                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="mt-3 text-sm text-slate-600">No attachments.</p>
             )}
+            {attachmentError ? (
+              <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {attachmentError}
+              </p>
+            ) : null}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="glass-card !p-5">
             <h2 className="text-sm font-semibold text-slate-700">Comments</h2>
-            <p className="mt-1 text-xs text-slate-500">Backend currently supports add/delete, but does not expose a “list comments” endpoint. New comments will appear here.</p>
+            <p className="mt-1 text-xs text-slate-500">Full comment history is loaded from the ticket conversation.</p>
 
             <form className="mt-3 flex flex-col gap-2" onSubmit={handleAddComment}>
               <textarea
-                className="min-h-[90px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="input-field min-h-[90px] resize-none bg-white"
                 placeholder="Write a comment…"
                 value={commentBody}
                 onChange={(e) => setCommentBody(e.target.value)}
@@ -248,7 +374,7 @@ export default function TicketDetailPage() {
                 <button
                   type="submit"
                   disabled={commenting}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {commenting ? 'Posting…' : 'Post comment'}
                 </button>
@@ -258,12 +384,57 @@ export default function TicketDetailPage() {
             {localComments.length ? (
               <ul className="mt-4 space-y-3">
                 {localComments.map((comment) => (
-                  <li key={comment.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <li key={comment.id} className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                       <span>{comment.author?.email || 'Unknown'} </span>
                       <span>{formatDate(comment.createdAt)}</span>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{comment.body}</p>
+                    {editingCommentId === comment.id ? (
+                      <div className="mt-2 space-y-2">
+                        <textarea
+                          className="input-field min-h-[84px] resize-none bg-white"
+                          value={editingBody}
+                          onChange={(e) => setEditingBody(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelEditComment}
+                            className="btn-secondary !px-3 !py-1.5 !text-xs"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEditComment(comment.id)}
+                            disabled={editingComment}
+                            className="btn-primary !px-3 !py-1.5 !text-xs disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {editingComment ? 'Saving…' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{comment.body}</p>
+                    )}
+                    {(canDeleteTicket || comment.author?.id === user?.id) ? (
+                      <div className="mt-2 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditComment(comment)}
+                          className="btn-secondary !px-3 !py-1.5 !text-xs"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="btn-secondary !px-3 !py-1.5 !text-xs !border-rose-200 !text-rose-700 hover:!bg-rose-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -274,15 +445,15 @@ export default function TicketDetailPage() {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <section className="glass-card !p-5">
             <h2 className="text-sm font-semibold text-slate-700">Status</h2>
             <p className="mt-1 text-xs text-slate-500">Current: {ticket.status}</p>
 
             <div className="mt-3 grid gap-3">
               <label className="grid gap-1 text-sm font-medium text-slate-700">
-                Update status
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Update status</span>
                 <select
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal disabled:cursor-not-allowed disabled:bg-slate-50"
+                  className="input-field bg-white disabled:cursor-not-allowed disabled:bg-slate-50"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   disabled={!canEditStatus}
@@ -296,9 +467,9 @@ export default function TicketDetailPage() {
               </label>
 
               <label className="grid gap-1 text-sm font-medium text-slate-700">
-                Resolution note (optional)
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resolution note</span>
                 <textarea
-                  className="min-h-[90px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal disabled:cursor-not-allowed disabled:bg-slate-50"
+                  className="input-field min-h-[90px] resize-none bg-white disabled:cursor-not-allowed disabled:bg-slate-50"
                   value={resolutionNote}
                   onChange={(e) => setResolutionNote(e.target.value)}
                   disabled={!canEditStatus}
@@ -312,10 +483,33 @@ export default function TicketDetailPage() {
                 type="button"
                 onClick={handleStatusSave}
                 disabled={!canEditStatus || saving}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? 'Saving…' : 'Save status'}
               </button>
+
+              {canAssignTicket ? (
+                <div className="grid gap-2 border-t border-slate-100 pt-3">
+                  <label className="grid gap-1 text-sm font-medium text-slate-700">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assign to user ID</span>
+                    <input
+                      className="input-field bg-white"
+                      value={assigneeId}
+                      onChange={(e) => setAssigneeId(e.target.value.replace(/[^\d]/g, ''))}
+                      placeholder="e.g. 5"
+                    />
+                  </label>
+                  {assignError ? <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{assignError}</p> : null}
+                  <button
+                    type="button"
+                    onClick={handleAssign}
+                    disabled={assigning || !assigneeId}
+                    className="btn-secondary !bg-slate-900 !text-white hover:!bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {assigning ? 'Assigning…' : 'Assign ticket'}
+                  </button>
+                </div>
+              ) : null}
 
               {!canEditStatus ? <p className="text-xs text-slate-500">Only Admin/Technician can update ticket status.</p> : null}
             </div>

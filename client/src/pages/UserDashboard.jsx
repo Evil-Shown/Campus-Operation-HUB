@@ -37,15 +37,14 @@ import { listResources } from '../api/resources'
 
 function StatusBadge({ status }) {
   const styles = {
-    confirmed: 'bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm',
-    pending: 'bg-amber-100 text-amber-700 border-amber-200 shadow-sm',
-    resolved: 'bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm',
-    open: 'bg-rose-100 text-rose-700 border-rose-200 shadow-sm',
-    'in-progress': 'bg-blue-100 text-blue-700 border-blue-200 shadow-sm'
+    confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+    pending: 'bg-amber-50 text-amber-700 border-amber-100',
+    resolved: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    open: 'bg-rose-50 text-rose-700 border-rose-100',
+    'in-progress': 'bg-blue-50 text-blue-700 border-blue-100'
   }
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${styles[status]}`}>
-      <div className={`h-1.5 w-1.5 rounded-full ${status === 'confirmed' || status === 'resolved' ? 'bg-current animate-pulse' : 'bg-current opacity-50'}`} />
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full border text-[10px] font-medium capitalize ${styles[status?.toLowerCase()] || 'bg-gray-50 text-gray-700 border-gray-100'}`}>
       {status}
     </span>
   )
@@ -57,7 +56,7 @@ function formatTime(dateString) {
   const diffMs = now - date
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffHrs / 24)
-
+  
   if (diffHrs < 1) return 'Just now'
   if (diffHrs < 24) return `${diffHrs} hr${diffHrs > 1 ? 's' : ''} ago`
   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
@@ -66,10 +65,10 @@ function formatTime(dateString) {
 
 function formatDateTime(dateString) {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: '2-digit', 
     minute: '2-digit',
     hour12: true
   })
@@ -96,7 +95,7 @@ export default function UserDashboard() {
       try {
         setLoading(true)
         setError(null)
-
+        
         const [bookingsData, ticketsData, resourcesData] = await Promise.all([
           listMyBookings({ baseUrl: apiBaseUrl, token }).catch(e => {
             console.error('Failed to fetch bookings:', e)
@@ -111,7 +110,7 @@ export default function UserDashboard() {
             return []
           })
         ])
-
+        
         setBookings(bookingsData || [])
         setTickets(ticketsData || [])
         setResources(resourcesData || [])
@@ -130,23 +129,46 @@ export default function UserDashboard() {
 
   // Calculate resource categories dynamically
   const resourceCategories = [
-    { name: 'Study Rooms', icon: BookOpen, action: 'ACADEMIC_STUDY', count: resources.filter(r => r.type === 'STUDY_ROOM').length, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
-    { name: 'Computer Labs', icon: Monitor, action: 'TECH_WORKSTATION', count: resources.filter(r => r.type === 'COMPUTER_LAB').length, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-    { name: 'Meeting Rooms', icon: Users, action: 'COLLAB_CENTER', count: resources.filter(r => r.type === 'MEETING_ROOM').length, color: 'text-cyan-600', bg: 'bg-cyan-50 border-cyan-100' },
-    { name: 'Gym Facilities', icon: Dumbbell, action: 'WELLNESS_NODE', count: resources.filter(r => r.type === 'GYM').length, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
-    { name: 'Cafeteria', icon: Utensils, action: 'ENERGY_CORE', count: resources.filter(r => r.type === 'CAFETERIA').length, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
-    { name: 'Parking', icon: Car, action: 'LOGISTICS_ZONE', count: resources.filter(r => r.type === 'PARKING').length, color: 'text-slate-600', bg: 'bg-slate-50 border-slate-100' }
-  ]
-
-  // Calculate stats dynamically
-  const activeReservations = bookings.filter(b => b.status === 'CONFIRMED' || b.status === 'PENDING').length
-  const pendingSupport = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length
+    { name: 'Study Rooms', icon: BookOpen, type: 'STUDY_ROOM', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', path: '/resources?type=STUDY_ROOM' },
+    { name: 'Computer Labs', icon: Monitor, type: 'COMPUTER_LAB', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', path: '/resources?type=COMPUTER_LAB' },
+    { name: 'Meeting Rooms', icon: Users, type: 'MEETING_ROOM', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', path: '/resources?type=MEETING_ROOM' },
+    { name: 'Lecture Halls', icon: BarChart3, type: 'LECTURE_HALL', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', path: '/resources?type=LECTURE_HALL' },
+    { name: 'Equipment', icon: Cpu, type: 'EQUIPMENT', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', path: '/resources?type=EQUIPMENT' },
+    { name: 'All Resources', icon: Search, type: null, color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200', path: '/resources' }
+  ].map(cat => ({
+    ...cat,
+    count: cat.type ? resources.filter(r => r.type === cat.type && r.status === 'ACTIVE').length : resources.filter(r => r.status === 'ACTIVE').length
+  }))
 
   const stats = [
-    { icon: Calendar, title: 'Active Reservations', value: activeReservations.toString().padStart(2, '0'), trend: 12, color: 'primary' },
-    { icon: ShieldCheck, title: 'Identity Status', value: 'Verified', trend: 100, color: 'blue' },
-    { icon: Activity, title: 'Pending Support', value: pendingSupport.toString().padStart(2, '0'), trend: -5, color: 'orange' },
-    { icon: Database, title: 'Allocated Storage', value: '42GB', trend: 8, color: 'indigo' },
+    { 
+      icon: Calendar, 
+      title: 'Upcoming Bookings', 
+      value: bookings.filter(b => new Date(b.startTime) >= new Date()).length,
+      subtitle: 'in the next 7 days',
+      color: 'indigo' 
+    },
+    { 
+      icon: Clock, 
+      title: 'Pending Approval', 
+      value: bookings.filter(b => b.status === 'PENDING').length,
+      subtitle: 'awaiting admin review',
+      color: 'amber' 
+    },
+    { 
+      icon: AlertCircle, 
+      title: 'Open Tickets', 
+      value: tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length,
+      subtitle: 'maintenance requests',
+      color: 'rose' 
+    },
+    { 
+      icon: CheckCircle, 
+      title: 'Completed Bookings', 
+      value: bookings.filter(b => b.status === 'CONFIRMED' && new Date(b.endTime) < new Date()).length,
+      subtitle: 'this semester',
+      color: 'emerald' 
+    }
   ]
 
   // Get upcoming bookings (next 5)
@@ -178,10 +200,16 @@ export default function UserDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">Loading dashboard data...</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="h-32 rounded-xl bg-gray-100 animate-pulse" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="h-96 rounded-xl bg-gray-100 animate-pulse" />
+          <div className="h-96 rounded-xl bg-gray-100 animate-pulse" />
         </div>
       </div>
     )
@@ -189,14 +217,16 @@ export default function UserDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Failed to Load Dashboard</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <button
+      <div className="min-h-[50vh] flex items-center justify-center p-6">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 max-w-md text-center">
+          <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-6 h-6 bg-rose-500 rounded-full" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Could not load your dashboard</h2>
+          <p className="text-sm text-gray-500 mb-6">Check your connection and try again.</p>
+          <button 
             onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
           >
             Retry
           </button>
@@ -205,187 +235,232 @@ export default function UserDashboard() {
     )
   }
 
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const today = new Date().toLocaleDateString('en-GB', { 
+    weekday: 'long', 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  })
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 space-y-10 animate-in fade-in duration-1000 pb-10 p-6 lg:p-8">
-      {/* Welcome Hero */}
-      <section className="relative overflow-hidden rounded-[2rem] bg-white/70 backdrop-blur-md border border-white/30 shadow-xl p-8 lg:p-12 group">
-        <div className="absolute top-0 right-0 w-[45%] h-full bg-gradient-to-l from-indigo-100/40 to-transparent pointer-events-none rounded-r-[2rem]" />
-        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-indigo-200/40 blur-[120px] rounded-full pointer-events-none" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* SECTION 1: PAGE HEADER */}
+      <header className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {greeting}, {user?.name?.split(' ')[0] || 'Operator'}
+          </h1>
+          <p className="text-gray-500 mt-1">
+            SLIIT Smart Campus — {today}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link 
+            to="/resources" 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Book a Resource
+          </Link>
+          <Link 
+            to="/tickets/new" 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            <AlertCircle className="w-4 h-4" />
+            Report an Issue
+          </Link>
+        </div>
+      </header>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-12">
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 mb-6"
-            >
-              <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-700">Secure Personal Portal</span>
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-5xl lg:text-6xl font-black text-gray-800 leading-[1] mb-6 tracking-tight uppercase"
-            >
-              Great to see you, <br />
-              <span className="text-indigo-600 font-black">{user?.name?.split(' ')[0] || 'Operator'}</span>.
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-gray-500 font-medium text-xl max-w-lg leading-relaxed italic"
-            >
-              Streamlining institutional workflows with intelligent automation and real-time operational insights.
-            </motion.p>
+      {/* SECTION 2: STATS ROW */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, i) => (
+          <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-indigo-200 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <stat.icon className={`w-5 h-5 text-${stat.color}-600`} />
+              <span className="text-sm font-medium text-gray-500">{stat.title}</span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
+            <div className="text-xs text-gray-400 mt-1">{stat.subtitle}</div>
           </div>
+        ))}
+      </div>
 
-          <div className="grid grid-cols-2 gap-5 lg:w-[480px]">
-            {stats.map((stat, i) => (
-              <StatsCard key={i} {...stat} delay={0.3 + (i * 0.1)} />
-            ))}
-          </div>
+      {/* SECTION 3: UPCOMING BOOKINGS */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Upcoming bookings</h2>
+          <Link to="/bookings/my" className="text-sm text-indigo-600 font-medium hover:underline">
+            View all
+          </Link>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          {upcomingBookings.length === 0 ? (
+            <div className="p-12 text-center">
+              <Calendar className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-500">No upcoming bookings</p>
+              <p className="text-xs text-gray-400 mt-1 mb-6">Book a resource to get started</p>
+              <Link 
+                to="/resources" 
+                className="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg font-medium text-sm hover:bg-indigo-50 transition-colors"
+              >
+                Browse resources
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {upcomingBookings.map((booking) => {
+                const rawId = booking.id.replace('BK-', '');
+                return (
+                  <Link 
+                    key={booking.id} 
+                    to={`/bookings/${rawId}`}
+                    className="flex flex-col md:flex-row md:items-center justify-between p-4 hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors">
+                          {booking.resourceName}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> {booking.location}
+                          </span>
+                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                            {booking.date} · {booking.time}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-4 md:mt-0">
+                      <div className="text-right">
+                        <StatusBadge status={booking.status} />
+                        <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">#{booking.id}</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Reservation Matrix */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between px-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-1 bg-indigo-500 rounded-full" />
-              <h3 className="text-xl font-black text-gray-800 uppercase tracking-widest">Active Schedule Matrix</h3>
-            </div>
-            <Link to="/bookings/my" className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2 hover:translate-x-1 transition-all">
-              Initialize View <ArrowRight className="h-3.5 w-3.5" />
+      {/* SECTION 4: SPLIT LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Tickets */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Recent tickets</h2>
+            <Link to="/tickets" className="text-sm text-indigo-600 font-medium hover:underline">
+              View all
             </Link>
           </div>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-full">
+            {recentTickets.length === 0 ? (
+              <div className="p-12 text-center">
+                <Activity className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-500">No tickets yet</p>
+                <p className="text-xs text-gray-400 mt-1 mb-6">Report a maintenance issue to get started</p>
+                <Link 
+                  to="/tickets/new" 
+                  className="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg font-medium text-sm hover:bg-indigo-50 transition-colors"
+                >
+                  Report an issue
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {recentTickets.map((ticket) => {
+                  const rawId = ticket.id.replace('TK-', '');
+                  const priorityColor = 
+                    ticket.priority === 'high' || ticket.priority === 'critical' ? 'bg-rose-500' :
+                    ticket.priority === 'medium' ? 'bg-amber-500' : 'bg-gray-300';
+                  
+                  return (
+                    <Link 
+                      key={ticket.id} 
+                      to={`/tickets/${rawId}`}
+                      className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${priorityColor}`} />
+                        <div>
+                          <h4 className="font-medium text-gray-800 text-sm group-hover:text-indigo-600 transition-colors line-clamp-1">
+                            {ticket.title}
+                          </h4>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            #{ticket.id} · {ticket.createdAt}
+                          </p>
+                        </div>
+                      </div>
+                      <StatusBadge status={ticket.status} />
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
 
-          <div className="space-y-5">
-            {upcomingBookings.map((booking, idx) => (
-              <motion.div
-                key={booking.id}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="relative group cursor-pointer"
+        {/* Quick Actions */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Quick actions</h2>
+          <div className="grid grid-cols-1 gap-4">
+            {[
+              { to: '/resources', icon: Calendar, color: 'indigo', title: 'Book a resource', desc: 'Rooms, labs, equipment' },
+              { to: '/tickets/new', icon: AlertCircle, color: 'rose', title: 'Report an issue', desc: 'Maintenance & incidents' },
+              { to: '/bookings/my', icon: Clock, color: 'amber', title: 'My bookings', desc: 'View and manage your reservations' },
+              { to: '/tickets', icon: Activity, color: 'emerald', title: 'My tickets', desc: 'Track your support requests' },
+            ].map((action, i) => (
+              <Link 
+                key={i} 
+                to={action.to}
+                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all group shadow-sm"
               >
-                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-200 to-indigo-100 rounded-2xl blur opacity-0 group-hover:opacity-30 transition duration-500" />
-                <div className="relative bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg hover:shadow-xl transition-all">
-                  <div className="flex items-center gap-6">
-                    <div className="relative">
-                      <div className="absolute -inset-2 bg-indigo-200/40 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition duration-500" />
-                      <div className="relative h-16 w-16 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center group-hover:bg-indigo-600 transition-all duration-300 shadow-sm">
-                        <BookOpen className="w-8 h-8 text-indigo-600 group-hover:text-white" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest italic">{booking.category}</span>
-                        <div className="h-1 w-1 rounded-full bg-gray-300" />
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.1em]">Ref: {booking.id}</span>
-                      </div>
-                      <h4 className="text-xl font-black text-gray-800 uppercase tracking-tight">{booking.resourceName}</h4>
-                      <p className="text-xs font-bold text-gray-500 flex items-center gap-2 mt-1 italic">
-                        <MapPin className="w-4 h-4 text-indigo-500" /> {booking.location}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-lg bg-${action.color}-50 flex items-center justify-center`}>
+                    <action.icon className={`w-5 h-5 text-${action.color}-600`} />
                   </div>
-                  <div className="flex flex-wrap items-center gap-8">
-                    <div className="text-right">
-                      <p className="text-xs font-black text-gray-800 flex items-center gap-2 justify-end mb-1 uppercase tracking-wider">
-                        <Calendar className="w-4 h-4 text-indigo-500" /> {booking.date}
-                      </p>
-                      <p className="text-[10px] font-black text-gray-500 flex items-center gap-2 justify-end uppercase tracking-[0.1em]">
-                        <Clock className="w-4 h-4 text-gray-400" /> {booking.time}
-                      </p>
-                    </div>
-                    <StatusBadge status={booking.status} />
-                    <button className="h-12 w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-200 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm hover:shadow-md">
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
+                  <div>
+                    <h4 className="font-medium text-gray-900 text-sm">{action.title}</h4>
+                    <p className="text-xs text-gray-400 mt-0.5">{action.desc}</p>
                   </div>
                 </div>
-              </motion.div>
+                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all" />
+              </Link>
             ))}
           </div>
-        </div>
-
-        {/* Sentinel Section */}
-        <div className="space-y-6">
-          <div className="px-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-1 bg-rose-500 rounded-full" />
-              <h3 className="text-xl font-black text-gray-800 uppercase tracking-widest">Support Sentinel</h3>
-            </div>
-          </div>
-
-          <div className="relative group overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-lg">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/40 blur-3xl -mr-16 -mt-16" />
-
-            <div className="relative p-8 space-y-8">
-              {recentTickets.map((ticket, idx) => (
-                <div key={ticket.id} className="group relative pl-6 border-l-2 border-gray-100 hover:border-indigo-300 transition-all duration-500">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="space-y-1.5 text-left text-left">
-                      <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest italic leading-none">Security Node {ticket.id}</p>
-                      <h5 className="text-sm font-black text-gray-800 tracking-widest uppercase group-hover:text-indigo-600 transition-colors line-clamp-1">{ticket.title}</h5>
-                    </div>
-                    <div className={`h-2.5 w-2.5 rounded-full ${ticket.priority === 'high' ? 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.4)]' : 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]'} animate-pulse`} />
-                  </div>
-                  <div className="flex items-center justify-between mt-4">
-                    <StatusBadge status={ticket.status} />
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{ticket.createdAt}</span>
-                  </div>
-                </div>
-              ))}
-              <button className="w-full h-14 rounded-xl bg-gray-50/80 border border-gray-200 text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all shadow-sm mt-4">
-                Initialize Protocol
-              </button>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
 
-      {/* Directory Section */}
-      <section className="space-y-6 pt-6">
-        <div className="px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-amber-500 rounded-full" />
-            <h3 className="text-xl font-black text-gray-800 uppercase tracking-widest">Global Asset Directory</h3>
-          </div>
-          <div className="relative hidden sm:block">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search assets..."
-              className="bg-white/80 backdrop-blur border border-gray-200 focus:border-indigo-300 rounded-xl pl-11 pr-5 h-11 text-xs font-bold uppercase tracking-widest focus:outline-none transition-all w-64 shadow-sm hover:shadow-md"
-            />
-          </div>
+      {/* SECTION 5: BROWSE RESOURCES */}
+      <section className="space-y-6 pt-12 border-t border-gray-100">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Browse by resource type</h2>
+          <p className="text-sm text-gray-400 mt-1">Select a category to view available resources</p>
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 px-1">
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {resourceCategories.map((cat, idx) => (
-            <motion.div
+            <Link
               key={cat.name}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              whileHover={{ y: -6, scale: 1.02 }}
-              className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-6 flex flex-col items-center text-center group cursor-pointer hover:shadow-xl transition-all duration-500"
+              to={cat.path}
+              className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col items-center text-center group hover:border-indigo-200 hover:shadow-md transition-all"
             >
-              <div className={`h-16 w-16 rounded-xl border ${cat.bg} flex items-center justify-center mb-5 group-hover:scale-110 transition-all duration-300 shadow-sm`}>
-                <cat.icon className={`w-8 h-8 ${cat.color} transition-colors`} />
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center mb-3 ${cat.bg} border ${cat.border} group-hover:scale-105 transition-transform`}>
+                <cat.icon className={`w-6 h-6 ${cat.color}`} />
               </div>
-              <p className="text-[8px] font-black text-gray-400 mb-1 uppercase tracking-widest italic">{cat.action}</p>
-              <h6 className="text-[11px] font-black text-gray-800 uppercase tracking-widest">{cat.name}</h6>
-              <div className="mt-3 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100">
-                <div className="h-1 w-1 rounded-full bg-indigo-500" />
-                <span className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.1em]">{cat.count} ACTIVE</span>
-              </div>
-            </motion.div>
+              <h3 className="text-sm font-semibold text-gray-800">{cat.name}</h3>
+              <p className="text-xs text-gray-400 mt-1">{cat.count} available</p>
+            </Link>
           ))}
         </div>
       </section>

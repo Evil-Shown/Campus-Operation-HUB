@@ -1,272 +1,426 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import {
   Package,
   CalendarClock,
   AlertCircle,
   Users,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock3,
   CheckCircle2,
   Activity,
-  ShieldCheck,
-  Search,
   FileText,
   Loader2,
   RefreshCw,
-  Terminal,
-  Cpu,
-  Globe,
-  Database,
-  History,
-  Info
-} from 'lucide-react';
-import useAuth from '../../hooks/useAuth';
-import adminApi from '../../api/adminApi';
-import resourceApi from '../../api/resourceApi';
-import bookingApi from '../../api/bookingApi';
-import ticketApi from '../../api/ticketApi';
-import PageHeader from '../../components/common/PageHeader';
-import Card from '../../components/common/Card';
-import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import ErrorMessage from '../../components/common/ErrorMessage';
+  Search,
+  ChevronRight
+} from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import { getAdminDashboardData } from '../../api/admin'
 
-const AdminStat = ({ icon: Icon, label, value, delta, trend, color, idx }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: idx * 0.1 }}
-    className="group"
-  >
-    <Card className="relative overflow-hidden group">
-      <div className={`absolute top-0 right-0 w-32 h-32 ${color}/5 blur-3xl -mr-16 -mt-16 group-hover:${color}/10 transition-all`} />
-      <div className="flex items-start justify-between relative z-10 mb-8">
-        <div className={`h-14 w-14 rounded-2xl ${color}/10 border border-${color.split('-')[1]}-100 flex items-center justify-center text-${color.split('-')[1]}-600 group-hover:scale-110 transition-transform`}>
-          <Icon size={24} />
-        </div>
-        <div className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${
-          trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-        }`}>
-           {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-           {delta}
-        </div>
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1 italic">{label}</p>
-        <h3 className="text-4xl font-black text-slate-900 leading-none tracking-tighter uppercase">{value}</h3>
-      </div>
-    </Card>
-  </motion.div>
-);
+function StatusPill({ status }) {
+  const map = {
+    PENDING:     'bg-amber-50 text-amber-700 border-amber-200',
+    APPROVED:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CONFIRMED:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+    REJECTED:    'bg-red-50 text-red-700 border-red-200',
+    CANCELLED:   'bg-gray-100 text-gray-500 border-gray-200',
+    OPEN:        'bg-rose-50 text-rose-700 border-rose-200',
+    IN_PROGRESS: 'bg-blue-50 text-blue-700 border-blue-200',
+    RESOLVED:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CLOSED:      'bg-gray-100 text-gray-500 border-gray-200',
+    CRITICAL:    'bg-red-50 text-red-700 border-red-200',
+    HIGH:        'bg-orange-50 text-orange-700 border-orange-200',
+    MEDIUM:      'bg-amber-50 text-amber-700 border-amber-200',
+    LOW:         'bg-gray-100 text-gray-600 border-gray-200',
+  }
+  const style = map[status?.toUpperCase()] || 'bg-gray-100 text-gray-500 border-gray-200'
+  return (
+    <span className={`inline-flex items-center border rounded-md px-2 py-0.5 text-xs font-medium ${style}`}>
+      {status}
+    </span>
+  )
+}
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState({ resources: [], bookings: [], tickets: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { apiBaseUrl, token } = useAuth()
+  const [data, setData] = useState({ resources: [], bookings: [], tickets: [] })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const fetchDashboardData = async () => {
+  const fetchData = async () => {
     try {
-      setLoading(true);
-      const [res, bkf, tkt] = await Promise.all([
-        resourceApi.listResources(),
-        bookingApi.listBookings(),
-        ticketApi.listTickets()
-      ]);
-      setStats({
-        resources: res.data || [],
-        bookings: bkf.data || [],
-        tickets: tkt.data || []
-      });
+      setLoading(true)
+      setError(null)
+      const result = await getAdminDashboardData({ baseUrl: apiBaseUrl, token })
+      setData(result)
     } catch (err) {
-      setError('System: Administrative data bridge failed.');
+      setError(err.message || 'Failed to load dashboard data')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    fetchData()
+  }, [apiBaseUrl, token])
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div className="p-10"><ErrorMessage message={error} /></div>;
-
-  const pendingBookings = stats.bookings.filter(b => b.status === 'PENDING').length;
-  const criticalTickets = stats.tickets.filter(t => t.priority === 'CRITICAL' && t.status !== 'RESOLVED').length;
+  // Calculate metrics from actual data
+  const pendingBookings = data.bookings.filter(b => b.status === 'PENDING').length
+  const openTickets = data.tickets.filter(t => t.status === 'OPEN').length
+  const criticalTickets = data.tickets.filter(t => t.priority === 'CRITICAL' || t.priority === 'HIGH').length
 
   const metrics = [
-    { label: 'Grid Assets', value: stats.resources.length, delta: '+2.4%', trend: 'up', icon: Package, color: 'bg-indigo-600' },
-    { label: 'Waitlist', value: pendingBookings, delta: '+12.1%', trend: 'up', icon: CalendarClock, color: 'bg-amber-600' },
-    { label: 'Active Incidents', value: stats.tickets.filter(t => t.status !== 'RESOLVED').length, delta: '-5.2%', trend: 'down', icon: AlertCircle, color: 'bg-rose-600' },
-    { label: 'Managed Nodes', value: '1.4k', delta: '+8.0%', trend: 'up', icon: Globe, color: 'bg-violet-600' },
-  ];
+    {
+      label: 'Total resources',
+      value: data.resources.length,
+      subtitle: 'in the catalogue',
+      icon: Package,
+      iconBg: 'bg-indigo-50',
+      iconColor: 'text-indigo-600',
+    },
+    {
+      label: 'Pending bookings',
+      value: pendingBookings,
+      subtitle: 'awaiting your approval',
+      icon: CalendarClock,
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+    },
+    {
+      label: 'Open tickets',
+      value: openTickets,
+      subtitle: 'need attention',
+      icon: AlertCircle,
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-600',
+    },
+    {
+      label: 'Critical issues',
+      value: criticalTickets,
+      subtitle: 'high or critical priority',
+      icon: Activity,
+      iconBg: 'bg-orange-50',
+      iconColor: 'text-orange-600',
+    },
+  ]
+
+  // Get recent bookings (last 5)
+  const recentBookings = data.bookings
+    .sort((a, b) => new Date(b.createdAt || b.startTime) - new Date(a.createdAt || a.startTime))
+    .slice(0, 5)
+    .map(booking => ({
+      item: booking.resourceName || booking.resource?.name || 'Unknown Resource',
+      user: booking.userName || booking.user?.name || 'Unknown User',
+      time: booking.startTime ? new Date(booking.startTime).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : 'N/A',
+      status: booking.status,
+    }))
+
+  // Get recent tickets (last 5 open or in_progress)
+  const recentTickets = data.tickets
+    .filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
+    .map(ticket => ({
+      id: `#TK-${ticket.id.toString().padStart(3, '0')}`,
+      title: ticket.title,
+      status: ticket.status,
+      priority: ticket.priority,
+    }))
+
+  // Calculate utilization by resource type
+  const resourcesByType = data.resources.reduce((acc, r) => {
+    const type = r.type || 'OTHER'
+    acc[type] = (acc[type] || 0) + 1
+    return acc
+  }, {})
+
+  const totalResources = data.resources.length || 1
+  const utilization = Object.entries(resourcesByType)
+    .map(([label, count]) => ({
+      label: label.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+      value: Math.round((count / totalResources) * 100),
+    }))
+    .slice(0, 3)
+
+  if (utilization.length === 0) {
+    utilization.push(
+      { label: 'Resources', value: 0 },
+      { label: 'Utilization', value: 0 },
+      { label: 'Capacity', value: 0 }
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <p className="text-sm font-medium text-gray-500">Loading dashboard data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+            <AlertCircle className="h-6 w-6 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Failed to load data</h3>
+            <p className="text-sm text-gray-500 mt-1">{error}</p>
+          </div>
+          <button
+            onClick={fetchData}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-12 pb-24">
-      <PageHeader 
-        title="Admin Terminal" 
-        subtitle="Executing high-level institutional oversight and resource orchestration."
-        action={
-          <div className="flex gap-4">
-             <Button variant="secondary" icon={FileText}>Audit Matrix</Button>
-             <Button icon={Activity}>Live Deploy</Button>
-          </div>
-        }
-      />
-
-      {/* Primary Analytics Matrix */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {metrics.map((m, i) => <AdminStat key={i} {...m} idx={i} />)}
+    <div className="space-y-8">
+      {/* SECTION 1: PAGE HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchData}
+            className="inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh data
+          </button>
+          <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-sm">
+            <FileText className="h-4 w-4" />
+            Export report
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Reservation Queue Terminal */}
-        <div className="lg:col-span-8 space-y-10">
-          <Card className="!p-0 overflow-hidden shadow-2xl relative border-slate-100">
-            <div className="absolute top-0 right-0 p-8 text-slate-50 opacity-10 pointer-events-none grayscale">
-               <History size={200} className="-mr-20 -mt-20" />
+      {/* SECTION 2: METRICS ROW */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric, idx) => (
+          <motion.div
+            key={metric.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.08 }}
+            className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-gray-300 transition-colors"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">{metric.label}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{metric.value}</p>
+                <p className="text-xs text-gray-400 mt-1">{metric.subtitle}</p>
+              </div>
+              <div className={`${metric.iconBg} w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
+              </div>
             </div>
-            <div className="bg-slate-900 p-8 flex items-center justify-between text-white border-b border-white/5">
-               <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center text-white ring-1 ring-white/10">
-                     <CalendarClock size={20} />
-                  </div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.3em]">Institutional Reservation Queue</h3>
-               </div>
-               <Badge className="bg-violet-600 text-white border-none shadow-lg shadow-violet-500/30">Active Refresh</Badge>
-            </div>
-            
-            <div className="overflow-x-auto overflow-y-auto max-h-[500px] scrollbar-refined">
-              <table className="min-w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Target Node</th>
-                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Identity</th>
-                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Schedule</th>
-                    <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 italic">Status</th>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* SECTION 3: MAIN GRID */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Bookings Table */}
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 className="text-base font-semibold text-gray-900">Recent bookings</h2>
+            <Link to="/admin/bookings" className="text-sm text-indigo-600 hover:underline">View all</Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-left">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Resource</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Requested by</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Date & time</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {recentBookings.length > 0 ? (
+                  recentBookings.map((row) => (
+                    <tr key={`${row.item}-${row.user}-${row.time}`} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{row.item}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{row.user}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{row.time}</td>
+                      <td className="px-6 py-4 text-right">
+                        <StatusPill status={row.status} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-12 text-center">
+                      <CalendarClock className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No bookings yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Booking requests will appear here</p>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {stats.bookings.slice(0, 10).map((row, i) => (
-                    <motion.tr 
-                      key={i} 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="group hover:bg-slate-50 transition-all duration-300 cursor-pointer"
-                    >
-                      <td className="px-10 py-6">
-                         <div className="flex items-center gap-4">
-                            <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-violet-600 shadow-inner group-hover:shadow-sm transition-all italic font-black text-[10px]">
-                               {i+1}
-                            </div>
-                            <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{row.resource?.name || 'Asset Node'}</span>
-                         </div>
-                      </td>
-                      <td className="px-10 py-6">
-                        <div className="flex flex-col gap-0.5">
-                           <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{row.user?.name || 'Operator'}</span>
-                           <span className="text-[9px] font-bold text-slate-400 italic">{row.user?.email}</span>
-                        </div>
-                      </td>
-                      <td className="px-10 py-6">
-                         <div className="flex flex-col gap-0.5">
-                            <span className="text-xs font-black text-slate-600">{new Date(row.startTime).toLocaleDateString()}</span>
-                            <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest">{new Date(row.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                         </div>
-                      </td>
-                      <td className="px-10 py-6">
-                         <Badge color={row.status === 'APPROVED' ? 'emerald' : 'amber'}>{row.status}</Badge>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Secondary Modules: Node Topology & Support Pulse */}
-        <div className="lg:col-span-4 space-y-10">
-           {/* Node Topology */}
-           <Card className="!p-10 shadow-xl border-slate-100 flex flex-col justify-between h-[450px]">
-              <div>
-                 <div className="flex items-center justify-between mb-10">
-                    <h4 className="text-[11px] font-black text-violet-600 uppercase tracking-[0.4em] border-b border-violet-100 pb-4">Asset Topology</h4>
-                    <Database size={18} className="text-slate-200" />
-                 </div>
-                 <div className="space-y-8">
-                    {[
-                      { label: 'Core Infrastructure', value: 82, color: 'bg-indigo-600' },
-                      { label: 'Technical Labs', value: 64, color: 'bg-emerald-600' },
-                      { label: 'Meeting Hubs', value: 45, color: 'bg-blue-600' }
-                    ].map((item, i) => (
-                      <div key={i} className="group cursor-pointer">
-                         <div className="flex items-center justify-between mb-3 px-1">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
-                            <span className="text-sm font-black text-slate-900">{item.value}%</span>
-                         </div>
-                         <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden p-[1px]">
-                            <motion.div 
-                               initial={{ width: 0 }}
-                               animate={{ width: `${item.value}%` }}
-                               transition={{ duration: 1.5, delay: i * 0.2 }}
-                               className={`h-full ${item.color} rounded-full shadow-lg group-hover:brightness-110 transition-all`}
-                            />
-                         </div>
-                      </div>
-                    ))}
-                 </div>
+        {/* Resource Breakdown Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-5">Resources by type</h2>
+          <div className="space-y-6">
+            {utilization.map((item, idx) => (
+              <div key={item.label}>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                  <span className="text-sm font-medium text-gray-900">{item.value}%</span>
+                </div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.value}%` }}
+                    transition={{ duration: 0.6, delay: idx * 0.1 }}
+                    className="h-full rounded-full bg-indigo-500"
+                  />
+                </div>
               </div>
-              <div className="p-6 rounded-3xl bg-slate-900 text-white flex items-center justify-between group hover:shadow-2xl transition-all duration-700 cursor-pointer">
-                 <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center">
-                       <Zap size={20} className="text-violet-400" />
-                    </div>
-                    <div>
-                       <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Optimize Grid</p>
-                       <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest italic">Run heuristic audit</p>
-                    </div>
-                 </div>
-                 <ArrowUpRight size={18} className="text-white/20 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-              </div>
-           </Card>
+            ))}
+          </div>
 
-           {/* Support Sentinel Pulse */}
-           <Card className="bg-rose-600 !p-10 text-white shadow-2xl relative overflow-hidden group h-[400px] flex flex-col justify-between">
-              <div className="absolute top-0 right-0 p-8 text-white opacity-10">
-                 <Terminal size={140} className="grayscale" />
+          <div className="border-t border-gray-100 mt-6 pt-5 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xl font-bold text-gray-900">{data.resources.filter(r => r.status === 'ACTIVE').length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Active resources</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-900">{data.resources.filter(r => r.status === 'OUT_OF_SERVICE').length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Out of service</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 4: BOTTOM GRID */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Open Tickets Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base font-semibold text-gray-900">Open tickets</h2>
+              {openTickets > 0 && (
+                <span className="text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-md px-2 py-0.5">
+                  {openTickets} active
+                </span>
+              )}
+            </div>
+            <Link to="/admin/tickets" className="text-sm text-indigo-600 hover:underline">View all</Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-left">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {recentTickets.length > 0 ? (
+                  recentTickets.map((row) => (
+                    <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="text-xs font-medium text-indigo-600">{row.id}</p>
+                        <p className="text-sm font-medium text-gray-900 mt-0.5 truncate max-w-[220px]">{row.title}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <StatusPill status={row.priority} />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <StatusPill status={row.status} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="px-6 py-12 text-center">
+                      <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-900">No open tickets</p>
+                      <p className="text-xs text-gray-400 mt-1">All issues have been resolved</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Quick Actions Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Quick actions</h2>
+          <div className="space-y-3">
+            <Link to="/admin/bookings?status=PENDING" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <CalendarClock className="h-4 w-4 text-amber-600" />
               </div>
-              <div className="relative z-10">
-                 <div className="flex items-center justify-between mb-10">
-                    <h3 className="text-2xl font-black uppercase tracking-tighter">Support Alpha</h3>
-                    <Badge className="bg-white/20 text-white border-white/20 backdrop-blur-md shadow-lg">{criticalTickets} Critical</Badge>
-                 </div>
-                 <div className="space-y-4">
-                    {stats.tickets.slice(0, 3).map((t, i) => (
-                      <div key={i} className="p-4 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-between group/ticket hover:bg-white/20 transition-all">
-                         <div className="flex items-center gap-4">
-                            <AlertCircle size={16} className={t.priority === 'CRITICAL' ? 'text-rose-200 animate-pulse' : 'text-white/40'} />
-                            <span className="text-[11px] font-black truncate max-w-[150px] uppercase tracking-widest">{t.title}</span>
-                         </div>
-                         <ArrowRight size={14} className="opacity-0 group-hover/ticket:opacity-100 group-hover/ticket:translate-x-1 transition-all" />
-                      </div>
-                    ))}
-                 </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Review pending bookings</p>
+                <p className="text-xs text-gray-400 mt-0.5">{pendingBookings} requests waiting</p>
               </div>
-              <Link to="/tickets">
-                 <button className="relative z-10 w-full h-16 rounded-2xl bg-white text-slate-900 text-[11px] font-black uppercase tracking-[0.4em] shadow-2xl hover:translate-y-[-4px] transition-all duration-300">
-                    Sentinel Matrix
-                 </button>
-              </Link>
-           </Card>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link to="/admin/tickets?status=OPEN" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="h-4 w-4 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Manage open tickets</p>
+                <p className="text-xs text-gray-400 mt-0.5">{openTickets} tickets need attention</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link to="/admin/resources/new" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <Package className="h-4 w-4 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Add new resource</p>
+                <p className="text-xs text-gray-400 mt-0.5">Register a room, lab, or equipment</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link to="/admin/resources" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                <Search className="h-4 w-4 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Browse all resources</p>
+                <p className="text-xs text-gray-400 mt-0.5">{data.resources.length} resources in catalogue</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

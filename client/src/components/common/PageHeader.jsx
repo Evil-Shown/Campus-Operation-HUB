@@ -1,39 +1,11 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-
-const PageHeader = ({ title, subtitle, action }) => {
+export default function PageHeader({ title, subtitle, action }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-      <div className="space-y-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-[0.8]"
-        >
-          {title}
-        </motion.h1>
-        {subtitle && (
-          <motion.p 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-base font-medium text-slate-400 italic border-l-4 border-indigo-600/10 pl-4"
-          >
-            {subtitle}
-          </motion.p>
-        )}
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+        {subtitle ? <p className="mt-1 text-sm text-slate-600">{subtitle}</p> : null}
       </div>
-      {action && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {action}
-        </motion.div>
-      )}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
-  );
-};
-
-export default PageHeader;
+  )
+}

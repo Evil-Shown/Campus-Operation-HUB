@@ -1,7 +1,7 @@
 package com.campusops.campus_ops_backend.model;
 
 import java.time.LocalTime;
-import jakarta.validation.constraints.Min; // For capacity validation
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,8 +37,6 @@ public class Resource {
     @Column(nullable = false)
     private ResourceType type;
 
-
-    @Min(value = 0, message = "Capacity cannot be negative") // prevent input Negative values
     private Integer capacity;
 
     @Column(nullable = false)

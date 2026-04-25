@@ -3,9 +3,6 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Plus, 
-  Search, 
-  Filter, 
-  History, 
   AlertCircle, 
   CheckCircle2, 
   Clock, 
@@ -39,7 +36,7 @@ function StatusPill({ status }) {
     REJECTED: 'bg-rose-900/10 text-rose-900 border-rose-900/20',
   }
   return (
-    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${styles[status] || styles.CLOSED}`}>
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${styles[status] || styles.CLOSED}`}>
       {status}
     </span>
   )
@@ -47,31 +44,43 @@ function StatusPill({ status }) {
 
 export default function TicketsPage() {
   const { apiBaseUrl, token, user } = useAuth()
-  const [scope, setScope] = useState(user?.role === 'leader' ? 'all' : 'mine')
+  const role = String(user?.role || '').toUpperCase()
+  const canSeeAll = role === 'ADMIN' || role === 'TECHNICIAN' || role === 'LEADER' || role === 'ROLE_ADMIN'
+  const [scope, setScope] = useState(canSeeAll ? 'all' : 'mine')
   const [statusFilter, setStatusFilter] = useState('')
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const MotionLi = motion.li
 
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [form, setForm] = useState({
-    resourceId: '',
+    resourceDetails: '',
     category: 'OTHER',
     description: '',
     priority: 'MEDIUM',
     contactInfo: user?.email || '',
   })
   const [files, setFiles] = useState([])
+  const isDescriptionValid = form.description.trim().length >= 10
 
-  const canSeeAll = user?.role === 'leader'
   const canCreate = Boolean(token)
 
   const query = useMemo(() => ({
     scope: canSeeAll ? scope : 'mine',
     status: statusFilter || undefined,
   }), [canSeeAll, scope, statusFilter])
+
+  useEffect(() => {
+    // Keep scope aligned with role once user/auth state is fully loaded.
+    setScope((prev) => {
+      if (canSeeAll && prev === 'mine') return 'all'
+      if (!canSeeAll && prev !== 'mine') return 'mine'
+      return prev
+    })
+  }, [canSeeAll])
 
   useEffect(() => {
     let ignore = false
@@ -98,11 +107,16 @@ export default function TicketsPage() {
   const submitNewTicket = async (e) => {
     e.preventDefault()
     if (!canCreate) return
+    if (!form.resourceDetails.trim()) {
+      setCreateError('Resource or location is required')
+      return
+    }
     setCreating(true)
     setCreateError('')
     try {
       const payload = {
-        resourceId: form.resourceId ? Number(form.resourceId) : null,
+        resourceId: null,
+        resourceLocation: form.resourceDetails.trim(),
         category: form.category,
         description: form.description.trim(),
         priority: form.priority,
@@ -111,7 +125,7 @@ export default function TicketsPage() {
       const created = await createTicket({ baseUrl: apiBaseUrl, token, data: payload, files })
       setTickets((prev) => [created, ...prev])
       setCreateOpen(false)
-      setForm({ resourceId: '', category: 'OTHER', description: '', priority: 'MEDIUM', contactInfo: user?.email || '' })
+      setForm({ resourceDetails: '', category: 'OTHER', description: '', priority: 'MEDIUM', contactInfo: user?.email || '' })
       setFiles([])
     } catch (err) {
       setCreateError(err?.message || 'Ticket neutralization failed')
@@ -131,18 +145,18 @@ export default function TicketsPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <ShieldCheck className="w-3.5 h-3.5 text-primary-500" />
-              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary-500">Incident Management Console</span>
+              <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">Tickets</span>
             </div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white">Institutional Maintenance</h1>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Report infrastructure anomalies and orchestrate resolution workflows.</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Maintenance tickets</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Report issues, track status, and collaborate with comments and attachments.</p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-white/5">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/70 p-1 backdrop-blur dark:border-white/10 dark:bg-white/5">
             {canSeeAll && (
               <select
-                className="bg-transparent text-xs font-bold px-3 py-2 focus:outline-none border-r border-slate-200 dark:border-white/10 uppercase tracking-widest text-slate-600 dark:text-slate-300"
+                className="bg-transparent px-3 py-2 text-sm font-medium text-slate-700 outline-none dark:text-slate-200 border-r border-slate-200 dark:border-white/10"
                 value={scope}
                 onChange={(e) => setScope(e.target.value)}
               >
@@ -151,7 +165,7 @@ export default function TicketsPage() {
               </select>
             )}
             <select
-              className="bg-transparent text-xs font-bold px-4 py-2 focus:outline-none uppercase tracking-widest text-slate-600 dark:text-slate-300"
+              className="bg-transparent px-4 py-2 text-sm font-medium text-slate-700 outline-none dark:text-slate-200"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -162,7 +176,7 @@ export default function TicketsPage() {
           <button
             onClick={() => setCreateOpen(true)}
             disabled={!canCreate}
-            className="btn-primary py-3 px-6 text-xs font-black uppercase tracking-[0.15em] flex items-center gap-2 shadow-xl shadow-primary-500/20"
+            className="btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> New Incident
           </button>
@@ -184,8 +198,8 @@ export default function TicketsPage() {
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-wider">Report New Incident</h2>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Protocol Generation Layer</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create ticket</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Provide a clear description and optionally attach photos.</p>
                 </div>
               </div>
               <button 
@@ -199,9 +213,11 @@ export default function TicketsPage() {
             <form onSubmit={submitNewTicket} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Classification</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Category
+                  </label>
                   <select
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary-500 outline-none transition-all"
+                    className="input-field bg-white dark:bg-slate-950 font-medium"
                     value={form.category}
                     onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
                   >
@@ -210,9 +226,11 @@ export default function TicketsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Threat Priority</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Priority
+                  </label>
                   <select
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary-500 outline-none transition-all"
+                    className="input-field bg-white dark:bg-slate-950 font-medium"
                     value={form.priority}
                     onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value }))}
                   >
@@ -221,24 +239,40 @@ export default function TicketsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Resource Reference (Optional)</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Resource and Location <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
+                  </label>
                   <input
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary-500 outline-none transition-all"
-                    placeholder="e.g. Asset #304"
-                    value={form.resourceId}
-                    onChange={(e) => setForm((prev) => ({ ...prev, resourceId: e.target.value.replace(/[^\d]/g, '') }))}
+                    className="input-field bg-white dark:bg-slate-950 font-medium"
+                    placeholder="e.g. Lab Projector - Block B Room 204"
+                    value={form.resourceDetails}
+                    onChange={(e) => setForm((prev) => ({ ...prev, resourceDetails: e.target.value }))}
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Detailed Description</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Description <span className="font-normal text-slate-500 dark:text-slate-400">(min 10 characters)</span>
+                  </label>
                   <textarea
-                    className="w-full h-[155px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary-500 outline-none transition-all resize-none"
-                    placeholder="Describe the institutional anomaly (min 10 chars)..."
+                    className="input-field h-[155px] resize-none bg-white dark:bg-slate-950 font-medium"
+                    placeholder="Describe the issue (min 10 characters)…"
                     value={form.description}
                     onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Preferred contact details
+                  </label>
+                  <input
+                    className="input-field bg-white dark:bg-slate-950 font-medium"
+                    placeholder="Email or phone number"
+                    value={form.contactInfo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, contactInfo: e.target.value }))}
                   />
                 </div>
               </div>
@@ -250,8 +284,8 @@ export default function TicketsPage() {
                       <Camera className="w-6 h-6" />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Visual Evidence</p>
-                      <p className="text-xs font-bold text-slate-500 uppercase">Attach up to 3 diagnostic captures</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Attachments</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Attach up to 3 images.</p>
                     </div>
                   </div>
                   <input
@@ -267,16 +301,16 @@ export default function TicketsPage() {
                   />
                   <label 
                     htmlFor="evidence-upload"
-                    className="btn-secondary !py-2.5 !px-5 text-[10px] font-black uppercase tracking-widest cursor-pointer"
+                    className="btn-secondary !py-2 !px-4 text-sm cursor-pointer"
                   >
-                    Select Captures
+                    Choose files
                   </label>
                 </div>
                 {files.length > 0 && (
                   <div className="flex gap-2">
                     {files.map((f, i) => (
-                      <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-lg border border-white/5 text-[10px] font-bold text-slate-500">
-                        <FileText className="w-3 h-3" /> {f.name.slice(0, 10)}...
+                      <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-lg border border-white/5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                        <FileText className="w-3 h-3" /> {f.name}
                       </div>
                     ))}
                   </div>
@@ -293,18 +327,23 @@ export default function TicketsPage() {
                 <button 
                   type="button" 
                   onClick={() => setCreateOpen(false)}
-                  className="px-6 py-3 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-slate-800 transition-colors"
+                  className="btn-secondary"
                 >
-                  Terminate Protocol
+                  Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={creating || form.description.length < 10}
-                  className="btn-primary py-3 px-8 text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 disabled:opacity-50"
+                  disabled={creating || !isDescriptionValid}
+                  className="btn-primary disabled:opacity-50"
                 >
-                  {creating ? 'Synchronizing...' : 'Initialize Ticket'}
+                  {creating ? 'Creating…' : 'Create ticket'}
                 </button>
               </div>
+              {!isDescriptionValid ? (
+                <p className="md:col-span-2 text-xs font-medium text-amber-700">
+                  Description must be at least 10 characters.
+                </p>
+              ) : null}
             </form>
           </motion.div>
         )}
@@ -315,12 +354,21 @@ export default function TicketsPage() {
         <div className="bg-slate-50 dark:bg-white/5 px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-3">
             <Layers className="w-4 h-4 text-slate-400" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Institutional Incident Repository</h3>
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ticket list</h3>
           </div>
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Showing {tickets.length} Global Records
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Showing {tickets.length} ticket(s)
           </div>
         </div>
+
+        {error ? (
+          <div className="px-6 py-4">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span>{error}</span>
+            </div>
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="py-24 flex flex-col items-center justify-center gap-4">
@@ -330,13 +378,13 @@ export default function TicketsPage() {
         ) : tickets.length === 0 ? (
           <div className="py-24 text-center">
             <CheckCircle2 className="w-12 h-12 text-emerald-500/20 mx-auto mb-4" />
-            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Global Status: Nominal</p>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">No incidents detected in the active queue.</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No tickets found</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Try adjusting the filters, or create a new ticket.</p>
           </div>
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-white/5">
             {tickets.map((ticket, idx) => (
-              <motion.li 
+              <MotionLi 
                 key={ticket.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -348,34 +396,32 @@ export default function TicketsPage() {
                   <div className="flex flex-col md:flex-row gap-6 md:items-center">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-3 mb-2">
-                        <span className="text-xs font-black text-primary-500 tracking-tighter">#{ticket.id}</span>
+                        <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">#{ticket.id}</span>
                         <StatusPill status={ticket.status} />
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded border uppercase tracking-widest ${
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
                           ticket.priority === 'CRITICAL' ? 'border-rose-500/30 text-rose-500' :
                           ticket.priority === 'HIGH' ? 'border-amber-500/30 text-amber-500' :
-                          'border-slate-300 text-slate-400'
+                          'border-slate-300 text-slate-500 dark:border-white/10 dark:text-slate-300'
                         }`}>
-                          {ticket.priority} PROT.
+                          {ticket.priority}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded">
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-full">
                           {ticket.category}
                         </span>
                       </div>
-                      <h4 className="font-bold text-slate-900 dark:text-slate-200 text-lg group-hover:text-primary-500 transition-colors line-clamp-1 truncate uppercase tracking-tight">
-                        {ticket.description.slice(0, 120)}...
+                      <h4 className="font-semibold text-slate-900 dark:text-slate-200 text-lg group-hover:text-primary-600 transition-colors line-clamp-1 truncate">
+                        {ticket.description}
                       </h4>
-                      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Initialized: {formatDate(ticket.createdAt)}</span>
-                        {ticket.reporter?.email && <span className="flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" /> Report: {ticket.reporter.name || ticket.reporter.email}</span>}
-                        {ticket.assignee?.email && <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Sector: {ticket.assignee.name || ticket.assignee.email}</span>}
+                      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-600 dark:text-slate-400">
+                        <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> Created {formatDate(ticket.createdAt)}</span>
+                        {ticket.reporter?.email && <span className="flex items-center gap-1.5"><Plus className="w-4 h-4" /> Reporter: {ticket.reporter.name || ticket.reporter.email}</span>}
+                        {ticket.assignee?.email && <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> Assignee: {ticket.assignee.name || ticket.assignee.email}</span>}
                       </div>
                     </div>
                     <div className="shrink-0 flex items-center gap-8 pl-6 border-l border-slate-100 dark:border-white/5">
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-500 mb-1">EVIDENCE</p>
-                        <p className="text-xs font-black text-slate-900 dark:text-white uppercase">
-                          {ticket.attachmentPaths?.length || 0} CAPTURE(S)
-                        </p>
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Attachments</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{ticket.attachmentPaths?.length || 0}</p>
                       </div>
                       <div className="h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/5 group-hover:bg-primary-500 group-hover:border-primary-500 group-hover:text-white transition-all text-slate-400 shadow-sm">
                         <ChevronRight className="w-5 h-5" />
@@ -383,7 +429,7 @@ export default function TicketsPage() {
                     </div>
                   </div>
                 </Link>
-              </motion.li>
+              </MotionLi>
             ))}
           </ul>
         )}

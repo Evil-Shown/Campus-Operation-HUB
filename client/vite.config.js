@@ -15,14 +15,4 @@ export default defineConfig({
   resolve: {
     dedupe: ['react', 'react-dom'],
   },
-  //  Proxy settings to forward API requests to the Spring Boot server(I used port 8081 )
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
-  }
 })

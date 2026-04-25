@@ -1,186 +1,174 @@
-import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import api from "../../api/api";
-import BookingFormFields from "../../components/bookings/BookingFormFields";
-import AvailabilityViewer from "../../components/bookings/AvailabilityViewer";
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import api from '../../api/api'
+import BookingFormFields from '../../components/bookings/BookingFormFields'
+import AvailabilityViewer from '../../components/bookings/AvailabilityViewer'
 
-const INITIAL_FORM = {
-  resourceId: "",
-  date: "",
-  startTime: "",
-  endTime: "",
-  purpose: "",
-  attendees: "",
-};
+const initialFormData = {
+  resourceId: '',
+  date: '',
+  startTime: '',
+  endTime: '',
+  purpose: '',
+  attendees: '',
+}
 
-const BookingForm = () => {
-  const { resourceId } = useParams();
-  const [resources, setResources] = useState([]);
-  const [formData, setFormData] = useState({ ...INITIAL_FORM, resourceId: resourceId || "" });
-  const [availabilityBookings, setAvailabilityBookings] = useState([]);
-  const [loadingResources, setLoadingResources] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+function BookingForm() {
+  const [resources, setResources] = useState([])
+  const [formData, setFormData] = useState(initialFormData)
+  const [availabilityBookings, setAvailabilityBookings] = useState([])
+  const [loadingResources, setLoadingResources] = useState(true)
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
 
-  // Load resources on mount
   useEffect(() => {
-    api
-      .get("/resources")
-      .then((res) => setResources(res.data))
-      .catch(() => setError("Failed to load resources."))
-      .finally(() => setLoadingResources(false));
-  }, []);
-
-  // Load availability when resource + date selected
-  useEffect(() => {
-    if (formData.resourceId && formData.date) {
-      api
-        .get(`/bookings/resource/${formData.resourceId}/availability`)
-        .then((res) => setAvailabilityBookings(res.data))
-        .catch(() => setAvailabilityBookings([]));
-    } else {
-      setAvailabilityBookings([]);
+    const loadResources = async () => {
+      try {
+        const response = await api.get('/resources')
+        setResources(response.data)
+      } catch (err) {
+        setError('Failed to load resources')
+      } finally {
+        setLoadingResources(false)
+      }
     }
-  }, [formData.resourceId, formData.date]);
+
+    loadResources()
+  }, [])
+
+  useEffect(() => {
+    const loadAvailability = async () => {
+      if (!formData.resourceId || !formData.date) {
+        setAvailabilityBookings([])
+        return
+      }
+
+      setLoadingAvailability(true)
+      try {
+        const response = await api.get(`/bookings/resource/${formData.resourceId}/availability`)
+        setAvailabilityBookings(response.data)
+      } catch (err) {
+        setAvailabilityBookings([])
+      } finally {
+        setLoadingAvailability(false)
+      }
+    }
+
+    loadAvailability()
+  }, [formData.resourceId, formData.date])
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setError(null);
-    setSuccess(false);
-  };
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
+    setSuccess(false)
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
+    setSuccess(false)
 
-    // Validate
-    if (!formData.resourceId) return setError("Please select a resource.");
-    if (!formData.date) return setError("Please select a date.");
-    if (!formData.startTime) return setError("Please select a start time.");
-    if (!formData.endTime) return setError("Please select an end time.");
-    if (formData.endTime <= formData.startTime)
-      return setError("End time must be after start time.");
+    if (!formData.resourceId) {
+      setError('Please select a resource')
+      return
+    }
+    if (!formData.date) {
+      setError('Please select a date')
+      return
+    }
+    if (!formData.startTime) {
+      setError('Please select a start time')
+      return
+    }
+    if (!formData.endTime) {
+      setError('Please select an end time')
+      return
+    }
+    if (formData.endTime <= formData.startTime) {
+      setError('End time must be after start time')
+      return
+    }
 
     const payload = {
       resourceId: Number(formData.resourceId),
       startTime: `${formData.date}T${formData.startTime}:00`,
       endTime: `${formData.date}T${formData.endTime}:00`,
-      purpose: formData.purpose?.trim() || "",
+      purpose: formData.purpose || null,
       attendees: formData.attendees ? Number(formData.attendees) : null,
-    };
+    }
 
-    setSubmitting(true);
-    setError(null);
+    setSubmitting(true)
+    setError(null)
 
     try {
-      await api.post("/bookings", payload);
-      setSuccess(true);
-      setFormData(INITIAL_FORM);
-      setAvailabilityBookings([]);
+      await api.post('/bookings', payload)
+      setSuccess(true)
+      setFormData(initialFormData)
+      setAvailabilityBookings([])
     } catch (err) {
-      const status = err.response?.status;
-      const msg = err.response?.data?.message;
-
-      if (typeof msg === "string" && msg.trim()) {
-        setError(msg);
-      } else if (status === 401) {
-        setError("You are not logged in. Please sign in and try again.");
-      } else if (status === 403) {
-        setError("You do not have permission to perform this action.");
-      } else if (status === 409) {
-        setError("This time slot conflicts with an existing approved booking.");
+      if (err.response?.status === 409) {
+        setError(err.response?.data?.message || 'Booking conflict detected.')
       } else {
-        setError("Something went wrong. Please try again.");
+        setError('Something went wrong. Please try again.')
       }
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">New Booking</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Reserve a campus facility
-          </p>
-        </div>
-        <Link
-          to="/bookings/my"
-          className="text-sm text-purple-600 hover:text-purple-700 
-            hover:underline flex items-center gap-1"
-        >
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">New Booking</h1>
+        <Link to="/bookings" className="text-sm text-blue-600 hover:underline">
           ← My Bookings
         </Link>
       </div>
 
-      {/* Success Alert */}
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 
-          rounded-xl p-4 mb-4 flex items-center gap-3">
-          <span className="text-lg">✅</span>
-          <span className="text-sm font-medium">
-            Booking submitted successfully! Awaiting admin approval.
-          </span>
+        <div className="bg-green-50 border border-green-400 text-green-800 rounded-lg p-4 mb-4 flex items-center gap-2">
+          <span>✅</span>
+          <span>Booking submitted successfully! Awaiting admin approval.</span>
         </div>
       )}
 
-      {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 
-          rounded-xl p-4 mb-4 flex items-center gap-3">
-          <span className="text-lg">❌</span>
-          <span className="text-sm font-medium">{error}</span>
+        <div className="bg-red-50 border border-red-400 text-red-800 rounded-lg p-4 mb-4 flex items-center gap-2">
+          <span>❌</span>
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Form Card */}
-      <div className="bg-white rounded-xl border border-gray-100 
-        shadow-sm p-6">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6">
         {loadingResources ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin border-4 border-purple-600 
-              border-t-transparent rounded-full w-8 h-8" />
-          </div>
+          <div className="text-sm text-gray-500">Loading resources...</div>
         ) : (
-          <form onSubmit={handleSubmit}>
-            <BookingFormFields
-              formData={formData}
-              resources={resources}
-              onChange={handleChange}
-            />
-
-            {/* Availability Viewer */}
-            {formData.resourceId && formData.date && (
-              <AvailabilityViewer
-                bookings={availabilityBookings}
-                selectedDate={formData.date}
-              />
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full mt-6 bg-purple-600 hover:bg-purple-700 
-                disabled:opacity-50 text-white font-medium py-3 
-                rounded-xl transition-colors flex items-center 
-                justify-center gap-2 text-sm"
-            >
-              {submitting && (
-                <span className="animate-spin border-2 border-white 
-                  border-t-transparent rounded-full w-4 h-4" />
-              )}
-              {submitting ? "Submitting..." : "Submit Booking Request"}
-            </button>
-          </form>
+          <BookingFormFields formData={formData} resources={resources} onChange={handleChange} />
         )}
-      </div>
-    </div>
-  );
-};
 
-export default BookingForm;
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium text-sm transition-colors"
+        >
+          {submitting && (
+            <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 inline-block mr-2" />
+          )}
+          {submitting ? 'Submitting...' : 'Submit Booking Request'}
+        </button>
+      </form>
+
+      {formData.resourceId && formData.date && (
+        <>
+          {loadingAvailability && <div className="text-sm text-gray-500 mt-4">Loading availability...</div>}
+          <AvailabilityViewer bookings={availabilityBookings} selectedDate={formData.date} />
+        </>
+      )}
+    </div>
+  )
+}
+
+export default BookingForm

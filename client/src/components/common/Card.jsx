@@ -1,16 +1,10 @@
-import React from 'react';
-
-const Card = ({ children, className = '', hover = true, padding = 'p-6' }) => {
+export default function Card({ className = '', children, ...props }) {
   return (
-    <div className={`
-      bg-white/80 backdrop-blur-md border border-white/20 rounded-3xl shadow-xl shadow-slate-200/40 
-      ${hover ? 'transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] hover:border-violet-100/50' : ''}
-      ${padding}
-      ${className}
-    `}>
+    <div
+      className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ${className}`}
+      {...props}
+    >
       {children}
     </div>
-  );
-};
-
-export default Card;
+  )
+}

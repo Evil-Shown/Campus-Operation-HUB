@@ -48,6 +48,39 @@ export function addTicketComment({ baseUrl, token, ticketId, body }) {
   })
 }
 
+export function updateTicketComment({ baseUrl, token, ticketId, commentId, body }) {
+  return apiJson({
+    baseUrl,
+    token,
+    path: `/api/tickets/${ticketId}/comments/${commentId}`,
+    method: 'PATCH',
+    body: { body },
+  })
+}
+
+export function listTicketComments({ baseUrl, token, ticketId }) {
+  return apiJson({
+    baseUrl,
+    token,
+    path: `/api/tickets/${ticketId}/comments`,
+  })
+}
+
+export function getTicketAttachmentUrl({ baseUrl, ticketId, fileName }) {
+  const rawBase = (baseUrl || '/api').trim() || '/api'
+  const hasAbsoluteBase = /^https?:\/\//i.test(rawBase)
+  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost'
+  const resolvedBase = hasAbsoluteBase ? rawBase : `${origin}${rawBase.startsWith('/') ? rawBase : `/${rawBase}`}`
+  const baseWithoutTrailingSlash = resolvedBase.replace(/\/+$/, '')
+
+  let normalizedPath = `/api/tickets/${ticketId}/attachments/${encodeURIComponent(fileName)}`
+  if (baseWithoutTrailingSlash.toLowerCase().endsWith('/api') && normalizedPath.toLowerCase().startsWith('/api/')) {
+    normalizedPath = normalizedPath.slice(5)
+  }
+
+  return new URL(normalizedPath, `${baseWithoutTrailingSlash}/`).toString()
+}
+
 export async function deleteTicketComment({ baseUrl, token, ticketId, commentId }) {
   await apiJson({
     baseUrl,

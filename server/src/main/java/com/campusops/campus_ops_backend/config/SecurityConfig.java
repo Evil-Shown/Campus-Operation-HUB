@@ -15,7 +15,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -42,18 +41,10 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.exceptionHandling(exception -> exception
-                .defaultAuthenticationEntryPointFor(
-                        (request, response, authException) -> response.sendError(
-                                org.springframework.http.HttpStatus.UNAUTHORIZED.value(),
-                                "Unauthorized"),
-                        new AntPathRequestMatcher("/api/**")));
         http.authorizeHttpRequests(auth -> auth
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/resources", "/api/resources/**", "/api/health").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auth/**").permitAll()
-            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/resource/*/availability").authenticated()
-            .requestMatchers("/api/bookings/**").authenticated()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated());
         if (clientRegistrationRepository.getIfAvailable() != null) {

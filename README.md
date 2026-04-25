@@ -195,6 +195,32 @@ CREATE DATABASE campus_op_hub OWNER campus_user;
 GRANT ALL PRIVILEGES ON DATABASE campus_op_hub TO campus_user;
 ```
 
+### Persistent local database (recommended)
+
+To avoid losing data between project restarts or PC reboots, run PostgreSQL through Docker with a named volume:
+
+```powershell
+cd "D:\Coding\Campus Operation HUB"
+docker compose up -d postgres
+```
+
+This repository includes `docker-compose.yml` with a persistent volume:
+
+- Service: `postgres` (`postgres:15`)
+- DB: `campus_op_hub`
+- User: `campus_user`
+- Password: `campus123`
+- Persistent volume: `campus_ops_pgdata`
+
+Verify your app is connected to this same database:
+
+```sql
+SELECT current_database(), current_user;
+SHOW data_directory;
+```
+
+Do not run `docker compose down -v` unless you intentionally want to delete all local DB data.
+
 For CI-like test runs, a dedicated database is commonly used:
 
 ```sql
@@ -231,6 +257,20 @@ cd server
 ## Run the Project
 
 Run frontend and backend in separate terminals.
+
+### 0) Start persistent PostgreSQL (required for stable local data)
+
+```powershell
+cd "D:\Coding\Campus Operation HUB"
+docker compose up -d postgres
+```
+
+Optional checks:
+
+```powershell
+docker compose ps
+docker volume ls
+```
 
 ### 1) Start backend (Spring Boot)
 
@@ -269,6 +309,8 @@ Frontend app:
 Terminal 1:
 
 ```powershell
+cd "D:\Coding\Campus Operation HUB"
+docker compose up -d postgres
 cd server
 .\mvnw.cmd spring-boot:run
 ```
@@ -453,6 +495,19 @@ GitHub Actions workflow: `.github/workflows/ci.yml`
 
 - Ensure upload directory exists and is writable
 - Check multipart limits in backend properties
+
+### Data disappears after restart/reboot
+
+- Ensure PostgreSQL is started through `docker compose up -d postgres`
+- Do not run `docker compose down -v` (this deletes DB volume/data)
+- In DBeaver, reconnect and refresh navigator after restarting services
+- Verify you are connected to the expected DB:
+
+```sql
+SELECT current_database(), current_user;
+SHOW data_directory;
+SELECT COUNT(*) FROM public.users;
+```
 
 ## Team Ownership
 
