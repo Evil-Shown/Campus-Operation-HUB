@@ -6,6 +6,7 @@ const AuthContext = createContext(null)
 
 const TOKEN_KEY = 'token'
 const USER_KEY = 'user'
+const LAST_ACTIVITY_KEY = 'lastActivityAt'
 const INACTIVITY_TIMEOUT = 20 * 60 * 1000
 
 function normalizeRole(role) {
@@ -34,7 +35,7 @@ function getErrorMessage(error) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY))
   const [loading, setLoading] = useState(true)
   const inactivityTimerRef = useRef(null)
 
@@ -42,18 +43,20 @@ export function AuthProvider({ children }) {
 
   const setSession = useCallback((nextToken, nextUser) => {
     if (nextToken) {
-      localStorage.setItem(TOKEN_KEY, nextToken)
+      sessionStorage.setItem(TOKEN_KEY, nextToken)
       setToken(nextToken)
     } else {
-      localStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(TOKEN_KEY)
       setToken(null)
     }
 
     const normalizedUser = normalizeUser(nextUser)
     if (normalizedUser) {
-      localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+      sessionStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+      sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
     } else {
-      localStorage.removeItem(USER_KEY)
+      sessionStorage.removeItem(USER_KEY)
+      sessionStorage.removeItem(LAST_ACTIVITY_KEY)
     }
     setUser(normalizedUser)
   }, [])
@@ -123,11 +126,21 @@ export function AuthProvider({ children }) {
     let isMounted = true
 
     const bootstrapAuth = async () => {
-      const storedToken = localStorage.getItem(TOKEN_KEY)
-      const storedUser = localStorage.getItem(USER_KEY)
+      const storedToken = sessionStorage.getItem(TOKEN_KEY)
+      const storedUser = sessionStorage.getItem(USER_KEY)
+      const storedLastActivity = sessionStorage.getItem(LAST_ACTIVITY_KEY)
 
       if (!storedToken) {
         if (isMounted) {
+          setLoading(false)
+        }
+        return
+      }
+
+      const lastActivityAt = Number.parseInt(storedLastActivity || '', 10)
+      if (!lastActivityAt || Date.now() - lastActivityAt > INACTIVITY_TIMEOUT) {
+        if (isMounted) {
+          setSession(null, null)
           setLoading(false)
         }
         return
@@ -144,7 +157,7 @@ export function AuthProvider({ children }) {
             setUser(normalizeUser(parsedUser))
           }
         } catch {
-          localStorage.removeItem(USER_KEY)
+          sessionStorage.removeItem(USER_KEY)
         }
       }
 
@@ -180,6 +193,8 @@ export function AuthProvider({ children }) {
       if (inactivityTimerRef.current) {
         window.clearTimeout(inactivityTimerRef.current)
       }
+
+      sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
 
       inactivityTimerRef.current = window.setTimeout(() => {
         logout('Session expired due to inactivity')
