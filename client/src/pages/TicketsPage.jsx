@@ -258,6 +258,18 @@ export default function TicketsPage() {
                     onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Preferred contact details
+                  </label>
+                  <input
+                    className="input-field bg-white dark:bg-slate-950 font-medium"
+                    placeholder="Email or phone number"
+                    value={form.contactInfo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, contactInfo: e.target.value }))}
+                  />
+                </div>
               </div>
 
               <div className="md:col-span-2 space-y-4">

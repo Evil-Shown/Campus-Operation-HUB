@@ -293,7 +293,7 @@ export default function TicketDetailPage() {
                 <span className="font-semibold text-slate-600">Reporter:</span> {ticket.reporter?.email || '—'}
               </div>
               <div>
-                <span className="font-semibold text-slate-600">Contact:</span> {ticket.contactInfo || '—'}
+                <span className="font-semibold text-slate-600">Preferred contact details:</span> {ticket.contactInfo || '—'}
               </div>
               <div>
                 <span className="font-semibold text-slate-600">Assignee:</span> {ticket.assignee?.email || '—'}
