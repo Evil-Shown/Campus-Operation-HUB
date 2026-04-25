@@ -107,16 +107,18 @@ export default function TicketsPage() {
   const submitNewTicket = async (e) => {
     e.preventDefault()
     if (!canCreate) return
+    if (!form.resourceDetails.trim()) {
+      setCreateError('Resource or location is required')
+      return
+    }
     setCreating(true)
     setCreateError('')
     try {
-      const resourceContext = form.resourceDetails.trim()
-        ? `\n\nResource/Location: ${form.resourceDetails.trim()}`
-        : ''
       const payload = {
         resourceId: null,
+        resourceLocation: form.resourceDetails.trim(),
         category: form.category,
-        description: `${form.description.trim()}${resourceContext}`,
+        description: form.description.trim(),
         priority: form.priority,
         contactInfo: form.contactInfo.trim(),
       }

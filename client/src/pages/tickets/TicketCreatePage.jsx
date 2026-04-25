@@ -31,16 +31,18 @@ export default function TicketCreatePage() {
       setError('Description must be at least 10 characters')
       return
     }
+    if (!form.resourceDetails.trim()) {
+      setError('Resource or location is required')
+      return
+    }
 
     setSubmitting(true)
     try {
-      const resourceContext = form.resourceDetails.trim()
-        ? `\n\nResource/Location: ${form.resourceDetails.trim()}`
-        : ''
       const payload = {
         resourceId: null,
+        resourceLocation: form.resourceDetails.trim(),
         category: form.category,
-        description: `${form.description.trim()}${resourceContext}`,
+        description: form.description.trim(),
         priority: form.priority,
         contactInfo: form.contactInfo.trim(),
       }
