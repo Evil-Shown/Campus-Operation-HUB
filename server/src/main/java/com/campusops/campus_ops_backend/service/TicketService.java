@@ -61,8 +61,9 @@ public class TicketService {
         Ticket ticket = Ticket.builder()
                 .reporter(reporter)
                 .resource(resource)
+                .resourceLocation(dto.getResourceLocation().trim())
                 .category(dto.getCategory())
-                .description(dto.getDescription().trim() + "\n\nResource/Location: " + dto.getResourceLocation().trim())
+                .description(dto.getDescription().trim())
                 .priority(dto.getPriority())
                 .contactInfo(dto.getContactInfo())
                 .build();
