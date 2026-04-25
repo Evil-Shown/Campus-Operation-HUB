@@ -6,6 +6,7 @@ const AuthContext = createContext(null)
 
 const TOKEN_KEY = 'token'
 const USER_KEY = 'user'
+const LAST_ACTIVITY_KEY = 'lastActivityAt'
 const INACTIVITY_TIMEOUT = 20 * 60 * 1000
 
 function normalizeRole(role) {
@@ -52,8 +53,10 @@ export function AuthProvider({ children }) {
     const normalizedUser = normalizeUser(nextUser)
     if (normalizedUser) {
       localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
     } else {
       localStorage.removeItem(USER_KEY)
+      localStorage.removeItem(LAST_ACTIVITY_KEY)
     }
     setUser(normalizedUser)
   }, [])
@@ -125,9 +128,19 @@ export function AuthProvider({ children }) {
     const bootstrapAuth = async () => {
       const storedToken = localStorage.getItem(TOKEN_KEY)
       const storedUser = localStorage.getItem(USER_KEY)
+      const storedLastActivity = localStorage.getItem(LAST_ACTIVITY_KEY)
 
       if (!storedToken) {
         if (isMounted) {
+          setLoading(false)
+        }
+        return
+      }
+
+      const lastActivityAt = Number.parseInt(storedLastActivity || '', 10)
+      if (!lastActivityAt || Date.now() - lastActivityAt > INACTIVITY_TIMEOUT) {
+        if (isMounted) {
+          setSession(null, null)
           setLoading(false)
         }
         return
@@ -180,6 +193,8 @@ export function AuthProvider({ children }) {
       if (inactivityTimerRef.current) {
         window.clearTimeout(inactivityTimerRef.current)
       }
+
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
 
       inactivityTimerRef.current = window.setTimeout(() => {
         logout('Session expired due to inactivity')

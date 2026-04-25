@@ -4,7 +4,9 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepository;
 
     @PostMapping("/api/auth/signup")
     public ResponseEntity<AuthResponseDTO> signup(@Valid @RequestBody SignupRequestDTO request) {
@@ -42,6 +45,12 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(authService.getCurrentUser(principal.getUser().getId()).user());
+    }
+
+    @GetMapping("/api/auth/providers")
+    public ResponseEntity<Map<String, Boolean>> providers() {
+        boolean googleEnabled = clientRegistrationRepository.getIfAvailable() != null;
+        return ResponseEntity.ok(Map.of("google", googleEnabled));
     }
 
     @GetMapping("/api/health")

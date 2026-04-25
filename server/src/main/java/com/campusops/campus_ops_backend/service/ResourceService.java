@@ -1,4 +1,4 @@
-package com.campusops.campus_ops_backend.service;
+/*package com.campusops.campus_ops_backend.service;
 
 import java.util.List;
 
@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@SuppressWarnings("null")
 public class ResourceService {
 
     private final ResourceRepository resourceRepository;
@@ -67,5 +68,60 @@ public class ResourceService {
     private Resource findResource(Long id) {
         return resourceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+    }
+}
+*/
+
+
+package com.campusops.campus_ops_backend.service;
+
+import com.campusops.campus_ops_backend.model.Resource;
+import com.campusops.campus_ops_backend.model.ResourceStatus;
+import com.campusops.campus_ops_backend.model.ResourceType;
+import com.campusops.campus_ops_backend.repository.ResourceRepository;
+import com.campusops.campus_ops_backend.repository.ResourceSpecification;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class ResourceService {
+
+    @Autowired
+    private ResourceRepository repository;
+
+    public Resource createResource(Resource resource) {
+        resource.setStatus(ResourceStatus.ACTIVE);
+        return repository.save(resource);
+    }
+
+    public Resource updateResource(Long id, Resource updatedResource) {
+        return repository.findById(id).map(resource -> {
+            resource.setName(updatedResource.getName());
+            resource.setType(updatedResource.getType());
+            resource.setSeatingCapacity(updatedResource.getSeatingCapacity());
+            resource.setPhysicalLocation(updatedResource.getPhysicalLocation());
+            resource.setStatus(updatedResource.getStatus());
+            resource.setAvailableFrom(updatedResource.getAvailableFrom());
+            resource.setAvailableTo(updatedResource.getAvailableTo());
+            return repository.save(resource);
+        }).orElseThrow(() -> new RuntimeException("Resource not found"));
+    }
+
+    public void softDeleteResource(Long id) {
+        Resource resource = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
+        resource.setStatus(ResourceStatus.OUT_OF_SERVICE); 
+        repository.save(resource);
+    }
+
+    public List<Resource> searchResources(ResourceType type, String location, Integer minCapacity) {
+        Specification<Resource> spec = ResourceSpecification.filterResources(type, location, minCapacity, true);
+        return repository.findAll(spec);
+    }
+
+    public List<Resource> getAllResourcesForAdmin() {
+        return repository.findAll();
     }
 }

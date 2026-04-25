@@ -22,7 +22,10 @@ export default function NotificationBell() {
 
     if (apiBaseUrl && token) {
       fetchUnreadCount()
+      const intervalId = window.setInterval(fetchUnreadCount, 30000)
+      return () => window.clearInterval(intervalId)
     }
+    return undefined
   }, [apiBaseUrl, token])
 
   useEffect(() => {
@@ -53,7 +56,12 @@ export default function NotificationBell() {
           </span>
         )}
       </button>
-      <NotificationDropdown isOpen={isOpen} onClose={() => setIsOpen(false)} onMarkRead={() => setUnreadCount(0)} />
+      <NotificationDropdown
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onMarkRead={() => setUnreadCount(0)}
+        onUnreadCountChange={setUnreadCount}
+      />
     </div>
   )
 }
