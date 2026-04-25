@@ -47,7 +47,9 @@ function StatusPill({ status }) {
 
 export default function TicketsPage() {
   const { apiBaseUrl, token, user } = useAuth()
-  const [scope, setScope] = useState(user?.role === 'leader' ? 'all' : 'mine')
+  const role = String(user?.role || '').toUpperCase()
+  const canSeeAll = role === 'ADMIN' || role === 'TECHNICIAN' || role === 'LEADER'
+  const [scope, setScope] = useState(canSeeAll ? 'all' : 'mine')
   const [statusFilter, setStatusFilter] = useState('')
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -66,7 +68,6 @@ export default function TicketsPage() {
   const [files, setFiles] = useState([])
   const isDescriptionValid = form.description.trim().length >= 10
 
-  const canSeeAll = user?.role === 'leader'
   const canCreate = Boolean(token)
 
   const query = useMemo(() => ({
