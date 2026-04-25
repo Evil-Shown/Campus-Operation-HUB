@@ -109,6 +109,17 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.addComment(ticketId, dto, principal.getUser()));
     }
 
+    @PatchMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<CommentResponseDTO> updateComment(@PathVariable @Positive Long ticketId,
+            @PathVariable @Positive Long commentId,
+            @Valid @RequestBody CommentRequestDTO dto,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ticketService.updateComment(ticketId, commentId, dto, principal.getUser()));
+    }
+
     @GetMapping("/{ticketId}/comments")
     public ResponseEntity<List<CommentResponseDTO>> getComments(@PathVariable @Positive Long ticketId,
             @AuthenticationPrincipal UserPrincipal principal) {

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -131,6 +132,7 @@ public class TicketService {
     @Transactional
     public TicketResponseDTO updateStatus(Long ticketId, Ticket.TicketStatus newStatus, String resolutionNote, User actingUser) {
         Ticket ticket = findTicket(ticketId);
+        validateStatusTransition(ticket, newStatus, actingUser, resolutionNote);
         ticket.setStatus(newStatus);
         if (resolutionNote != null && !resolutionNote.isBlank()) {
             ticket.setResolutionNote(resolutionNote);
@@ -172,6 +174,24 @@ public class TicketService {
         }
 
         return CommentResponseDTO.from(saved);
+    }
+
+    @Transactional
+    public CommentResponseDTO updateComment(Long ticketId, Long commentId, CommentRequestDTO dto, User currentUser) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
+        if (comment.getTicket() == null || !comment.getTicket().getId().equals(ticketId)) {
+            throw new ResourceNotFoundException(
+                    "Comment not found with id: " + commentId + " for ticket id: " + ticketId);
+        }
+        boolean isAdmin = currentUser.getRole() == User.Role.ADMIN;
+        boolean isAuthor = comment.getAuthor() != null && comment.getAuthor().getId().equals(currentUser.getId());
+        if (!isAuthor && !isAdmin) {
+            throw new UnauthorizedActionException("You are not allowed to edit this comment");
+        }
+        comment.setBody(dto.getBody());
+        comment.setUpdatedAt(java.time.LocalDateTime.now());
+        return CommentResponseDTO.from(commentRepository.save(comment));
     }
 
     @Transactional(readOnly = true)
@@ -274,6 +294,35 @@ public class TicketService {
         boolean isReporter = ticket.getReporter() != null && ticket.getReporter().getId().equals(currentUser.getId());
         boolean isAssignee = ticket.getAssignee() != null && ticket.getAssignee().getId().equals(currentUser.getId());
         return isReporter || isAssignee;
+    }
+
+    private void validateStatusTransition(Ticket ticket, Ticket.TicketStatus newStatus, User actingUser,
+            String resolutionNote) {
+        Ticket.TicketStatus currentStatus = ticket.getStatus();
+        if (currentStatus == Ticket.TicketStatus.CLOSED || currentStatus == Ticket.TicketStatus.REJECTED) {
+            throw new IllegalArgumentException("Closed or rejected tickets cannot be moved to another status");
+        }
+
+        boolean isAdmin = actingUser.getRole() == User.Role.ADMIN;
+        EnumSet<Ticket.TicketStatus> allowedNext = switch (currentStatus) {
+            case OPEN -> EnumSet.of(Ticket.TicketStatus.IN_PROGRESS, Ticket.TicketStatus.REJECTED);
+            case IN_PROGRESS -> EnumSet.of(Ticket.TicketStatus.RESOLVED, Ticket.TicketStatus.REJECTED);
+            case RESOLVED -> EnumSet.of(Ticket.TicketStatus.CLOSED, Ticket.TicketStatus.REJECTED);
+            default -> EnumSet.noneOf(Ticket.TicketStatus.class);
+        };
+
+        if (!allowedNext.contains(newStatus)) {
+            throw new IllegalArgumentException("Invalid status transition from " + currentStatus + " to " + newStatus);
+        }
+
+        if (newStatus == Ticket.TicketStatus.REJECTED) {
+            if (!isAdmin) {
+                throw new UnauthorizedActionException("Only admins can reject tickets");
+            }
+            if (resolutionNote == null || resolutionNote.isBlank()) {
+                throw new IllegalArgumentException("A rejection reason is required when setting status to REJECTED");
+            }
+        }
     }
 
     public record TicketAttachmentFileDTO(byte[] content, String mimeType, String originalFileName) {

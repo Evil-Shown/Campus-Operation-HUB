@@ -8,6 +8,7 @@ import {
   getTicket,
   getTicketAttachmentUrl,
   listTicketComments,
+  updateTicketComment,
   updateTicketStatus,
 } from '../api/tickets'
 import { useAuth } from '../context/AuthContext'
@@ -53,6 +54,9 @@ export default function TicketDetailPage() {
   const [commenting, setCommenting] = useState(false)
   const [commentError, setCommentError] = useState('')
   const [localComments, setLocalComments] = useState([])
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [editingBody, setEditingBody] = useState('')
+  const [editingComment, setEditingComment] = useState(false)
 
   const canEditStatus = useMemo(() => {
     const role = normalizeRole(user?.role)
@@ -166,6 +170,41 @@ export default function TicketDetailPage() {
       setLocalComments((prev) => prev.filter((comment) => comment.id !== commentId))
     } catch (err) {
       setCommentError(err?.message || 'Failed to delete comment')
+    }
+  }
+
+  const handleStartEditComment = (comment) => {
+    setCommentError('')
+    setEditingCommentId(comment.id)
+    setEditingBody(comment.body || '')
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingBody('')
+  }
+
+  const handleSaveEditComment = async (commentId) => {
+    if (!editingBody.trim()) {
+      setCommentError('Comment body cannot be empty')
+      return
+    }
+    setEditingComment(true)
+    setCommentError('')
+    try {
+      const updated = await updateTicketComment({
+        baseUrl: apiBaseUrl,
+        token,
+        ticketId: id,
+        commentId,
+        body: editingBody.trim(),
+      })
+      setLocalComments((prev) => prev.map((comment) => (comment.id === commentId ? updated : comment)))
+      handleCancelEditComment()
+    } catch (err) {
+      setCommentError(err?.message || 'Failed to edit comment')
+    } finally {
+      setEditingComment(false)
     }
   }
 
@@ -324,9 +363,43 @@ export default function TicketDetailPage() {
                       <span>{comment.author?.email || 'Unknown'} </span>
                       <span>{formatDate(comment.createdAt)}</span>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{comment.body}</p>
+                    {editingCommentId === comment.id ? (
+                      <div className="mt-2 space-y-2">
+                        <textarea
+                          className="input-field min-h-[84px] resize-none bg-white"
+                          value={editingBody}
+                          onChange={(e) => setEditingBody(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelEditComment}
+                            className="btn-secondary !px-3 !py-1.5 !text-xs"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEditComment(comment.id)}
+                            disabled={editingComment}
+                            className="btn-primary !px-3 !py-1.5 !text-xs disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {editingComment ? 'Saving…' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{comment.body}</p>
+                    )}
                     {(canDeleteTicket || comment.author?.id === user?.id) ? (
-                      <div className="mt-2 flex justify-end">
+                      <div className="mt-2 flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditComment(comment)}
+                          className="btn-secondary !px-3 !py-1.5 !text-xs"
+                        >
+                          Edit
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteComment(comment.id)}

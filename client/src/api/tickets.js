@@ -48,6 +48,16 @@ export function addTicketComment({ baseUrl, token, ticketId, body }) {
   })
 }
 
+export function updateTicketComment({ baseUrl, token, ticketId, commentId, body }) {
+  return apiJson({
+    baseUrl,
+    token,
+    path: `/api/tickets/${ticketId}/comments/${commentId}`,
+    method: 'PATCH',
+    body: { body },
+  })
+}
+
 export function listTicketComments({ baseUrl, token, ticketId }) {
   return apiJson({
     baseUrl,
