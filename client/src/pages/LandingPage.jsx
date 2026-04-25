@@ -88,7 +88,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 px-4 py-2 transition-colors">
-              Sign in
+              Login
             </Link>
             <Link to="/signup" className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl px-4 py-2 transition-colors">
               Get started
@@ -121,7 +121,7 @@ export default function LandingPage() {
                   Get started free <ArrowRight size={16} />
                 </Link>
                 <Link to="/login" className="inline-flex items-center gap-2 bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold text-sm rounded-xl px-6 py-3 transition-colors">
-                  Sign in to your account
+                  Login to your account
                 </Link>
               </div>
               <div className="mt-8 flex items-center gap-6 flex-wrap">
@@ -304,7 +304,7 @@ export default function LandingPage() {
                 Create free account <ArrowRight size={16} />
               </Link>
               <Link to="/login" className="bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm rounded-xl px-8 py-3 transition-colors inline-flex items-center gap-2 border border-indigo-400 shadow-sm">
-                Sign in
+                Login
               </Link>
             </div>
             <div className="mt-8 flex items-center justify-center gap-2 text-indigo-300/80">
@@ -329,7 +329,7 @@ export default function LandingPage() {
               <p className="text-sm text-slate-400 mt-2 font-medium">SLIIT Faculty of Computing · IT3030 PAF 2026</p>
             </div>
             <nav className="flex gap-6">
-              <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Sign in</Link>
+              <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Login</Link>
               <Link to="/signup" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">Create account</Link>
             </nav>
           </div>
