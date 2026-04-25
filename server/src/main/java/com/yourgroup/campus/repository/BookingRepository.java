@@ -1,26 +1,24 @@
 package com.yourgroup.campus.repository;
 
-import com.yourgroup.campus.model.Booking;
-import com.yourgroup.campus.model.Booking.BookingStatus;
-import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
+import com.yourgroup.campus.model.Booking;
+import com.yourgroup.campus.model.Booking.BookingStatus;
+
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Member 2 - Booking Management
 
-        /**
-         * Find APPROVED bookings that overlap with the given time window.
-         * Used during booking creation to detect conflicts.
-         */
     @Query("""
             SELECT b FROM Booking b
             WHERE b.resource.id = :resourceId
@@ -33,13 +31,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("resourceId") Long resourceId,
             @Param("bookingDate") LocalDate bookingDate,
             @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime);
+            @Param("endTime") LocalDateTime endTime
+    );
 
-        /**
-         * Find APPROVED bookings that overlap with the given time window,
-         * excluding a specific booking by id.
-         * Used during approval to re-check conflicts.
-         */
     @Query("""
             SELECT b FROM Booking b
             WHERE b.resource.id = :resourceId

@@ -21,13 +21,7 @@ public class ResourceService {
     private final ResourceRepository resourceRepository;
 
     public List<ResourceResponseDTO> search(Resource.ResourceType type, String location, Integer minCapacity) {
-        String queryLocation = location == null ? null : location.trim().toLowerCase();
-        return resourceRepository.findAll().stream()
-                .filter(resource -> resource.getStatus() != Resource.ResourceStatus.OUT_OF_SERVICE)
-                .filter(resource -> type == null || resource.getType() == type)
-                .filter(resource -> minCapacity == null || (resource.getCapacity() != null && resource.getCapacity() >= minCapacity))
-                .filter(resource -> queryLocation == null || queryLocation.isBlank() ||
-                        (resource.getLocation() != null && resource.getLocation().toLowerCase().contains(queryLocation)))
+        return resourceRepository.search(type, location, minCapacity).stream()
                 .map(ResourceResponseDTO::from)
                 .toList();
     }

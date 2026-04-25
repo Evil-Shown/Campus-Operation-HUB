@@ -1,8 +1,6 @@
 package com.yourgroup.campus.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,35 +12,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
-    private Map<String, Object> errorBody(HttpStatus status, String error, String message, HttpServletRequest request) {
-        return Map.of(
-                "timestamp", Instant.now().toString(),
-                "status", status.value(),
-                "error", error,
-                "message", message == null ? "" : message,
-                "path", request.getRequestURI()
-        );
-    }
-
     @ExceptionHandler(BookingNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleBookingNotFound(
+    public ResponseEntity<Map<String, Object>> handleBookingNotFoundException(
             BookingNotFoundException ex,
-            HttpServletRequest request) {
-        HttpStatus status = HttpStatus.NOT_FOUND;
-        return ResponseEntity.status(status)
-                .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
     @ExceptionHandler(BookingConflictException.class)
-    public ResponseEntity<Map<String, Object>> handleBookingConflict(
+    public ResponseEntity<Map<String, Object>> handleBookingConflictException(
             BookingConflictException ex,
-            HttpServletRequest request) {
-        HttpStatus status = HttpStatus.CONFLICT;
-        return ResponseEntity.status(status)
-                .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
     @ExceptionHandler(UnauthorizedBookingAccessException.class)
@@ -55,25 +40,23 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
             IllegalArgumentException ex,
-            HttpServletRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        return ResponseEntity.status(status)
-                .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(
+    public ResponseEntity<Map<String, Object>> handleIllegalStateException(
             IllegalStateException ex,
-            HttpServletRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        return ResponseEntity.status(status)
-                .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
@@ -86,12 +69,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleUnhandledException(
-            Exception ex,
-            HttpServletRequest request) {
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        return ResponseEntity.status(status)
-                .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request
+    ) {
+        Map<String, Object> body = Map.of(
+                "timestamp", LocalDateTime.now().toString(),
+                "status", status.value(),
+                "error", status.getReasonPhrase(),
+                "message", message,
+                "path", request.getRequestURI()
+        );
+
+        return ResponseEntity.status(status).body(body);
     }
 }

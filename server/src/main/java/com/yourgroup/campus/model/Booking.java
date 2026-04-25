@@ -1,7 +1,10 @@
 package com.yourgroup.campus.model;
 
+import java.time.LocalDateTime;
+
 import com.campusops.campus_ops_backend.model.Resource;
 import com.campusops.campus_ops_backend.model.User;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,10 +24,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Entity
 @Table(name = "bookings")

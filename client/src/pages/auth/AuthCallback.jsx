@@ -1,45 +1,56 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Loader2, ShieldCheck } from 'lucide-react'
+import api from '../../api/axios'
 import { useAuth } from '../../context/AuthContext'
-import LoadingSpinner from '../../components/common/LoadingSpinner'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const { signin } = useAuth()
+  const { setSession } = useAuth()
+
+  const getDashboardPath = (role) => (role === 'ADMIN' ? '/admin' : '/dashboard')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
-    const userJson = params.get('user')
 
-    if (token && userJson) {
-      try {
-        const userData = JSON.parse(decodeURIComponent(userJson))
-        // Establish secure session
-        localStorage.setItem('token', token)
-        localStorage.setItem('user', JSON.stringify(userData))
-        
-        // Finalize node synchronization
-        const targetPath = userData.role === 'ADMIN' ? '/admin' : '/dashboard'
-        setTimeout(() => navigate(targetPath), 1500)
-      } catch (e) {
-        console.error('Signal corruption detected during synchronization.')
-        navigate('/login')
+    const hydrateSession = async () => {
+      if (!token) {
+        navigate('/login', { replace: true })
+        return
       }
-    } else {
-      navigate('/login')
+
+      localStorage.setItem('token', token)
+
+      try {
+        const response = await api.get('/auth/me')
+        setSession(token, response.data)
+        navigate(getDashboardPath(response?.data?.role), { replace: true })
+      } catch {
+        setSession(token, null)
+        navigate('/dashboard', { replace: true })
+      }
     }
-  }, [navigate])
+
+    hydrateSession()
+  }, [navigate, setSession])
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-       <div className="flex flex-col items-center gap-10">
-          <LoadingSpinner fullPage={false} />
-          <div className="text-center space-y-4">
-             <h2 className="text-xl font-black text-white uppercase tracking-[0.6em] animate-pulse">Establishing Secure Link</h2>
-             <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.4em] italic">Finalizing identity synchronization protocol...</p>
-          </div>
-       </div>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 font-sans">
+      <div className="flex flex-col items-center gap-6 p-12 bg-white rounded-[2rem] shadow-2xl border border-slate-100">
+        <div className="relative">
+          <div className="absolute inset-0 bg-indigo-100 rounded-full blur-xl animate-pulse"></div>
+          <Loader2 className="h-12 w-12 text-indigo-600 animate-spin relative z-10" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Authenticating Protocol</h2>
+          <p className="text-slate-400 text-sm font-medium tracking-wide uppercase">Securing Institutional Link...</p>
+        </div>
+        <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+          <ShieldCheck size={14} />
+          Verified Secure Handshake
+        </div>
+      </div>
     </div>
   )
 }

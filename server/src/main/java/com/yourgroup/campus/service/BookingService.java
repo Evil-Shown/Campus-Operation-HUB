@@ -1,13 +1,13 @@
 package com.yourgroup.campus.service;
 
+import com.yourgroup.campus.dto.BookingRequestDTO;
+import com.yourgroup.campus.dto.BookingResponseDTO;
 import com.campusops.campus_ops_backend.exception.ResourceNotFoundException;
 import com.campusops.campus_ops_backend.model.Resource;
 import com.campusops.campus_ops_backend.model.User;
 import com.campusops.campus_ops_backend.repository.ResourceRepository;
 import com.campusops.campus_ops_backend.repository.UserRepository;
 import com.campusops.campus_ops_backend.service.NotificationService;
-import com.yourgroup.campus.dto.BookingRequestDTO;
-import com.yourgroup.campus.dto.BookingResponseDTO;
 import com.yourgroup.campus.exception.BookingConflictException;
 import com.yourgroup.campus.exception.BookingNotFoundException;
 import com.yourgroup.campus.exception.UnauthorizedBookingAccessException;
@@ -178,7 +178,8 @@ public class BookingService {
                 booking.getStartTime().toLocalDate(),
                 booking.getStartTime(),
                 booking.getEndTime(),
-                bookingId);
+                bookingId
+        );
         if (!conflicts.isEmpty()) {
             throw new BookingConflictException("A conflicting booking was approved while this was pending");
         }

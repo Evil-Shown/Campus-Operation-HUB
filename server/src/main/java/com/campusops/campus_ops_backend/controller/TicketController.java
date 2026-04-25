@@ -3,6 +3,7 @@ package com.campusops.campus_ops_backend.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.validation.annotation.Validated;
 
 import com.campusops.campus_ops_backend.dto.request.CommentRequestDTO;
 import com.campusops.campus_ops_backend.dto.request.TicketRequestDTO;
@@ -28,11 +30,15 @@ import com.campusops.campus_ops_backend.security.UserPrincipal;
 import com.campusops.campus_ops_backend.service.TicketService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
+@Validated
 public class TicketController {
 
     private final TicketService ticketService;
@@ -48,6 +54,7 @@ public class TicketController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
     public ResponseEntity<List<TicketResponseDTO>> all(@RequestParam(required = false) Ticket.TicketStatus status) {
         return ResponseEntity.ok(ticketService.getAll(status));
     }
@@ -61,15 +68,19 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TicketResponseDTO> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.getById(id));
+    public ResponseEntity<TicketResponseDTO> getById(@PathVariable @Positive Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ticketService.getById(id, principal.getUser()));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
-    public ResponseEntity<TicketResponseDTO> updateStatus(@PathVariable Long id,
-            @RequestParam Ticket.TicketStatus status,
-            @RequestParam(required = false) String resolutionNote,
+    public ResponseEntity<TicketResponseDTO> updateStatus(@PathVariable @Positive Long id,
+            @RequestParam @NotNull Ticket.TicketStatus status,
+            @RequestParam(required = false) @Size(max = 2000) String resolutionNote,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -79,8 +90,8 @@ public class TicketController {
 
     @PatchMapping("/{id}/assign")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<TicketResponseDTO> assign(@PathVariable Long id,
-            @RequestParam Long assigneeId,
+    public ResponseEntity<TicketResponseDTO> assign(@PathVariable @Positive Long id,
+            @RequestParam @Positive Long assigneeId,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -89,7 +100,7 @@ public class TicketController {
     }
 
     @PostMapping("/{ticketId}/comments")
-    public ResponseEntity<CommentResponseDTO> addComment(@PathVariable Long ticketId,
+    public ResponseEntity<CommentResponseDTO> addComment(@PathVariable @Positive Long ticketId,
             @Valid @RequestBody CommentRequestDTO dto,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
@@ -98,20 +109,57 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.addComment(ticketId, dto, principal.getUser()));
     }
 
-    @DeleteMapping("/{ticketId}/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long ticketId,
-            @PathVariable Long commentId,
+    @PatchMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<CommentResponseDTO> updateComment(@PathVariable @Positive Long ticketId,
+            @PathVariable @Positive Long commentId,
+            @Valid @RequestBody CommentRequestDTO dto,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        ticketService.deleteComment(commentId, principal.getUser());
+        return ResponseEntity.ok(ticketService.updateComment(ticketId, commentId, dto, principal.getUser()));
+    }
+
+    @GetMapping("/{ticketId}/comments")
+    public ResponseEntity<List<CommentResponseDTO>> getComments(@PathVariable @Positive Long ticketId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ticketService.getComments(ticketId, principal.getUser()));
+    }
+
+    @GetMapping("/{ticketId}/attachments/{fileName}")
+    public ResponseEntity<byte[]> getAttachment(@PathVariable @Positive Long ticketId,
+            @PathVariable String fileName,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        TicketService.TicketAttachmentFileDTO file = ticketService.getAttachmentFile(ticketId, fileName, principal.getUser());
+        String safeFileName = file.originalFileName() == null || file.originalFileName().isBlank()
+                ? "attachment"
+                : file.originalFileName();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.mimeType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : file.mimeType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + safeFileName + "\"")
+                .body(file.content());
+    }
+
+    @DeleteMapping("/{ticketId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable @Positive Long ticketId,
+            @PathVariable @Positive Long commentId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        ticketService.deleteComment(ticketId, commentId, principal.getUser());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id,
+    public ResponseEntity<Void> delete(@PathVariable @Positive Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

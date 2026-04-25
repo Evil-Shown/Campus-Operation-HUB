@@ -88,7 +88,9 @@ const BookingForm = () => {
       setError(err.response?.data?.message || 'Failed to create booking. Please try again.')
     } finally {
       setSubmitting(false)
+      setSubmitting(false)
     }
+  }
   }
 
   return (
@@ -183,5 +185,8 @@ const BookingForm = () => {
     </div>
   )
 }
+  )
+}
 
+export default BookingForm
 export default BookingForm

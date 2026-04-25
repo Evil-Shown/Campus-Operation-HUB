@@ -44,7 +44,11 @@ const AdminBookings = () => {
       await bookingService.approveBooking(id, note)
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'APPROVED', adminReviewNote: note } : b)))
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to approve booking.')
+      if (err.response?.status === 409) {
+        alert('Could not approve — a conflicting booking exists.')
+      } else {
+        alert(err.response?.data?.message || 'Failed to approve booking.')
+      }
     }
   }
 
@@ -59,17 +63,37 @@ const AdminBookings = () => {
     }
   }
 
-  const totalPages = Math.max(1, Math.ceil(bookings.length / pageSize))
-  const paginated = bookings.slice((page - 1) * pageSize, page * pageSize)
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex flex-col items-center justify-center py-16 text-gray-600">
+          <span className="animate-spin border-2 border-gray-400 border-t-transparent rounded-full w-6 h-6 mb-3" />
+          <p>Loading pending bookings...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <p className="text-red-600 text-center py-8">{error}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      <div className="mb-2 flex items-center gap-3">
-        <h1 className="text-2xl font-bold text-gray-800">Booking Dashboard</h1>
-        <span className="rounded-full border border-yellow-200 bg-yellow-100 px-3 py-0.5 text-sm font-semibold text-yellow-700">
-          {bookings.length} results
-        </span>
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl font-bold text-gray-800">Pending Approvals</h1>
+        {bookings.length > 0 && (
+          <span className="bg-yellow-100 text-yellow-800 text-sm px-3 py-1 rounded-full font-medium">
+            {bookings.length} pending
+          </span>
+        )}
       </div>
+
+      <p className="text-gray-500 mb-6">Review and action pending booking requests</p>
       <p className="mb-5 text-sm text-gray-500">Review, approve, or reject booking requests.</p>
 
       <div className="mb-5 grid gap-3 md:grid-cols-4">

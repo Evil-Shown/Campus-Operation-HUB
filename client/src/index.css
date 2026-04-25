@@ -21,12 +21,7 @@
 
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-primary-500/30;
-    font-family: 'Inter', sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
   }
 
   .dark body {
@@ -52,11 +47,16 @@
   }
 
   .btn-primary {
-    @apply relative px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-300 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 active:scale-95 shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 disabled:opacity-50 disabled:pointer-events-none;
+    @apply relative px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-300
+    bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500
+    active:scale-95 shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40
+    disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 active:scale-95 shadow-sm hover:shadow-md;
+    @apply px-6 py-2.5 rounded-xl font-semibold transition-all duration-300
+    bg-white hover:bg-slate-50 text-slate-900 border border-slate-200
+    active:scale-95 shadow-sm hover:shadow-md;
   }
 
   .dark .btn-secondary {
@@ -64,7 +64,8 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 backdrop-blur-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none;
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white/50 backdrop-blur-sm
+    focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none;
   }
 
   .dark .input-field {
@@ -78,7 +79,7 @@
   }
 
   .bg-gradient-mesh {
-    background-image:
+    background-image: 
       radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
       radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
       radial-gradient(at 100% 100%, rgba(34, 211, 238, 0.15) 0px, transparent 50%),
@@ -98,10 +99,12 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom,
-        transparent,
-        rgba(124, 58, 237, 0.05) 50%,
-        transparent);
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      rgba(124, 58, 237, 0.05) 50%,
+      transparent
+    );
     height: 100px;
     width: 100%;
     animation: scan 4s linear infinite;
@@ -109,13 +112,8 @@
   }
 
   @keyframes scan {
-    from {
-      transform: translateY(-100%);
-    }
-
-    to {
-      transform: translateY(500%);
-    }
+    from { transform: translateY(-100%); }
+    to { transform: translateY(500%); }
   }
 
   .scrollbar-refined::-webkit-scrollbar {

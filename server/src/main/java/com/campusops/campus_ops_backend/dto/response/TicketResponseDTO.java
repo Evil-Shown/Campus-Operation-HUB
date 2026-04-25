@@ -2,6 +2,7 @@ package com.campusops.campus_ops_backend.dto.response;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.nio.file.Paths;
 
 import com.campusops.campus_ops_backend.model.Ticket;
 
@@ -41,7 +42,11 @@ public record TicketResponseDTO(
                 t.getStatus(),
                 t.getContactInfo(),
                 t.getResolutionNote(),
-                t.getAttachments() == null ? List.of() : t.getAttachments().stream().map(TicketAttachment -> TicketAttachment.getFilePath()).toList(),
+                t.getAttachments() == null ? List.of()
+                        : t.getAttachments().stream()
+                                .map(attachment -> attachment.getFilePath())
+                                .map(path -> path == null ? null : Paths.get(path).getFileName().toString())
+                                .toList(),
                 t.getCreatedAt());
     }
 }

@@ -5,7 +5,6 @@ import com.yourgroup.campus.dto.BookingResponseDTO;
 import com.yourgroup.campus.dto.BookingStatusUpdateDTO;
 import com.yourgroup.campus.model.Booking.BookingStatus;
 import com.yourgroup.campus.service.BookingService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.campusops.campus_ops_backend.security.UserPrincipal;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,9 +28,9 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<BookingResponseDTO> createBooking(
             @Valid @RequestBody BookingRequestDTO dto,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(bookingService.createBooking(dto, principal.getUser().getId()));
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.createBooking(dto, userId));
     }
 
     @GetMapping("/my")
