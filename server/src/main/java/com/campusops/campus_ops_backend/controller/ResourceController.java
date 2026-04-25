@@ -1,4 +1,4 @@
-package com.campusops.campus_ops_backend.controller;
+/*package com.campusops.campus_ops_backend.controller;
 
 import java.util.List;
 
@@ -59,6 +59,59 @@ public class ResourceController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         resourceService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+*/
+
+package com.campusops.campus_ops_backend.controller;
+
+import com.campusops.campus_ops_backend.model.Resource;
+import com.campusops.campus_ops_backend.model.ResourceType;
+import com.campusops.campus_ops_backend.service.ResourceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/resources")
+public class ResourceController {
+
+    @Autowired
+    private ResourceService resourceService;
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Resource>> search(
+            @RequestParam(required = false) ResourceType type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Integer minCapacity) {
+        return ResponseEntity.ok(resourceService.searchResources(type, location, minCapacity));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<Resource>> getAllForAdmin() {
+        return ResponseEntity.ok(resourceService.getAllResourcesForAdmin());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<Resource> create(@RequestBody Resource resource) {
+        return ResponseEntity.ok(resourceService.createResource(resource));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<Resource> update(@PathVariable Long id, @RequestBody Resource resource) {
+        return ResponseEntity.ok(resourceService.updateResource(id, resource));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        resourceService.softDeleteResource(id);
         return ResponseEntity.noContent().build();
     }
 }
