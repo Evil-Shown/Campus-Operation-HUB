@@ -160,5 +160,5 @@ export default function TicketCreatePage() {
         </div>
       </form>
     </div>
-  )
+  );
 }

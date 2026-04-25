@@ -4,7 +4,7 @@ import PrivateRoute from './components/common/PrivateRoute'
 import Layout from './components/layout/Layout'
 import RootPage from './pages/RootPage'
 import LoginPage from './pages/auth/LoginPage'
-import SignupPage from './pages/SignupPage'
+import SignupPage from './pages/auth/SignupPage'
 import AuthCallback from './pages/auth/AuthCallback'
 import ResourceListPage from './pages/resources/ResourceListPage'
 import ResourceDetailPage from './pages/resources/ResourceDetailPage'
@@ -40,6 +40,7 @@ function App() {
           <Route path="/notifications" element={withProtectedLayout(<NotificationsPage />)} />
           <Route path="/admin-dashboard" element={withProtectedLayout(<AdminDashboardPage />, ['ADMIN'])} />
           <Route path="/resources/:id" element={withProtectedLayout(<ResourceDetailPage />)} />
+          <Route path="/bookings/new" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/my" element={withProtectedLayout(<MyBookingsPage />)} />
           <Route path="/tickets" element={withProtectedLayout(<TicketsPage />)} />
