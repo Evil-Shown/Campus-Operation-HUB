@@ -16,13 +16,9 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useResources from '../../hooks/useResources';
-import PageHeader from '../../components/common/PageHeader';
-import Card from '../../components/common/Card';
 import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ErrorMessage from '../../components/common/ErrorMessage';
-import EmptyState from '../../components/common/EmptyState';
 
 const ResourceCard = ({ resource, idx }) => {
   const getGradient = (type) => {
@@ -53,7 +49,7 @@ const ResourceCard = ({ resource, idx }) => {
       whileHover={{ y: -10 }}
       className="group"
     >
-      <Card className="!p-0 overflow-hidden h-full flex flex-col hover:border-violet-200 transition-all duration-500 shadow-2xl shadow-slate-200/40">
+      <div className="overflow-hidden h-full flex flex-col hover:border-violet-200 transition-all duration-500 shadow-2xl shadow-slate-200/40 rounded-3xl border border-slate-100 bg-white">
         <div className={`h-40 bg-gradient-to-br ${getGradient(resource.type)} relative overflow-hidden p-8`}>
           <div className="absolute top-0 right-0 p-6">
             <Badge 
@@ -115,13 +111,14 @@ const ResourceCard = ({ resource, idx }) => {
             </div>
             
             <Link to={`/resources/${resource.id}`}>
-              <Button size="sm" icon={ArrowUpRight} className="group-hover:translate-y-[-2px]">
+              <button className="group-hover:translate-y-[-2px] h-10 px-5 rounded-xl bg-violet-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all flex items-center gap-2">
+                <ArrowUpRight size={16} />
                 Enter Node
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 };
@@ -141,24 +138,25 @@ export default function ResourceListPage() {
 
   return (
     <div className="space-y-12 pb-24">
-      <PageHeader 
-        title="Asset Directory" 
-        subtitle="Executing deep scan across 2,400+ institutional resource nodes."
-        action={
-          <div className="flex items-center gap-4">
-             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 shadow-sm">
-                <Database size={20} />
-             </div>
-             <div className="text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Assets</p>
-                <p className="text-2xl font-black text-slate-900 leading-none">{resources.length}</p>
-             </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <p className="text-xs font-black text-violet-600 uppercase tracking-[0.3em]">Asset Control</p>
+          <h1 className="mt-2 text-4xl font-black text-slate-900 tracking-tight">Asset Directory</h1>
+          <p className="mt-2 text-sm text-slate-500">Executing deep scan across institutional resource nodes.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 shadow-sm">
+            <Database size={20} />
           </div>
-        }
-      />
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Assets</p>
+            <p className="text-2xl font-black text-slate-900 leading-none">{resources.length}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Advanced Filter Matrix */}
-      <Card className="!p-4 flex flex-col md:flex-row items-center gap-4 bg-white/50 border-slate-100 shadow-lg">
+      <div className="p-4 flex flex-col md:flex-row items-center gap-4 bg-white/50 border border-slate-100 shadow-lg rounded-3xl">
         <div className="relative flex-1 group">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-violet-600 transition-colors" />
           <input
@@ -175,12 +173,12 @@ export default function ResourceListPage() {
           </button>
           <div className="h-14 w-[1px] bg-slate-100 mx-1 hidden md:block" />
           <Link to="/tickets/new">
-            <Button size="md" variant="secondary" className="h-14 rounded-2xl">
+            <button className="h-14 px-6 rounded-2xl bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all">
               Add Node
-            </Button>
+            </button>
           </Link>
         </div>
-      </Card>
+      </div>
 
       <AnimatePresence mode="wait">
         {filteredResources.length > 0 ? (
@@ -195,11 +193,18 @@ export default function ResourceListPage() {
             ))}
           </motion.div>
         ) : (
-          <EmptyState 
-            title="Grid Scan Silent" 
-            message={`No resource profiles matched your query for "${searchTerm}". Verify operational parameters and try again.`}
-            action={<Button onClick={() => setSearchTerm('')}>Reset Global Scan</Button>}
-          />
+          <div className="rounded-3xl border border-slate-100 bg-white p-10 text-center shadow-lg">
+            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Grid Scan Silent</h3>
+            <p className="mt-3 text-sm text-slate-500">
+              {`No resource profiles matched your query for "${searchTerm}". Verify operational parameters and try again.`}
+            </p>
+            <button
+              onClick={() => setSearchTerm('')}
+              className="mt-6 h-11 px-6 rounded-xl bg-violet-600 text-white text-[11px] font-black uppercase tracking-widest hover:bg-violet-700 transition-all"
+            >
+              Reset Global Scan
+            </button>
+          </div>
         )}
       </AnimatePresence>
     </div>

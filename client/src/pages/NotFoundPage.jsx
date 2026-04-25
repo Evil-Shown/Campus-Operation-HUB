@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldAlert, ArrowLeft, Home, Terminal, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Button from '../components/common/Button';
 
 export default function NotFoundPage() {
   return (
@@ -40,9 +39,9 @@ export default function NotFoundPage() {
               </button>
            </Link>
            <Link to="/dashboard">
-              <Button icon={Home} className="h-16 px-10 rounded-2xl">
-                 Return to Command
-              </Button>
+              <button className="h-16 px-10 rounded-2xl bg-white/5 border border-white/10 text-white text-[11px] font-black uppercase tracking-[0.4em] hover:bg-white hover:text-slate-900 transition-all flex items-center gap-4">
+                 <Home size={18} /> Return to Command
+              </button>
            </Link>
         </div>
 
