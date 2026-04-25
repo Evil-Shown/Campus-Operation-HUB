@@ -1,6 +1,6 @@
 package com.campusops.campus_ops_backend.dto.request;
 
-import com.yourgroup.campus.model.Booking;
+import com.campusops.campus_ops_backend.model.Booking;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

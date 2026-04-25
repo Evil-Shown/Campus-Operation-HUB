@@ -57,7 +57,7 @@ function formatTime(dateString) {
   const diffMs = now - date
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffHrs / 24)
-
+  
   if (diffHrs < 1) return 'Just now'
   if (diffHrs < 24) return `${diffHrs} hr${diffHrs > 1 ? 's' : ''} ago`
   if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
@@ -66,10 +66,10 @@ function formatTime(dateString) {
 
 function formatDateTime(dateString) {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    hour: '2-digit', 
     minute: '2-digit',
     hour12: true
   })
@@ -96,7 +96,7 @@ export default function UserDashboard() {
       try {
         setLoading(true)
         setError(null)
-
+        
         const [bookingsData, ticketsData, resourcesData] = await Promise.all([
           listMyBookings({ baseUrl: apiBaseUrl, token }).catch(e => {
             console.error('Failed to fetch bookings:', e)
@@ -111,7 +111,7 @@ export default function UserDashboard() {
             return []
           })
         ])
-
+        
         setBookings(bookingsData || [])
         setTickets(ticketsData || [])
         setResources(resourcesData || [])
@@ -141,7 +141,7 @@ export default function UserDashboard() {
   // Calculate stats dynamically
   const activeReservations = bookings.filter(b => b.status === 'CONFIRMED' || b.status === 'PENDING').length
   const pendingSupport = tickets.filter(t => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length
-
+  
   const stats = [
     { icon: Calendar, title: 'Active Reservations', value: activeReservations.toString().padStart(2, '0'), trend: 12, color: 'primary' },
     { icon: ShieldCheck, title: 'Identity Status', value: 'Verified', trend: 100, color: 'blue' },
@@ -194,7 +194,7 @@ export default function UserDashboard() {
           <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Failed to Load Dashboard</h2>
           <p className="text-gray-600 mb-6">{error}</p>
-          <button
+          <button 
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
           >
@@ -211,7 +211,7 @@ export default function UserDashboard() {
       <section className="relative overflow-hidden rounded-[2rem] bg-white/70 backdrop-blur-md border border-white/30 shadow-xl p-8 lg:p-12 group">
         <div className="absolute top-0 right-0 w-[45%] h-full bg-gradient-to-l from-indigo-100/40 to-transparent pointer-events-none rounded-r-[2rem]" />
         <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-indigo-200/40 blur-[120px] rounded-full pointer-events-none" />
-
+        
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-12">
           <div className="flex-1">
             <motion.div
@@ -324,7 +324,7 @@ export default function UserDashboard() {
 
           <div className="relative group overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-lg">
             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/40 blur-3xl -mr-16 -mt-16" />
-
+            
             <div className="relative p-8 space-y-8">
               {recentTickets.map((ticket, idx) => (
                 <div key={ticket.id} className="group relative pl-6 border-l-2 border-gray-100 hover:border-indigo-300 transition-all duration-500">
@@ -358,14 +358,14 @@ export default function UserDashboard() {
           </div>
           <div className="relative hidden sm:block">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search assets..."
+            <input 
+              type="text" 
+              placeholder="Search assets..." 
               className="bg-white/80 backdrop-blur border border-gray-200 focus:border-indigo-300 rounded-xl pl-11 pr-5 h-11 text-xs font-bold uppercase tracking-widest focus:outline-none transition-all w-64 shadow-sm hover:shadow-md"
             />
           </div>
         </div>
-
+        
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 px-1">
           {resourceCategories.map((cat, idx) => (
             <motion.div
