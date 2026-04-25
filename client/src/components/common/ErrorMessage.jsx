@@ -1,12 +1,3 @@
-<<<<<<< feature/facilities
-export default function ErrorMessage({ message }) {
-  return (
-    <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-      {message}
-    </div>
-  )
-}
-=======
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -30,4 +21,3 @@ const ErrorMessage = ({ message }) => {
 };
 
 export default ErrorMessage;
->>>>>>> development
