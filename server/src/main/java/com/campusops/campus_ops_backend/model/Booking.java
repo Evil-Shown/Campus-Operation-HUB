@@ -12,21 +12,32 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
+@Entity
+@Table(name = "bookings")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
 @Table(name = "bookings")
 public class Booking {
+    // Member 2 - Booking Management
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,21 +57,39 @@ public class Booking {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @NotBlank
+    @Column(name = "purpose", nullable = false, length = 500)
     private String purpose;
 
-    private Integer attendees;
+    @Column(name = "attendees")
+    private Integer expectedAttendees;
 
     @Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus status = BookingStatus.PENDING;
 
-    private String rejectReason;
+    @Column(name = "reject_reason", length = 500)
+    private String adminReviewNote;
 
-    @Default
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Transient
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        if (status == null) {
+            status = BookingStatus.PENDING;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public enum BookingStatus { PENDING, APPROVED, REJECTED, CANCELLED }
 }

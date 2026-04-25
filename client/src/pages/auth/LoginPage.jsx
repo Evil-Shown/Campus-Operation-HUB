@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 
 function readLoginErrorMessage(err) {
   if (err?.response?.data?.message) return err.response.data.message
+  if (err?.message) return err.message
   if (err?.code === 'ERR_NETWORK') return 'Unable to connect to the campus servers. Please check your internet.'
   return 'Authentication failed. Please verify your institutional credentials.'
 }
