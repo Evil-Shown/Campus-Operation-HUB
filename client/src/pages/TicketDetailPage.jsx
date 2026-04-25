@@ -57,6 +57,7 @@ export default function TicketDetailPage() {
   const [editingCommentId, setEditingCommentId] = useState(null)
   const [editingBody, setEditingBody] = useState('')
   const [editingComment, setEditingComment] = useState(false)
+  const [attachmentError, setAttachmentError] = useState('')
 
   const canEditStatus = useMemo(() => {
     const role = normalizeRole(user?.role)
@@ -227,6 +228,27 @@ export default function TicketDetailPage() {
     }
   }
 
+  const handleOpenAttachment = async (fileName) => {
+    setAttachmentError('')
+    try {
+      const url = getTicketAttachmentUrl({ baseUrl: apiBaseUrl, ticketId: ticket.id, fileName })
+      const response = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      if (!response.ok) {
+        throw new Error(`Failed to open attachment (${response.status})`)
+      }
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      window.open(objectUrl, '_blank', 'noopener,noreferrer')
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+    } catch (err) {
+      setAttachmentError(err?.message || 'Failed to open attachment')
+    }
+  }
+
   if (loading) {
     return <div className="mx-auto w-full max-w-5xl px-2 py-8 text-sm text-slate-600">Loading ticket…</div>
   }
@@ -316,20 +338,24 @@ export default function TicketDetailPage() {
               <ul className="mt-3 space-y-2 text-sm text-slate-700">
                 {ticket.attachmentPaths.map((path) => (
                   <li key={path} className="rounded-lg bg-slate-50 px-3 py-2">
-                    <a
-                      href={getTicketAttachmentUrl({ baseUrl: apiBaseUrl, ticketId: ticket.id, fileName: path })}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-medium text-indigo-600 hover:underline break-all"
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAttachment(path)}
+                      className="break-all font-medium text-indigo-600 hover:underline"
                     >
                       {path}
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="mt-3 text-sm text-slate-600">No attachments.</p>
             )}
+            {attachmentError ? (
+              <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                {attachmentError}
+              </p>
+            ) : null}
           </section>
 
           <section className="glass-card !p-5">
