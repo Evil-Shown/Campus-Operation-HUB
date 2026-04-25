@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@SuppressWarnings("null")
 public class ResourceService {
 
     private final ResourceRepository resourceRepository;
