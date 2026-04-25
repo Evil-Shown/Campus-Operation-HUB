@@ -5,15 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import { listNotifications, markAllRead, markOneRead } from '../api/notifications'
 import { useAuth } from '../context/AuthContext'
 
-const Motion = motion
-
 function getNotificationIcon(type) {
   const icons = {
     BOOKING_APPROVED: CheckCircle,
     BOOKING_REJECTED: XCircle,
+    TICKET_STATUS_CHANGED: MessageCircle,
+    TICKET_COMMENT_ADDED: MessageCircle,
     TICKET_UPDATED: MessageCircle,
-    TICKET_RESOLVED: CheckCircle,
-    TICKET_ASSIGNED: Bell,
     COMMENT_ADDED: MessageCircle,
   }
   return icons[type] || Bell
@@ -23,9 +21,9 @@ function getNotificationColor(type) {
   const colors = {
     BOOKING_APPROVED: 'text-emerald-500 bg-emerald-50 border-emerald-200',
     BOOKING_REJECTED: 'text-rose-500 bg-rose-50 border-rose-200',
+    TICKET_STATUS_CHANGED: 'text-blue-500 bg-blue-50 border-blue-200',
+    TICKET_COMMENT_ADDED: 'text-purple-500 bg-purple-50 border-purple-200',
     TICKET_UPDATED: 'text-blue-500 bg-blue-50 border-blue-200',
-    TICKET_RESOLVED: 'text-emerald-500 bg-emerald-50 border-emerald-200',
-    TICKET_ASSIGNED: 'text-indigo-500 bg-indigo-50 border-indigo-200',
     COMMENT_ADDED: 'text-purple-500 bg-purple-50 border-purple-200',
   }
   return colors[type] || 'text-gray-500 bg-gray-50 border-gray-200'
@@ -46,7 +44,7 @@ function formatTime(dateString) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default function NotificationDropdown({ isOpen, onClose, onMarkRead }) {
+export default function NotificationDropdown({ isOpen, onClose, onMarkRead, onUnreadCountChange }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(false)
   const { apiBaseUrl, token } = useAuth()
@@ -73,11 +71,15 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkRead }) {
   const handleMarkAsRead = async (id) => {
     try {
       await markOneRead({ baseUrl: apiBaseUrl, token, id })
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-      const unreadCount = notifications.filter(n => !n.read).length
-      if (unreadCount <= 1 && onMarkRead) {
-        onMarkRead()
-      }
+      setNotifications((prev) => {
+        const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        const nextUnread = updated.filter((n) => !n.read).length
+        onUnreadCountChange?.(nextUnread)
+        if (nextUnread === 0) {
+          onMarkRead?.()
+        }
+        return updated
+      })
     } catch (error) {
       console.error('Failed to mark as read:', error)
     }
@@ -87,6 +89,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkRead }) {
     try {
       await markAllRead({ baseUrl: apiBaseUrl, token })
       setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      onUnreadCountChange?.(0)
       if (onMarkRead) {
         onMarkRead()
       }
@@ -151,6 +154,11 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkRead }) {
                     <div
                       key={notif.id}
                       className={`cursor-pointer border-b border-gray-50 p-4 transition-colors hover:bg-gray-50 ${!notif.read ? 'bg-indigo-50/30' : ''}`}
+                      onClick={() => {
+                        if (!notif.read) {
+                          handleMarkAsRead(notif.id)
+                        }
+                      }}
                     >
                       <div className="flex gap-3">
                         <div className={`flex-shrink-0 h-10 w-10 rounded-xl border flex items-center justify-center ${colorClass}`}>

@@ -35,7 +35,7 @@ function getErrorMessage(error) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY))
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [loading, setLoading] = useState(true)
   const inactivityTimerRef = useRef(null)
 
@@ -43,20 +43,20 @@ export function AuthProvider({ children }) {
 
   const setSession = useCallback((nextToken, nextUser) => {
     if (nextToken) {
-      sessionStorage.setItem(TOKEN_KEY, nextToken)
+      localStorage.setItem(TOKEN_KEY, nextToken)
       setToken(nextToken)
     } else {
-      sessionStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(TOKEN_KEY)
       setToken(null)
     }
 
     const normalizedUser = normalizeUser(nextUser)
     if (normalizedUser) {
-      sessionStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
-      sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
+      localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser))
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
     } else {
-      sessionStorage.removeItem(USER_KEY)
-      sessionStorage.removeItem(LAST_ACTIVITY_KEY)
+      localStorage.removeItem(USER_KEY)
+      localStorage.removeItem(LAST_ACTIVITY_KEY)
     }
     setUser(normalizedUser)
   }, [])
@@ -126,9 +126,9 @@ export function AuthProvider({ children }) {
     let isMounted = true
 
     const bootstrapAuth = async () => {
-      const storedToken = sessionStorage.getItem(TOKEN_KEY)
-      const storedUser = sessionStorage.getItem(USER_KEY)
-      const storedLastActivity = sessionStorage.getItem(LAST_ACTIVITY_KEY)
+      const storedToken = localStorage.getItem(TOKEN_KEY)
+      const storedUser = localStorage.getItem(USER_KEY)
+      const storedLastActivity = localStorage.getItem(LAST_ACTIVITY_KEY)
 
       if (!storedToken) {
         if (isMounted) {
@@ -157,7 +157,7 @@ export function AuthProvider({ children }) {
             setUser(normalizeUser(parsedUser))
           }
         } catch {
-          sessionStorage.removeItem(USER_KEY)
+          localStorage.removeItem(USER_KEY)
         }
       }
 
@@ -194,7 +194,7 @@ export function AuthProvider({ children }) {
         window.clearTimeout(inactivityTimerRef.current)
       }
 
-      sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()))
 
       inactivityTimerRef.current = window.setTimeout(() => {
         logout('Session expired due to inactivity')
