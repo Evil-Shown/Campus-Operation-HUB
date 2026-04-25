@@ -28,6 +28,7 @@ import EmptyState from '../components/common/EmptyState';
 
 const getIcon = (type) => {
   const icons = {
+    BOOKING_PENDING_REVIEW: Bell,
     BOOKING_APPROVED: CheckCircle,
     BOOKING_REJECTED: XCircle,
     TICKET_UPDATED: MessageCircle,
@@ -40,6 +41,7 @@ const getIcon = (type) => {
 
 const getColor = (type) => {
   const colors = {
+    BOOKING_PENDING_REVIEW: 'amber',
     BOOKING_APPROVED: 'emerald',
     BOOKING_REJECTED: 'rose',
     TICKET_UPDATED: 'blue',

@@ -85,7 +85,14 @@ const BookingForm = () => {
       setFormData(INITIAL_FORM)
       setAvailabilityBookings([])
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create booking. Please try again.')
+      if (err?.response?.status === 409) {
+        setError(
+          err.response?.data?.message ||
+            'That time slot was just taken for this resource. Please choose a different time.',
+        )
+      } else {
+        setError(err.response?.data?.message || 'Failed to create booking. Please try again.')
+      }
     } finally {
       setSubmitting(false)
     }
