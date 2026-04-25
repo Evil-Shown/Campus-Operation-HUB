@@ -199,7 +199,9 @@ export default function TicketsPage() {
             <form onSubmit={submitNewTicket} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Category</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Category
+                  </label>
                   <select
                     className="input-field bg-white dark:bg-slate-950 font-medium"
                     value={form.category}
@@ -210,7 +212,9 @@ export default function TicketsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Priority</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Priority
+                  </label>
                   <select
                     className="input-field bg-white dark:bg-slate-950 font-medium"
                     value={form.priority}
@@ -221,7 +225,9 @@ export default function TicketsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Resource ID (optional)</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Resource ID <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
+                  </label>
                   <input
                     className="input-field bg-white dark:bg-slate-950 font-medium"
                     placeholder="e.g. 304"
@@ -233,7 +239,9 @@ export default function TicketsPage() {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Description</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Description <span className="font-normal text-slate-500 dark:text-slate-400">(min 10 characters)</span>
+                  </label>
                   <textarea
                     className="input-field h-[155px] resize-none bg-white dark:bg-slate-950 font-medium"
                     placeholder="Describe the issue (min 10 characters)…"

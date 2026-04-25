@@ -352,7 +352,7 @@ export default function TicketDetailPage() {
 
             <div className="mt-3 grid gap-3">
               <label className="grid gap-1 text-sm font-medium text-slate-700">
-                Update status
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Update status</span>
                 <select
                   className="input-field bg-white disabled:cursor-not-allowed disabled:bg-slate-50"
                   value={status}
@@ -368,7 +368,7 @@ export default function TicketDetailPage() {
               </label>
 
               <label className="grid gap-1 text-sm font-medium text-slate-700">
-                Resolution note (optional)
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resolution note</span>
                 <textarea
                   className="input-field min-h-[90px] resize-none bg-white disabled:cursor-not-allowed disabled:bg-slate-50"
                   value={resolutionNote}
@@ -392,7 +392,7 @@ export default function TicketDetailPage() {
               {canAssignTicket ? (
                 <div className="grid gap-2 border-t border-slate-100 pt-3">
                   <label className="grid gap-1 text-sm font-medium text-slate-700">
-                    Assign to user ID
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Assign to user ID</span>
                     <input
                       className="input-field bg-white"
                       value={assigneeId}
