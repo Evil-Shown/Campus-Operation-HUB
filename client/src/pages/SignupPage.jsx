@@ -7,32 +7,15 @@ import {
   Lock,
   Eye,
   EyeOff,
-  ChevronRight,
   School,
   ShieldCheck,
   AlertCircle,
-  Globe,
-  Sparkles,
-  Shield,
-  Fingerprint
+  Calendar,
+  ClipboardList,
+  Users
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
-
-const FeatureCard = ({ icon: Icon, title, desc, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-    className="group p-6 rounded-[2rem] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] transition-all duration-500"
-  >
-    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-500 mb-4">
-      <Icon size={24} />
-    </div>
-    <h4 className="font-bold text-slate-800 mb-2">{title}</h4>
-    <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
-  </motion.div>
-)
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -100,205 +83,215 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 flex flex-col lg:flex-row overflow-x-hidden">
-      {/* Background Decor */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-100/30 blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-50/50 blur-[120px]" />
-      </div>
-
-      {/* Left: Content Area */}
-      <div className="relative z-10 w-full lg:w-[45%] flex flex-col justify-between p-8 lg:p-16">
-        <div>
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            className="flex items-center gap-4 mb-16"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-[0_10px_25px_rgba(79,70,229,0.3)]">
-              <School className="text-white h-8 w-8" />
+    <div className="min-h-screen w-full bg-slate-50 flex flex-col lg:flex-row font-sans selection:bg-indigo-100">
+      {/* LEFT PANEL: Branding & Illustration */}
+      <div className="w-full lg:w-[45%] bg-white border-r border-slate-100 flex flex-col justify-between p-10 lg:p-16 h-screen lg:sticky lg:top-0">
+        <div className="max-w-md">
+          {/* Logo Row */}
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200/50">
+              <School className="text-white" size={22} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 leading-none">SmartCampus</h2>
-              <p className="text-[10px] uppercase tracking-widest text-indigo-600 font-bold mt-1">Infrastructure Hub</p>
+              <h2 className="text-xl font-bold text-slate-900 leading-none">SmartCampus</h2>
+              <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">SLIIT Faculty of Computing</p>
             </div>
-          </motion.div>
+          </div>
 
-          <div className="max-w-xl">
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.2 }}
-              className="text-6xl font-extrabold text-slate-900 leading-[1.05] tracking-tight mb-8"
-            >
-              The Next Era of <br />
-              <span className="text-indigo-600 italic">Campus Intelligence</span>.
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: 0.3 }}
-              className="text-xl text-slate-500 leading-relaxed font-medium mb-12"
-            >
-              Join thousands of faculty members and operational experts in orchestrating excellence across the institutional network.
-            </motion.p>
+          {/* Headline */}
+          <div className="mt-16 sm:mt-24">
+            <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 leading-[1.1] tracking-tight">
+              Join Smart Campus<br />
+              and manage your<br />
+              campus experience.
+            </h1>
+            <p className="mt-6 text-base text-slate-500 font-normal leading-relaxed max-w-sm">
+              Create your account to start booking facilities and reporting maintenance issues at SLIIT.
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <FeatureCard 
-                icon={Fingerprint} 
-                title="Secure Identity" 
-                desc="Zero-trust authentication protocols for institutional data."
-                delay={0.4}
-              />
-              <FeatureCard 
-                icon={Sparkles} 
-                title="AI Orchestration" 
-                desc="Smart ticket routing and resource optimization algorithms."
-                delay={0.5}
-              />
+          {/* Features */}
+          <div className="mt-12 lg:mt-16 flex flex-col gap-8">
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <Calendar className="text-indigo-600" size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Make bookings</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Reserve rooms, labs, and equipment instantly</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <ClipboardList className="text-indigo-600" size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Submit tickets</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Report and track facility maintenance issues</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <Users className="text-indigo-600" size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">Collaborate</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Share resources and coordinate with your team</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="mt-12 text-sm text-slate-400 font-medium">
-          &copy; 2026 SmartCampus Network &bull; Verified Node Authorization Required
-        </motion.div>
+        {/* Footer */}
+        <div className="mt-12 text-xs text-slate-400 font-medium">
+          © 2026 SLIIT Smart Campus · IT3030 PAF Assignment
+        </div>
       </div>
 
-      {/* Right: Form Area */}
-      <div className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-          animate={{ opacity: 1, scale: 1, y: 0 }} 
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-[540px]"
-        >
-          <div className="bg-white p-10 lg:p-14 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.06)] border border-slate-200/50 relative overflow-hidden">
-             {/* Decorative Gradient Border */}
-             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500"></div>
-             
-             <div className="mb-10 text-center lg:text-left">
-               <h2 className="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">Create Account</h2>
-               <p className="text-slate-500 font-medium text-lg">Initialize your secure operational profile.</p>
-             </div>
+      {/* RIGHT PANEL: Form Area */}
+      <div className="flex-1 bg-slate-50 flex items-center justify-center p-6 lg:p-12 min-h-screen">
+        <div className="max-w-lg w-full">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 lg:p-10 shadow-sm">
+            {/* Header */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-slate-900">Create your account</h2>
+              <p className="text-sm text-slate-500 mt-1">Fill in your details to get started</p>
+            </div>
 
-             <form onSubmit={handleSubmit} className="space-y-6">
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                 <div className="space-y-2">
-                   <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Identity Name</label>
-                   <div className="relative group">
-                     <User className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                     <input
-                       name="name"
-                       type="text"
-                       value={formData.name}
-                       onChange={handleInputChange}
-                       placeholder="Full Name"
-                       className={`w-full pl-14 pr-5 h-14 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium ${validationErrors.name ? 'border-rose-500 ring-rose-500/10' : ''}`}
-                     />
-                   </div>
-                 </div>
-                 <div className="space-y-2">
-                   <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Work Email</label>
-                   <div className="relative group">
-                     <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                     <input
-                       name="email"
-                       type="email"
-                       value={formData.email}
-                       onChange={handleInputChange}
-                       placeholder="name@university.edu"
-                       className={`w-full pl-14 pr-5 h-14 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium ${validationErrors.email ? 'border-rose-500 ring-rose-500/10' : ''}`}
-                     />
-                   </div>
-                 </div>
-               </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name Field */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 ml-1 block">Full name</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your full name"
+                    className={`h-11 w-full pl-10 pr-4 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all ${validationErrors.name ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/20' : ''}`}
+                  />
+                </div>
+                {validationErrors.name && (
+                  <p className="text-xs text-rose-600 mt-1 ml-1">{validationErrors.name}</p>
+                )}
+              </div>
 
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                 <div className="space-y-2">
-                   <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Security Phrase</label>
-                   <div className="relative group">
-                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                     <input
-                       name="password"
-                       type={showPassword ? 'text' : 'password'}
-                       value={formData.password}
-                       onChange={handleInputChange}
-                       placeholder="••••••••"
-                       className={`w-full pl-14 pr-12 h-14 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium ${validationErrors.password ? 'border-rose-500 ring-rose-500/10' : ''}`}
-                     />
-                   </div>
-                 </div>
-                 <div className="space-y-2">
-                   <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Verify Phrase</label>
-                   <div className="relative group">
-                     <input
-                       name="confirmPassword"
-                       type={showPassword ? 'text' : 'password'}
-                       value={formData.confirmPassword}
-                       onChange={handleInputChange}
-                       placeholder="••••••••"
-                       className={`w-full pl-6 pr-12 h-14 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium ${validationErrors.confirmPassword ? 'border-rose-500 ring-rose-500/10' : ''}`}
-                     />
-                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                     </button>
-                   </div>
-                 </div>
-               </div>
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 ml-1 block">Email address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="you@sliit.lk"
+                    className={`h-11 w-full pl-10 pr-4 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all ${validationErrors.email ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/20' : ''}`}
+                  />
+                </div>
+                {validationErrors.email && (
+                  <p className="text-xs text-rose-600 mt-1 ml-1">{validationErrors.email}</p>
+                )}
+              </div>
 
-               <AnimatePresence>
-                 {error && (
-                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-[1.25rem] bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold flex items-center gap-3">
-                     <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" /> {error}
-                   </motion.div>
-                 )}
-               </AnimatePresence>
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 ml-1 block">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="••••••••"
+                    className={`h-11 w-full pl-10 pr-11 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all ${validationErrors.password ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/20' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {validationErrors.password ? (
+                  <p className="text-xs text-rose-600 mt-1 ml-1">{validationErrors.password}</p>
+                ) : (
+                  <p className="text-xs text-slate-400 mt-1 ml-1">Minimum 6 characters</p>
+                )}
+              </div>
 
-               <button
-                 type="submit"
-                 disabled={isLoading}
-                 className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] font-bold text-lg shadow-[0_15px_30px_rgba(79,70,229,0.2)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 group mt-4 overflow-hidden relative"
-               >
-                 <div className="absolute inset-0 bg-white/20 translate-y-full hover:translate-y-0 transition-transform duration-300 pointer-events-none" />
-                 {isLoading ? (
-                   <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                 ) : (
-                   <>
-                     <span>Initialize Protocol</span>
-                     <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                   </>
-                 )}
-               </button>
-             </form>
+              {/* Confirm Password Field */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 ml-1 block">Confirm password</label>
+                <div className="relative">
+                  <input
+                    name="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    placeholder="••••••••"
+                    className={`h-11 w-full pl-4 pr-11 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all ${validationErrors.confirmPassword ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/20' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {validationErrors.confirmPassword && (
+                  <p className="text-xs text-rose-600 mt-1 ml-1">{validationErrors.confirmPassword}</p>
+                )}
+              </div>
 
-             <div className="mt-12 text-center">
-               <p className="text-slate-500 font-medium">
-                 Already part of the network?{' '}
-                 <Link to="/login" className="text-indigo-600 font-bold hover:underline underline-offset-4 decoration-2">
-                   Secure Sign In
-                 </Link>
-               </p>
-             </div>
+              {/* Error Alert */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2.5"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-             <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed uppercase tracking-widest">
-                 Authorized Personnel Only. Access subject to <br />
-                 <span className="text-slate-600 underline cursor-pointer hover:text-indigo-600 transition-colors">Institutional Security Protocols</span>
-               </p>
-             </div>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="h-11 w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+              >
+                {isLoading ? (
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  'Create account'
+                )}
+              </button>
+            </form>
+
+            {/* Sign in Link */}
+            <div className="mt-8 text-center">
+              <span className="text-sm text-slate-500">Already have an account?</span>
+              <Link to="/login" className="text-sm text-indigo-600 font-medium hover:underline ml-1">Sign in</Link>
+            </div>
+
+            {/* Terms Note */}
+            <div className="mt-10 pt-4 text-center border-t border-slate-50">
+              <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                By creating an account you agree to our Terms of Service and Privacy Policy.
+              </p>
+            </div>
           </div>
-          
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="mt-8 flex justify-center items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-widest"
-          >
-            <ShieldCheck size={16} className="text-emerald-500" />
-            Military-Grade Encryption Enabled
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )
