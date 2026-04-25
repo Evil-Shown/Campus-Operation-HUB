@@ -16,6 +16,10 @@ public class TicketRequestDTO {
 
     private Long resourceId;
 
+    @NotBlank
+    @Size(max = 255)
+    private String resourceLocation;
+
     @NotNull
     private Ticket.TicketCategory category;
 

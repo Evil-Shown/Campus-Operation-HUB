@@ -1,36 +1,41 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import {
   Package,
   CalendarClock,
   AlertCircle,
   Users,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock3,
   CheckCircle2,
   Activity,
-  ShieldCheck,
-  Search,
   FileText,
   Loader2,
   RefreshCw,
+  Search,
+  ChevronRight
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getAdminDashboardData } from '../../api/admin'
 
-function StatusPill({ status, variant = 'neutral' }) {
-  const styles = {
-    neutral: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
-    success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    danger: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-    primary: 'bg-primary-500/10 text-primary-500 border-primary-500/20',
+function StatusPill({ status }) {
+  const map = {
+    PENDING:     'bg-amber-50 text-amber-700 border-amber-200',
+    APPROVED:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CONFIRMED:   'bg-emerald-50 text-emerald-700 border-emerald-200',
+    REJECTED:    'bg-red-50 text-red-700 border-red-200',
+    CANCELLED:   'bg-gray-100 text-gray-500 border-gray-200',
+    OPEN:        'bg-rose-50 text-rose-700 border-rose-200',
+    IN_PROGRESS: 'bg-blue-50 text-blue-700 border-blue-200',
+    RESOLVED:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+    CLOSED:      'bg-gray-100 text-gray-500 border-gray-200',
+    CRITICAL:    'bg-red-50 text-red-700 border-red-200',
+    HIGH:        'bg-orange-50 text-orange-700 border-orange-200',
+    MEDIUM:      'bg-amber-50 text-amber-700 border-amber-200',
+    LOW:         'bg-gray-100 text-gray-600 border-gray-200',
   }
-
+  const style = map[status?.toUpperCase()] || 'bg-gray-100 text-gray-500 border-gray-200'
   return (
-    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${styles[variant]}`}>
+    <span className={`inline-flex items-center border rounded-md px-2 py-0.5 text-xs font-medium ${style}`}>
       {status}
     </span>
   )
@@ -66,36 +71,36 @@ export default function AdminDashboardPage() {
 
   const metrics = [
     {
-      label: 'Managed Assets',
+      label: 'Total resources',
       value: data.resources.length,
-      delta: '+8.2%',
-      trend: 'up',
+      subtitle: 'in the catalogue',
       icon: Package,
-      color: 'from-primary-500 to-indigo-600',
+      iconBg: 'bg-indigo-50',
+      iconColor: 'text-indigo-600',
     },
     {
-      label: 'Pending Requests',
+      label: 'Pending bookings',
       value: pendingBookings,
-      delta: pendingBookings > 5 ? '+12%' : '-5%',
-      trend: pendingBookings > 5 ? 'up' : 'down',
+      subtitle: 'awaiting your approval',
       icon: CalendarClock,
-      color: 'from-amber-400 to-orange-500',
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-600',
     },
     {
-      label: 'Active Incidents',
+      label: 'Open tickets',
       value: openTickets,
-      delta: openTickets > 8 ? '+15%' : '-8%',
-      trend: openTickets > 8 ? 'up' : 'down',
+      subtitle: 'need attention',
       icon: AlertCircle,
-      color: 'from-rose-400 to-red-500',
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-600',
     },
     {
-      label: 'Critical Issues',
+      label: 'Critical issues',
       value: criticalTickets,
-      delta: criticalTickets > 3 ? '+20%' : '-10%',
-      trend: criticalTickets > 3 ? 'up' : 'down',
-      icon: Users,
-      color: 'from-emerald-400 to-teal-500',
+      subtitle: 'high or critical priority',
+      icon: Activity,
+      iconBg: 'bg-orange-50',
+      iconColor: 'text-orange-600',
     },
   ]
 
@@ -185,183 +190,90 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Admin Header */}
-      <section className="relative overflow-hidden rounded-[2rem] bg-white/70 backdrop-blur-md border border-white/30 shadow-xl px-8 py-10">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 h-80 w-80 rounded-full bg-indigo-200/40 blur-[120px]" />
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-white border border-indigo-100 shadow-lg">
-              <ShieldCheck className="h-8 w-8 text-indigo-600" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-indigo-700">System Administrator Terminal</p>
-              </div>
-              <h1 className="text-3xl font-black text-gray-800">Institutional Oversight</h1>
-              <p className="text-sm font-medium text-gray-500 mt-1">Cross-departmental resource orchestration and incident monitoring.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
-              <FileText className="h-4 w-4" />
-              Generate Audit Log
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200/60 hover:shadow-xl transition-all">
-              <Activity className="h-4 w-4" />
-              Live Deployment
-            </button>
-          </div>
+    <div className="space-y-8">
+      {/* SECTION 1: PAGE HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Admin dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
         </div>
-      </section>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchData}
+            className="inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh data
+          </button>
+          <button className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-sm">
+            <FileText className="h-4 w-4" />
+            Export report
+          </button>
+        </div>
+      </div>
 
-      {/* Primary Metrics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* SECTION 2: METRICS ROW */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric, idx) => (
           <motion.div
             key={metric.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="bg-white/80 backdrop-blur-sm border border-gray-100 group shadow-lg hover:shadow-xl"
+            transition={{ delay: idx * 0.08 }}
+            className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-gray-300 transition-colors"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{metric.label}</p>
-                <p className="text-3xl font-black text-gray-800 leading-none">{metric.value < 10 ? `0${metric.value}` : metric.value}</p>
+                <p className="text-sm font-medium text-gray-500">{metric.label}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{metric.value}</p>
+                <p className="text-xs text-gray-400 mt-1">{metric.subtitle}</p>
               </div>
-              <div className={`p-3 rounded-2xl bg-gradient-to-br ${metric.color} shadow-lg shadow-primary-500/10 group-hover:scale-110 transition-transform`}>
-                <metric.icon className="h-5 w-5 text-white" />
+              <div className={`${metric.iconBg} w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
               </div>
-            </div>
-
-            <div className="mt-6 flex items-center gap-2">
-              <div className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-black ${metric.trend === 'up' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                {metric.trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                {metric.delta}
-              </div>
-              <span className="text-[10px] font-bold text-gray-400">vs last cycle</span>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Reservation Queue */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-lg font-black text-gray-800 uppercase tracking-widest">Active Reservation Queue</h2>
-            <button className="text-[10px] font-black text-indigo-600 border border-indigo-200 rounded-md px-2 py-1 uppercase tracking-widest hover:bg-indigo-50 transition-all">Full Log</button>
+      {/* SECTION 3: MAIN GRID */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Bookings Table */}
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 className="text-base font-semibold text-gray-900">Recent bookings</h2>
+            <Link to="/admin/bookings" className="text-sm text-indigo-600 hover:underline">View all</Link>
           </div>
-
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl !p-0 overflow-hidden shadow-lg">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset Requested</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Requestor</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Schedule</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Authorization</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {recentBookings.length > 0 ? (
-                    recentBookings.map((row) => (
-                      <tr key={`${row.item}-${row.user}-${row.time}`} className="group hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-gray-800">{row.item}</td>
-                        <td className="px-6 py-4 text-xs font-semibold text-gray-500">{row.user}</td>
-                        <td className="px-6 py-4 text-xs font-bold text-gray-600">{row.time}</td>
-                        <td className="px-6 py-4">
-                          <StatusPill status={row.status} variant={row.status === 'APPROVED' ? 'success' : 'warning'} />
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">
-                        No recent bookings found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Space Utilization Bento Side */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 px-2">
-            <h2 className="text-lg font-black text-gray-800 uppercase tracking-widest">Asset Telemetry</h2>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-lg space-y-6 p-6">
-            {utilization.map((item) => (
-              <div key={item.label} className="group">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-gray-400">{item.label}</span>
-                  <span className="text-sm font-black text-gray-800">{item.value}%</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.value}%` }}
-                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 group-hover:brightness-110 transition-all"
-                  />
-                </div>
-              </div>
-            ))}
-            
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Network Pulse</p>
-                <div className="flex gap-1">
-                  {[1,2,3,4,5,6,7].map(i => <div key={i} className={`h-4 w-1 rounded-full ${i > 4 ? 'bg-indigo-500' : 'bg-gray-200'}`} />)}
-                </div>
-              </div>
-              <p className="text-[11px] font-bold text-gray-500 leading-relaxed">Infrastructure load is within normal parameters. No scaling events required.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Support Terminal */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-lg font-black text-gray-800 uppercase tracking-widest">Incident Terminal</h2>
-            <StatusPill status={`${openTickets} ACTIVE`} variant="danger" />
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl !p-0 overflow-hidden shadow-lg">
-            <table className="min-w-full text-left text-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-left">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Case ID</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Incident</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Priority</th>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Resource</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Requested by</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Date & time</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {recentTickets.length > 0 ? (
-                  recentTickets.map((row) => (
-                    <tr key={row.id} className="group hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-xs font-black text-indigo-600">{row.id}</td>
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-gray-800 truncate max-w-[200px]">{row.title}</p>
-                        <StatusPill status={row.status} variant={row.status === 'OPEN' ? 'danger' : 'primary'} />
-                      </td>
-                      <td className="px-6 py-4">
-                        <StatusPill status={row.priority} variant={row.priority === 'CRITICAL' ? 'danger' : row.priority === 'HIGH' ? 'warning' : 'neutral'} />
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {recentBookings.length > 0 ? (
+                  recentBookings.map((row) => (
+                    <tr key={`${row.item}-${row.user}-${row.time}`} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{row.item}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{row.user}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{row.time}</td>
+                      <td className="px-6 py-4 text-right">
+                        <StatusPill status={row.status} />
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="3" className="px-6 py-8 text-center text-sm text-gray-500">
-                      No active incidents found
+                    <td colSpan="4" className="px-6 py-12 text-center">
+                      <CalendarClock className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No bookings yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Booking requests will appear here</p>
                     </td>
                   </tr>
                 )}
@@ -370,25 +282,142 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Events Feed */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-black text-gray-800 uppercase tracking-widest px-2">Operational Events</h2>
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-lg space-y-6 p-6">
-            {[
-              { icon: CheckCircle2, text: 'Resource provisioned for Lab 3', time: '2m ago', color: 'text-emerald-500' },
-              { icon: Clock3, text: 'Ticket #TK-002 assigned to Hardware', time: '17m ago', color: 'text-amber-500' },
-              { icon: Activity, text: 'Daily systems diagnostic complete', time: '42m ago', color: 'text-primary-500' },
-            ].map((event, idx) => (
-              <div key={idx} className="flex gap-4 group">
-                <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gray-50 ${event.color}`}>
-                  <event.icon className="h-4 w-4" />
+        {/* Resource Breakdown Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-5">Resources by type</h2>
+          <div className="space-y-6">
+            {utilization.map((item, idx) => (
+              <div key={item.label}>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                  <span className="text-sm font-medium text-gray-900">{item.value}%</span>
                 </div>
-                <div className="flex-1 border-b border-gray-100 pb-4 group-last:border-0">
-                  <p className="text-sm font-bold text-gray-800">{event.text}</p>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{event.time}</p>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${item.value}%` }}
+                    transition={{ duration: 0.6, delay: idx * 0.1 }}
+                    className="h-full rounded-full bg-indigo-500"
+                  />
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="border-t border-gray-100 mt-6 pt-5 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xl font-bold text-gray-900">{data.resources.filter(r => r.status === 'ACTIVE').length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Active resources</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-900">{data.resources.filter(r => r.status === 'OUT_OF_SERVICE').length}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Out of service</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 4: BOTTOM GRID */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Open Tickets Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base font-semibold text-gray-900">Open tickets</h2>
+              {openTickets > 0 && (
+                <span className="text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-md px-2 py-0.5">
+                  {openTickets} active
+                </span>
+              )}
+            </div>
+            <Link to="/admin/tickets" className="text-sm text-indigo-600 hover:underline">View all</Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100 text-left">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {recentTickets.length > 0 ? (
+                  recentTickets.map((row) => (
+                    <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="text-xs font-medium text-indigo-600">{row.id}</p>
+                        <p className="text-sm font-medium text-gray-900 mt-0.5 truncate max-w-[220px]">{row.title}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <StatusPill status={row.priority} />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <StatusPill status={row.status} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="px-6 py-12 text-center">
+                      <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-900">No open tickets</p>
+                      <p className="text-xs text-gray-400 mt-1">All issues have been resolved</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Quick Actions Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Quick actions</h2>
+          <div className="space-y-3">
+            <Link to="/admin/bookings?status=PENDING" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <CalendarClock className="h-4 w-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Review pending bookings</p>
+                <p className="text-xs text-gray-400 mt-0.5">{pendingBookings} requests waiting</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link to="/admin/tickets?status=OPEN" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="h-4 w-4 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Manage open tickets</p>
+                <p className="text-xs text-gray-400 mt-0.5">{openTickets} tickets need attention</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link to="/admin/resources/new" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <Package className="h-4 w-4 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Add new resource</p>
+                <p className="text-xs text-gray-400 mt-0.5">Register a room, lab, or equipment</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+
+            <Link to="/admin/resources" className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all group w-full text-left">
+              <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                <Search className="h-4 w-4 text-gray-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Browse all resources</p>
+                <p className="text-xs text-gray-400 mt-0.5">{data.resources.length} resources in catalogue</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
         </div>
       </div>

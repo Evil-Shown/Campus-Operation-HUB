@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import PrivateRoute from './components/common/PrivateRoute'
 import Layout from './components/layout/Layout'
+import RootPage from './pages/RootPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AuthCallback from './pages/auth/AuthCallback'
@@ -30,7 +31,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<RootPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
