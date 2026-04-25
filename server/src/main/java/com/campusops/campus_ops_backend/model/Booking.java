@@ -19,13 +19,9 @@ import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Entity
 @Table(name = "bookings")
@@ -34,8 +30,6 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "bookings")
 public class Booking {
     // Member 2 - Booking Management
 
@@ -61,7 +55,7 @@ public class Booking {
     private String purpose;
 
     @Column(name = "attendees")
-    private Integer expectedAttendees;
+    private Integer attendees;
 
     @Default
     @Enumerated(EnumType.STRING)
@@ -69,7 +63,7 @@ public class Booking {
     private BookingStatus status = BookingStatus.PENDING;
 
     @Column(name = "reject_reason", length = 500)
-    private String adminReviewNote;
+    private String rejectReason;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
