@@ -46,6 +46,7 @@ public class SecurityConfig {
             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auth/**").permitAll()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/resources/search").permitAll()
                 .anyRequest().authenticated());
         if (clientRegistrationRepository.getIfAvailable() != null) {
             http.oauth2Login(oauth -> oauth
@@ -74,3 +75,4 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 }
+
