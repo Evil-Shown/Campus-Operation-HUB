@@ -45,7 +45,7 @@ function StatusPill({ status }) {
 export default function TicketsPage() {
   const { apiBaseUrl, token, user } = useAuth()
   const role = String(user?.role || '').toUpperCase()
-  const canSeeAll = role === 'ADMIN' || role === 'TECHNICIAN' || role === 'LEADER'
+  const canSeeAll = role === 'ADMIN' || role === 'TECHNICIAN' || role === 'LEADER' || role === 'ROLE_ADMIN'
   const [scope, setScope] = useState(canSeeAll ? 'all' : 'mine')
   const [statusFilter, setStatusFilter] = useState('')
   const [tickets, setTickets] = useState([])
@@ -72,6 +72,15 @@ export default function TicketsPage() {
     scope: canSeeAll ? scope : 'mine',
     status: statusFilter || undefined,
   }), [canSeeAll, scope, statusFilter])
+
+  useEffect(() => {
+    // Keep scope aligned with role once user/auth state is fully loaded.
+    setScope((prev) => {
+      if (canSeeAll && prev === 'mine') return 'all'
+      if (!canSeeAll && prev !== 'mine') return 'mine'
+      return prev
+    })
+  }, [canSeeAll])
 
   useEffect(() => {
     let ignore = false
