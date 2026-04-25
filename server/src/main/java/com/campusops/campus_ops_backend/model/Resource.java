@@ -1,4 +1,4 @@
-package com.campusops.campus_ops_backend.model;
+/*package com.campusops.campus_ops_backend.model;
 
 import java.time.LocalTime;
 
@@ -51,5 +51,42 @@ public class Resource {
     private LocalTime availabilityEnd;
 
     public enum ResourceType { LECTURE_HALL, LAB, MEETING_ROOM, EQUIPMENT }
-    public enum ResourceStatus { ACTIVE, OUT_OF_SERVICE }
+    public enum ResourceStatus { ACTIVE, OUT_OF_SERVICE, MAINTENANCE }
+}*/
+
+package com.campusops.campus_ops_backend.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalTime;
+
+@Data
+@Entity
+@Table(name = "resources")
+public class Resource {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ResourceType type;
+
+    private Integer seatingCapacity;
+
+    @Column(nullable = false)
+    private String physicalLocation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ResourceStatus status = ResourceStatus.ACTIVE;
+
+    @Column(nullable = false)
+    private LocalTime availableFrom;
+
+    @Column(nullable = false)
+    private LocalTime availableTo;
 }
