@@ -12,7 +12,7 @@ export default function TicketCreatePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    resourceId: '',
+    resourceDetails: '',
     category: 'OTHER',
     description: '',
     priority: 'MEDIUM',
@@ -34,10 +34,13 @@ export default function TicketCreatePage() {
 
     setSubmitting(true)
     try {
+      const resourceContext = form.resourceDetails.trim()
+        ? `\n\nResource/Location: ${form.resourceDetails.trim()}`
+        : ''
       const payload = {
-        resourceId: form.resourceId ? Number(form.resourceId) : null,
+        resourceId: null,
         category: form.category,
-        description: form.description.trim(),
+        description: `${form.description.trim()}${resourceContext}`,
         priority: form.priority,
         contactInfo: form.contactInfo.trim(),
       }
@@ -76,12 +79,13 @@ export default function TicketCreatePage() {
           </div>
 
           <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Resource ID (optional)</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Resource and Location (optional)</label>
           <input
             type="text"
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-            value={form.resourceId}
-            onChange={(e) => setForm((prev) => ({ ...prev, resourceId: e.target.value.replace(/[^\d]/g, '') }))}
+            value={form.resourceDetails}
+            onChange={(e) => setForm((prev) => ({ ...prev, resourceDetails: e.target.value }))}
+            placeholder="e.g. Lab Projector - Block B Room 204"
           />
           </div>
 

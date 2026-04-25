@@ -57,7 +57,7 @@ export default function TicketsPage() {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
   const [form, setForm] = useState({
-    resourceId: '',
+    resourceDetails: '',
     category: 'OTHER',
     description: '',
     priority: 'MEDIUM',
@@ -110,17 +110,20 @@ export default function TicketsPage() {
     setCreating(true)
     setCreateError('')
     try {
+      const resourceContext = form.resourceDetails.trim()
+        ? `\n\nResource/Location: ${form.resourceDetails.trim()}`
+        : ''
       const payload = {
-        resourceId: form.resourceId ? Number(form.resourceId) : null,
+        resourceId: null,
         category: form.category,
-        description: form.description.trim(),
+        description: `${form.description.trim()}${resourceContext}`,
         priority: form.priority,
         contactInfo: form.contactInfo.trim(),
       }
       const created = await createTicket({ baseUrl: apiBaseUrl, token, data: payload, files })
       setTickets((prev) => [created, ...prev])
       setCreateOpen(false)
-      setForm({ resourceId: '', category: 'OTHER', description: '', priority: 'MEDIUM', contactInfo: user?.email || '' })
+      setForm({ resourceDetails: '', category: 'OTHER', description: '', priority: 'MEDIUM', contactInfo: user?.email || '' })
       setFiles([])
     } catch (err) {
       setCreateError(err?.message || 'Ticket neutralization failed')
@@ -235,13 +238,13 @@ export default function TicketsPage() {
 
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Resource ID <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
+                    Resource and Location <span className="font-normal text-slate-500 dark:text-slate-400">(optional)</span>
                   </label>
                   <input
                     className="input-field bg-white dark:bg-slate-950 font-medium"
-                    placeholder="e.g. 304"
-                    value={form.resourceId}
-                    onChange={(e) => setForm((prev) => ({ ...prev, resourceId: e.target.value.replace(/[^\d]/g, '') }))}
+                    placeholder="e.g. Lab Projector - Block B Room 204"
+                    value={form.resourceDetails}
+                    onChange={(e) => setForm((prev) => ({ ...prev, resourceDetails: e.target.value }))}
                   />
                 </div>
               </div>
