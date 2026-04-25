@@ -46,10 +46,22 @@ export default function AdminBookingsPage() {
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      await bookingApi.updateBookingStatus(id, status);
+      let adminReviewNote = '';
+      if (status === 'REJECTED') {
+        const reason = window.prompt('Enter rejection reason (required):');
+        if (!reason || !reason.trim()) return;
+        adminReviewNote = reason.trim();
+      } else if (status === 'APPROVED') {
+        const note = window.prompt('Enter approval note (optional):');
+        if (note !== null) {
+          adminReviewNote = note.trim();
+        }
+      }
+
+      await bookingApi.updateBookingStatus(id, status, adminReviewNote);
       fetchBookings();
     } catch (err) {
-      alert(`System: Status synchronization to ${status} failed.`);
+      alert(err?.response?.data?.message || `System: Status synchronization to ${status} failed.`);
     }
   };
 
@@ -120,27 +132,27 @@ export default function AdminBookingsPage() {
                            <td className="px-10 py-6">
                               <div className="flex items-center gap-4">
                                  <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-inner font-black text-xs">
-                                    {row.user?.name?.charAt(0)}
+                                    {(row.userName || 'U').charAt(0)}
                                  </div>
                                  <div className="flex flex-col gap-0.5">
-                                    <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{row.user?.name}</span>
-                                    <span className="text-[9px] font-bold text-slate-400 italic">{row.user?.email}</span>
+                                    <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{row.userName || 'Unknown User'}</span>
+                                    <span className="text-[9px] font-bold text-slate-400 italic">ID: {row.userId ?? '-'}</span>
                                  </div>
                               </div>
                            </td>
                            <td className="px-10 py-6">
                               <div className="flex items-center gap-3">
                                  <Building2 size={12} className="text-violet-500" />
-                                 <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{row.resource?.name}</span>
+                                 <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{row.resourceName}</span>
                               </div>
                            </td>
                            <td className="px-10 py-6">
                               <div className="flex flex-col gap-1">
                                  <div className="flex items-center gap-2 text-xs font-black text-slate-900">
-                                    <Calendar size={12} className="text-slate-300" /> {new Date(row.startTime).toLocaleDateString()}
+                                    <Calendar size={12} className="text-slate-300" /> {row.bookingDate}
                                  </div>
                                  <div className="flex items-center gap-2 text-[10px] font-black text-violet-600 uppercase tracking-widest">
-                                    <Clock size={12} className="text-violet-400" /> {new Date(row.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <Clock size={12} className="text-violet-400" /> {row.startTime} - {row.endTime}
                                  </div>
                               </div>
                            </td>
@@ -150,7 +162,7 @@ export default function AdminBookingsPage() {
                               </Badge>
                            </td>
                            <td className="px-10 py-6 text-right">
-                              <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center justify-end gap-3">
                                  {row.status === 'PENDING' && (
                                    <>
                                       <button 

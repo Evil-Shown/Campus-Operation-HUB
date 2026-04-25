@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -44,9 +45,9 @@ public class GlobalExceptionHandler {
                 .body(errorBody(status, status.getReasonPhrase(), ex.getMessage(), request));
     }
 
-    @ExceptionHandler(UnauthorizedException.class)
+    @ExceptionHandler(UnauthorizedBookingAccessException.class)
     public ResponseEntity<Map<String, Object>> handleUnauthorized(
-            UnauthorizedException ex,
+            UnauthorizedBookingAccessException ex,
             HttpServletRequest request) {
         HttpStatus status = HttpStatus.FORBIDDEN;
         return ResponseEntity.status(status)
@@ -76,12 +77,13 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
-        String message = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(fieldError -> fieldError.getDefaultMessage() == null ? "Validation failed" : fieldError.getDefaultMessage())
-                .orElse("Validation failed");
-        return ResponseEntity.status(status)
-                .body(errorBody(status, status.getReasonPhrase(), message, request));
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(fieldError ->
+                fieldErrors.put(fieldError.getField(),
+                        fieldError.getDefaultMessage() == null ? "Validation failed" : fieldError.getDefaultMessage()));
+        Map<String, Object> body = new LinkedHashMap<>(errorBody(status, status.getReasonPhrase(), "Validation failed", request));
+        body.put("fieldErrors", fieldErrors);
+        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(Exception.class)

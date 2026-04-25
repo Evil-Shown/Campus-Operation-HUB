@@ -53,7 +53,9 @@ public class SecurityConfig {
             .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auth/**").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/resource/*/availability").authenticated()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/bookings/resource/*/availability").authenticated()
             .requestMatchers("/api/bookings/**").authenticated()
+            .requestMatchers("/api/v1/bookings/**").authenticated()
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated());
         if (clientRegistrationRepository.getIfAvailable() != null) {

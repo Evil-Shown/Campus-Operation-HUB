@@ -2,6 +2,7 @@ package com.campusops.campus_ops_backend.service;
 
 import java.util.List;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,39 +15,56 @@ import com.campusops.campus_ops_backend.repository.NotificationRepository;
 import com.campusops.campus_ops_backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
-    @Transactional
     public void create(User user, String type, String message) {
-        notificationRepository.save(Notification.builder()
-                .user(user)
-                .type(type)
-                .message(message)
-                .isRead(false)
-                .build());
+        try {
+            notificationRepository.save(Notification.builder()
+                    .user(user)
+                    .type(type)
+                    .message(message)
+                    .isRead(false)
+                    .build());
+        } catch (DataAccessException ex) {
+            log.warn("Failed to create notification for user {}: {}", user.getId(), ex.getMessage());
+        }
     }
 
-    @Transactional(readOnly = true)
     public List<NotificationResponseDTO> getForUser(Long userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(NotificationResponseDTO::from)
-                .toList();
+        try {
+            return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                    .map(NotificationResponseDTO::from)
+                    .toList();
+        } catch (DataAccessException ex) {
+            log.warn("Failed to load notifications for user {}: {}", userId, ex.getMessage());
+            return List.of();
+        }
     }
 
-    @Transactional(readOnly = true)
     public long countUnread(Long userId) {
-        return notificationRepository.countByUserIdAndIsReadFalse(userId);
+        try {
+            return notificationRepository.countByUserIdAndIsReadFalse(userId);
+        } catch (DataAccessException ex) {
+            log.warn("Failed to count unread notifications for user {}: {}", userId, ex.getMessage());
+            return 0L;
+        }
     }
 
     @Transactional
     public void markAllRead(Long userId) {
-        notificationRepository.markAllReadByUserId(userId);
+        try {
+            notificationRepository.markAllReadByUserId(userId);
+        } catch (DataAccessException ex) {
+            log.warn("Failed to mark all notifications read for user {}: {}", userId, ex.getMessage());
+        }
     }
 
     @Transactional
@@ -56,7 +74,11 @@ public class NotificationService {
         if (!notification.getUser().getId().equals(userId)) {
             throw new UnauthorizedActionException("You are not allowed to modify this notification");
         }
-        notification.setIsRead(true);
-        notificationRepository.save(notification);
+        try {
+            notification.setIsRead(true);
+            notificationRepository.save(notification);
+        } catch (DataAccessException ex) {
+            log.warn("Failed to mark notification {} as read for user {}: {}", notificationId, userId, ex.getMessage());
+        }
     }
 }

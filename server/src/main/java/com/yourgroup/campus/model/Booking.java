@@ -13,14 +13,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "bookings")
@@ -30,6 +34,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Booking {
+    // Member 2 - Booking Management
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,28 +54,37 @@ public class Booking {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(name = "purpose", length = 500)
+    @Column(name = "purpose", nullable = false, length = 500)
     private String purpose;
 
     @Column(name = "attendees")
-    private Integer attendees;
+    private Integer expectedAttendees;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private BookingStatus status;
 
     @Column(name = "reject_reason", length = 500)
-    private String rejectReason;
+    private String adminReviewNote;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Transient
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
         if (status == null) {
             status = BookingStatus.PENDING;
         }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public static enum BookingStatus {

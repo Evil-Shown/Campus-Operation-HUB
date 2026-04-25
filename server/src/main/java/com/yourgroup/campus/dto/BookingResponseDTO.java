@@ -4,11 +4,14 @@ import com.yourgroup.campus.model.Booking;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @Builder
 public class BookingResponseDTO {
+    // Member 2 - Booking Management
 
     private Long id;
     private Long resourceId;
@@ -16,11 +19,15 @@ public class BookingResponseDTO {
     private String resourceLocation;
     private Long userId;
     private String userName;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private LocalDate bookingDate;
+    private LocalTime startTime;
+    private LocalTime endTime;
     private String purpose;
-    private Integer attendees;
+    private Integer expectedAttendees;
     private Booking.BookingStatus status;
-    private String rejectReason;
+    private String adminReviewNote;
+    private Long reviewedById;
+    private String reviewedByName;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

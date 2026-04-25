@@ -1,53 +1,98 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import api from "../../api/api";
-import StatusBadge from "../../components/bookings/StatusBadge";
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import BookingStatusBadge from '../../components/bookings/BookingStatusBadge'
+import bookingService from '../../services/bookingService'
+import { useAuth } from '../../context/AuthContext'
 
-const FILTERS = ["ALL", "PENDING", "APPROVED", "REJECTED", "CANCELLED"];
+const FILTERS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']
 
 const MyBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [filter, setFilter] = useState("ALL");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Member 2 - Booking Management
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+  const [bookings, setBookings] = useState([])
+  const [filter, setFilter] = useState('ALL')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [toast, setToast] = useState('')
 
   useEffect(() => {
-    api
-      .get("/bookings/my")
-      .then((res) => setBookings(res.data))
-      .catch(() => setError("Failed to load your bookings."))
-      .finally(() => setLoading(false));
-  }, []);
+    bookingService
+      .getMyBookings()
+      .then((res) => setBookings(res.data || []))
+      .catch(() => setError('Failed to load your bookings.'))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const filtered =
-    filter === "ALL" ? bookings : bookings.filter((b) => b.status === filter);
+  useEffect(() => {
+    if (!toast) return undefined
+    const timer = window.setTimeout(() => setToast(''), 2500)
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  const filtered = useMemo(
+    () => (filter === 'ALL' ? bookings : bookings.filter((b) => b.status === filter)),
+    [bookings, filter],
+  )
 
   const handleCancel = async (id) => {
     try {
-      await api.patch(`/bookings/${id}/cancel`);
+      if (!window.confirm('Are you sure you want to cancel this booking?')) return
+      await bookingService.cancelBooking(id)
       setBookings((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" } : b))
-      );
+        prev.map((b) => (b.id === id ? { ...b, status: 'CANCELLED', adminReviewNote: '' } : b)),
+      )
+      setToast('Booking cancelled successfully.')
     } catch (err) {
-      alert(err.response?.data?.message || err.message || "Failed to cancel booking.");
+      setError(err.response?.data?.message || 'Failed to cancel booking.')
     }
-  };
+  }
 
-  const formatDate = (dt) =>
-    new Date(dt).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+  const handleApprove = async (id) => {
+    try {
+      const noteInput = window.prompt('Enter approval note (optional):')
+      if (noteInput === null) return
+      const note = noteInput.trim()
+      await bookingService.approveBooking(id, note)
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, status: 'APPROVED', adminReviewNote: note } : b,
+        ),
+      )
+      setToast('Booking approved successfully.')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to approve booking.')
+    }
+  }
 
-  const formatTime = (dt) =>
-    new Date(dt).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const handleReject = async (id) => {
+    try {
+      const reasonInput = window.prompt('Enter rejection reason (required):')
+      if (!reasonInput || !reasonInput.trim()) return
+      const reason = reasonInput.trim()
+      await bookingService.rejectBooking(id, reason)
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, status: 'REJECTED', adminReviewNote: reason } : b,
+        ),
+      )
+      setToast('Booking rejected successfully.')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reject booking.')
+    }
+  }
+
+  const formatDate = (date) => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+  const actionBtn = 'rounded-md px-2.5 py-1 text-xs font-medium transition-colors'
 
   return (
     <div className="max-w-5xl mx-auto p-6">
+      {toast && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+          {toast}
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
@@ -125,90 +170,134 @@ const MyBookings = () => {
 
       {/* Table */}
       {!loading && !error && filtered.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 
-          shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-5 py-3.5 text-gray-500 
-                  font-medium text-xs uppercase tracking-wide">
-                  Booking ID
-                </th>
-                <th className="text-left px-5 py-3.5 text-gray-500 
-                  font-medium text-xs uppercase tracking-wide">
-                  Resource
-                </th>
-                <th className="text-left px-5 py-3.5 text-gray-500 
-                  font-medium text-xs uppercase tracking-wide">
-                  Date
-                </th>
-                <th className="text-left px-5 py-3.5 text-gray-500 
-                  font-medium text-xs uppercase tracking-wide">
-                  Time
-                </th>
-                <th className="text-left px-5 py-3.5 text-gray-500 
-                  font-medium text-xs uppercase tracking-wide">
-                  Status
-                </th>
-                <th className="text-left px-5 py-3.5 text-gray-500 
-                  font-medium text-xs uppercase tracking-wide">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((b, i) => (
-                <tr
-                  key={b.id}
-                  className={`border-b border-gray-50 hover:bg-gray-50 
-                    transition-colors ${
-                      i === filtered.length - 1 ? "border-0" : ""
-                    }`}
-                >
-                  <td className="px-5 py-4 font-semibold text-gray-800">
-                    BK-{b.id}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="font-medium text-gray-700">
-                      {b.resourceName}
-                    </div>
-                    <div className="text-gray-400 text-xs">
-                      📍 {b.resourceLocation}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-gray-600">
-                    {formatDate(b.startTime)}
-                  </td>
-                  <td className="px-5 py-4 text-gray-600">
-                    {formatTime(b.startTime)} — {formatTime(b.endTime)}
-                  </td>
-                  <td className="px-5 py-4">
-                    <StatusBadge status={b.status} />
-                    {b.status === "REJECTED" && b.rejectReason && (
-                      <div className="text-red-500 text-xs mt-1">
-                        {b.rejectReason}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    {(b.status === "PENDING" || b.status === "APPROVED") && (
-                      <button
-                        onClick={() => handleCancel(b.id)}
-                        className="text-red-500 hover:text-red-700 
-                          text-xs hover:underline"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </td>
+        <>
+          <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left px-5 py-3.5 text-gray-500 font-medium text-xs uppercase tracking-wide">Booking ID</th>
+                  <th className="text-left px-5 py-3.5 text-gray-500 font-medium text-xs uppercase tracking-wide">Resource</th>
+                  <th className="text-left px-5 py-3.5 text-gray-500 font-medium text-xs uppercase tracking-wide">Date</th>
+                  <th className="text-left px-5 py-3.5 text-gray-500 font-medium text-xs uppercase tracking-wide">Time</th>
+                  <th className="text-left px-5 py-3.5 text-gray-500 font-medium text-xs uppercase tracking-wide">Status</th>
+                  <th className="text-left px-5 py-3.5 text-gray-500 font-medium text-xs uppercase tracking-wide">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((b, i) => (
+                  <tr
+                    key={b.id}
+                    className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                      i === filtered.length - 1 ? 'border-0' : ''
+                    }`}
+                  >
+                    <td className="px-5 py-4 font-semibold text-gray-800">BK-{b.id}</td>
+                    <td className="px-5 py-4">
+                      <div className="font-medium text-gray-700">{b.resourceName}</div>
+                      <div className="text-gray-400 text-xs">📍 {b.resourceLocation}</div>
+                    </td>
+                    <td className="px-5 py-4 text-gray-600">{formatDate(b.bookingDate)}</td>
+                    <td className="px-5 py-4 text-gray-600">{b.startTime} - {b.endTime}</td>
+                    <td className="px-5 py-4">
+                      <BookingStatusBadge status={b.status} />
+                      {b.status === 'REJECTED' && b.adminReviewNote && (
+                        <div className="text-red-500 text-xs mt-1">{b.adminReviewNote}</div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex gap-2 flex-wrap items-center">
+                        <Link
+                          to={`/bookings/${b.id}`}
+                          className={`${actionBtn} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100`}
+                        >
+                          Details
+                        </Link>
+                        {isAdmin && b.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(b.id)}
+                              className={`${actionBtn} border border-green-200 bg-green-50 text-green-700 hover:bg-green-100`}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(b.id)}
+                              className={`${actionBtn} border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100`}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {(b.status === 'PENDING' || b.status === 'APPROVED') && (
+                          <button
+                            onClick={() => handleCancel(b.id)}
+                            className={`${actionBtn} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100`}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-3 md:hidden">
+            {filtered.map((b) => (
+              <div key={b.id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="font-semibold text-gray-800">BK-{b.id}</p>
+                  <BookingStatusBadge status={b.status} />
+                </div>
+                <p className="text-sm font-medium text-gray-700">{b.resourceName}</p>
+                <p className="text-xs text-gray-500">📍 {b.resourceLocation}</p>
+                <p className="mt-2 text-sm text-gray-600">{formatDate(b.bookingDate)} | {b.startTime} - {b.endTime}</p>
+                {b.status === 'REJECTED' && b.adminReviewNote && (
+                  <p className="mt-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-600">
+                    Reason: {b.adminReviewNote}
+                  </p>
+                )}
+                <div className="mt-3 flex gap-2 flex-wrap">
+                  <Link
+                    to={`/bookings/${b.id}`}
+                    className={`${actionBtn} border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100`}
+                  >
+                    Details
+                  </Link>
+                  {isAdmin && b.status === 'PENDING' && (
+                    <>
+                      <button
+                        onClick={() => handleApprove(b.id)}
+                        className={`${actionBtn} border border-green-200 bg-green-50 text-green-700 hover:bg-green-100`}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(b.id)}
+                        className={`${actionBtn} border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100`}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {(b.status === 'PENDING' || b.status === 'APPROVED') && (
+                    <button
+                      onClick={() => handleCancel(b.id)}
+                      className={`${actionBtn} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100`}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default MyBookings;
+export default MyBookings
