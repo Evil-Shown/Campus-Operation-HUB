@@ -3,26 +3,28 @@ package com.campusops.campus_ops_backend.dto.response;
 import java.time.LocalTime;
 
 import com.campusops.campus_ops_backend.model.Resource;
+import com.campusops.campus_ops_backend.model.ResourceStatus;
+import com.campusops.campus_ops_backend.model.ResourceType;
 
 public record ResourceResponseDTO(
         Long id,
         String name,
-        Resource.ResourceType type,
-        Integer capacity,
-        String location,
-        Resource.ResourceStatus status,
-        LocalTime availabilityStart,
-        LocalTime availabilityEnd) {
+        ResourceType type,
+        Integer seatingCapacity,
+        String physicalLocation,
+        ResourceStatus status,
+        LocalTime availableFrom,
+        LocalTime availableTo) {
 
     public static ResourceResponseDTO from(Resource r) {
         return new ResourceResponseDTO(
                 r.getId(),
                 r.getName(),
                 r.getType(),
-                r.getCapacity(),
-                r.getLocation(),
+                r.getSeatingCapacity(),
+                r.getPhysicalLocation(),
                 r.getStatus(),
-                r.getAvailabilityStart(),
-                r.getAvailabilityEnd());
+                r.getAvailableFrom(),
+                r.getAvailableTo());
     }
 }
