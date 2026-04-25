@@ -189,12 +189,12 @@ export default function TicketDetailPage() {
   }
 
   if (loading) {
-    return <div className="mx-auto w-full max-w-5xl px-1 py-8 text-sm text-slate-600">Loading ticket…</div>
+    return <div className="mx-auto w-full max-w-5xl px-2 py-8 text-sm text-slate-600">Loading ticket…</div>
   }
 
   if (error) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-4 px-1 py-8">
+      <div className="mx-auto w-full max-w-5xl space-y-4 px-2 py-8">
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
         <Link to="/tickets" className="text-sm font-semibold text-indigo-600 hover:underline">
           Back to tickets
@@ -205,7 +205,7 @@ export default function TicketDetailPage() {
 
   if (!ticket) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-4 px-1 py-8">
+      <div className="mx-auto w-full max-w-5xl space-y-4 px-2 py-8">
         <p className="text-sm text-slate-600">Ticket not found.</p>
         <Link to="/tickets" className="text-sm font-semibold text-indigo-600 hover:underline">
           Back to tickets
@@ -215,11 +215,15 @@ export default function TicketDetailPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-2 py-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link to="/tickets" className="text-sm font-semibold text-indigo-600 hover:underline">
-            ← Back
+          <Link
+            to="/tickets"
+            className="btn-secondary inline-flex w-fit items-center gap-2 !px-4 !py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+          >
+            <span aria-hidden="true">←</span>
+            <span>Back to tickets</span>
           </Link>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">Ticket #{ticket.id}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
@@ -232,7 +236,7 @@ export default function TicketDetailPage() {
           <button
             type="button"
             onClick={handleDelete}
-            className="rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+            className="btn-secondary !border-rose-200 !text-rose-700 hover:!bg-rose-50"
           >
             Delete ticket
           </button>
@@ -241,7 +245,7 @@ export default function TicketDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="glass-card !p-5">
             <h2 className="text-sm font-semibold text-slate-700">Description</h2>
             <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{ticket.description}</p>
 
@@ -261,7 +265,7 @@ export default function TicketDetailPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="glass-card !p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-slate-700">Attachments</h2>
@@ -277,7 +281,7 @@ export default function TicketDetailPage() {
                       href={getTicketAttachmentUrl({ baseUrl: apiBaseUrl, ticketId: ticket.id, fileName: path })}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-medium text-indigo-600 hover:underline"
+                      className="font-medium text-indigo-600 hover:underline break-all"
                     >
                       {path}
                     </a>
@@ -289,13 +293,13 @@ export default function TicketDetailPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="glass-card !p-5">
             <h2 className="text-sm font-semibold text-slate-700">Comments</h2>
             <p className="mt-1 text-xs text-slate-500">Full comment history is loaded from the ticket conversation.</p>
 
             <form className="mt-3 flex flex-col gap-2" onSubmit={handleAddComment}>
               <textarea
-                className="min-h-[90px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="input-field min-h-[90px] resize-none bg-white"
                 placeholder="Write a comment…"
                 value={commentBody}
                 onChange={(e) => setCommentBody(e.target.value)}
@@ -305,7 +309,7 @@ export default function TicketDetailPage() {
                 <button
                   type="submit"
                   disabled={commenting}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {commenting ? 'Posting…' : 'Post comment'}
                 </button>
@@ -315,7 +319,7 @@ export default function TicketDetailPage() {
             {localComments.length ? (
               <ul className="mt-4 space-y-3">
                 {localComments.map((comment) => (
-                  <li key={comment.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <li key={comment.id} className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                       <span>{comment.author?.email || 'Unknown'} </span>
                       <span>{formatDate(comment.createdAt)}</span>
@@ -326,7 +330,7 @@ export default function TicketDetailPage() {
                         <button
                           type="button"
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="rounded border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                          className="btn-secondary !px-3 !py-1.5 !text-xs !border-rose-200 !text-rose-700 hover:!bg-rose-50"
                         >
                           Delete
                         </button>
@@ -342,7 +346,7 @@ export default function TicketDetailPage() {
         </div>
 
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="glass-card !p-5">
             <h2 className="text-sm font-semibold text-slate-700">Status</h2>
             <p className="mt-1 text-xs text-slate-500">Current: {ticket.status}</p>
 
@@ -350,7 +354,7 @@ export default function TicketDetailPage() {
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 Update status
                 <select
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal disabled:cursor-not-allowed disabled:bg-slate-50"
+                  className="input-field bg-white disabled:cursor-not-allowed disabled:bg-slate-50"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   disabled={!canEditStatus}
@@ -366,7 +370,7 @@ export default function TicketDetailPage() {
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 Resolution note (optional)
                 <textarea
-                  className="min-h-[90px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal disabled:cursor-not-allowed disabled:bg-slate-50"
+                  className="input-field min-h-[90px] resize-none bg-white disabled:cursor-not-allowed disabled:bg-slate-50"
                   value={resolutionNote}
                   onChange={(e) => setResolutionNote(e.target.value)}
                   disabled={!canEditStatus}
@@ -380,7 +384,7 @@ export default function TicketDetailPage() {
                 type="button"
                 onClick={handleStatusSave}
                 disabled={!canEditStatus || saving}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="btn-primary disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? 'Saving…' : 'Save status'}
               </button>
@@ -390,7 +394,7 @@ export default function TicketDetailPage() {
                   <label className="grid gap-1 text-sm font-medium text-slate-700">
                     Assign to user ID
                     <input
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal"
+                      className="input-field bg-white"
                       value={assigneeId}
                       onChange={(e) => setAssigneeId(e.target.value.replace(/[^\d]/g, ''))}
                       placeholder="e.g. 5"
@@ -401,7 +405,7 @@ export default function TicketDetailPage() {
                     type="button"
                     onClick={handleAssign}
                     disabled={assigning || !assigneeId}
-                    className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn-secondary !bg-slate-900 !text-white hover:!bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {assigning ? 'Assigning…' : 'Assign ticket'}
                   </button>
