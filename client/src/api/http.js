@@ -40,7 +40,8 @@ function buildApiUrl({ baseUrl, path, query }) {
 
   // Avoid accidental /api/api duplication when baseUrl already contains /api.
   if (baseWithoutTrailingSlash.toLowerCase().endsWith('/api') && normalizedPath.toLowerCase().startsWith('/api/')) {
-    normalizedPath = normalizedPath.slice(4)
+    // Keep the path relative to preserve the /api base segment.
+    normalizedPath = normalizedPath.slice(5)
   }
 
   const url = new URL(normalizedPath, `${baseWithoutTrailingSlash}/`)

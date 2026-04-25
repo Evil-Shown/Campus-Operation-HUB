@@ -1,32 +1,10 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckCircle, 
-  Clock, 
-  MessageCircle, 
-  XCircle, 
-  Check, 
-  Bell, 
-  Filter, 
-  Trash2, 
-  RefreshCw,
-  Zap,
-  Activity,
-  History,
-  Terminal,
-  ShieldCheck
-} from 'lucide-react';
-import useNotifications from '../hooks/useNotifications';
-import notificationApi from '../api/notificationApi';
-import PageHeader from '../components/common/PageHeader';
-import Card from '../components/common/Card';
-import Badge from '../components/common/Badge';
-import Button from '../components/common/Button';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import ErrorMessage from '../components/common/ErrorMessage';
-import EmptyState from '../components/common/EmptyState';
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { CheckCircle, Clock, MessageCircle, XCircle, Check, Bell, Filter, Trash2, RefreshCw } from 'lucide-react'
+import { listNotifications, markAllRead, markOneRead } from '../api/notifications'
+import { useAuth } from '../context/AuthContext'
 
-const getIcon = (type) => {
+function getNotificationIcon(type) {
   const icons = {
     BOOKING_APPROVED: CheckCircle,
     BOOKING_REJECTED: XCircle,
@@ -34,171 +12,280 @@ const getIcon = (type) => {
     TICKET_RESOLVED: CheckCircle,
     TICKET_ASSIGNED: Bell,
     COMMENT_ADDED: MessageCircle,
-  };
-  return icons[type] || Bell;
-};
+  }
+  return icons[type] || Bell
+}
 
-const getColor = (type) => {
+function getNotificationColor(type) {
   const colors = {
-    BOOKING_APPROVED: 'emerald',
-    BOOKING_REJECTED: 'rose',
-    TICKET_UPDATED: 'blue',
-    TICKET_RESOLVED: 'emerald',
-    TICKET_ASSIGNED: 'indigo',
-    COMMENT_ADDED: 'violet',
-  };
-  return colors[type] || 'slate';
-};
+    BOOKING_APPROVED: 'text-emerald-500 bg-emerald-50 border-emerald-200',
+    BOOKING_REJECTED: 'text-rose-500 bg-rose-50 border-rose-200',
+    TICKET_UPDATED: 'text-blue-500 bg-blue-50 border-blue-200',
+    TICKET_RESOLVED: 'text-emerald-500 bg-emerald-50 border-emerald-200',
+    TICKET_ASSIGNED: 'text-indigo-500 bg-indigo-50 border-indigo-200',
+    COMMENT_ADDED: 'text-purple-500 bg-purple-50 border-purple-200',
+  }
+  return colors[type] || 'text-gray-500 bg-gray-50 border-gray-200'
+}
 
-const formatTime = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+function formatTime(dateString) {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHrs / 24)
   
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHrs < 24) return `${diffHrs}h ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHrs < 24) return `${diffHrs}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
 export default function NotificationsPage() {
-  const { notifications, unreadCount, loading, error, refresh } = useNotifications();
-  const [filter, setFilter] = useState('ALL');
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all') // all, unread, read
+  const [typeFilter, setTypeFilter] = useState('all')
+  const { apiBaseUrl, token } = useAuth()
 
-  const handleMarkRead = async (id) => {
-    try {
-      await notificationApi.markAsRead(id);
-      refresh();
-    } catch (err) {
-      console.error('System: Sync failed');
+  useEffect(() => {
+    async function fetchNotifications() {
+      if (!apiBaseUrl || !token) return
+      
+      try {
+        setLoading(true)
+        const data = await listNotifications({ baseUrl: apiBaseUrl, token })
+        setNotifications(data || [])
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  };
+
+    fetchNotifications()
+  }, [apiBaseUrl, token])
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await markOneRead({ baseUrl: apiBaseUrl, token, id })
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    } catch (error) {
+      console.error('Failed to mark as read:', error)
+    }
+  }
 
   const handleMarkAllRead = async () => {
     try {
-      await notificationApi.markAllAsRead();
-      refresh();
-    } catch (err) {
-      console.error('System: Sync failed');
+      await markAllRead({ baseUrl: apiBaseUrl, token })
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    } catch (error) {
+      console.error('Failed to mark all as read:', error)
     }
-  };
+  }
 
-  const filtered = filter === 'ALL' 
-    ? notifications 
-    : filter === 'UNREAD' 
-      ? notifications.filter(n => !n.isRead) 
-      : notifications.filter(n => n.isRead);
+  const handleRefresh = async () => {
+    try {
+      setLoading(true)
+      const data = await listNotifications({ baseUrl: apiBaseUrl, token })
+      setNotifications(data || [])
+    } catch (error) {
+      console.error('Failed to refresh notifications:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  if (loading && notifications.length === 0) return <LoadingSpinner />;
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === 'unread' && n.read) return false
+    if (filter === 'read' && !n.read) return false
+    if (typeFilter !== 'all' && n.type !== typeFilter) return false
+    return true
+  })
+
+  const unreadCount = notifications.filter(n => !n.read).length
+  const typeCounts = notifications.reduce((acc, n) => {
+    acc[n.type] = (acc[n.type] || 0) + 1
+    return acc
+  }, {})
 
   return (
-    <div className="space-y-12 pb-24">
-      <PageHeader 
-        title="Inbox Matrix" 
-        subtitle="Stay updated with your institutional activities and system signals."
-        action={
-          <div className="flex gap-4">
-             <div className="px-6 py-3 rounded-2xl bg-white border border-slate-100 flex flex-col items-end shadow-sm">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Unread Alerts</span>
-                <span className="text-xl font-black text-indigo-600 leading-none">{unreadCount}</span>
-             </div>
-             <Button onClick={refresh} variant="secondary" icon={RefreshCw}>Pulse</Button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40 p-6 lg:p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-black text-gray-800 uppercase tracking-tight">Notifications</h1>
+              <p className="text-gray-500 mt-1">Stay updated with your campus activities</p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all shadow-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
           </div>
-        }
-      />
 
-      <div className="flex flex-wrap items-center justify-between gap-6">
-         <div className="flex bg-white border border-slate-100 rounded-2xl p-1.5 shadow-sm">
-            {['ALL', 'UNREAD', 'ARCHIVED'].map(f => (
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</p>
+              <p className="text-2xl font-black text-gray-800 mt-1">{notifications.length}</p>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unread</p>
+              <p className="text-2xl font-black text-indigo-600 mt-1">{unreadCount}</p>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bookings</p>
+              <p className="text-2xl font-black text-gray-800 mt-1">
+                {(typeCounts.BOOKING_APPROVED || 0) + (typeCounts.BOOKING_REJECTED || 0)}
+              </p>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-4 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tickets</p>
+              <p className="text-2xl font-black text-gray-800 mt-1">
+                {(typeCounts.TICKET_UPDATED || 0) + (typeCounts.TICKET_RESOLVED || 0) + (typeCounts.TICKET_ASSIGNED || 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1">
               <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  filter === f ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  filter === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                {f}
+                All
               </button>
-            ))}
-         </div>
-         {unreadCount > 0 && (
-           <Button variant="ghost" size="sm" icon={Check} onClick={handleMarkAllRead} className="text-indigo-600 hover:bg-indigo-50">
-             Authorize All as Read
-           </Button>
-         )}
-      </div>
-
-      <div className="space-y-4">
-        <AnimatePresence mode="popLayout">
-          {filtered.length > 0 ? filtered.map((notif, i) => {
-            const Icon = getIcon(notif.type);
-            const color = getColor(notif.type);
-            
-            return (
-              <motion.div
-                key={notif.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="group"
+              <button
+                onClick={() => setFilter('unread')}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  filter === 'unread' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
               >
-                <Card className={`!p-6 border-slate-100 transition-all duration-300 ${!notif.isRead ? 'bg-indigo-50/20 border-indigo-100/50 shadow-indigo-500/5 shadow-xl' : 'hover:bg-slate-50'}`}>
-                   <div className="flex items-start gap-8">
-                      <div className={`h-14 w-14 rounded-2xl shrink-0 flex items-center justify-center text-${color}-600 bg-${color}-50 border border-${color}-100 group-hover:scale-105 transition-transform`}>
-                         <Icon size={24} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                         <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight truncate">{notif.title}</h4>
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">{formatTime(notif.createdAt)}</span>
-                         </div>
-                         <p className="text-sm font-bold text-slate-500 leading-relaxed mb-4">{notif.message}</p>
-                         <div className="flex items-center gap-4">
-                            {!notif.isRead && (
-                              <button 
-                                onClick={() => handleMarkRead(notif.id)}
-                                className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-widest flex items-center gap-2 group/btn"
-                              >
-                                <Check size={14} className="group-hover/btn:scale-125 transition-transform" /> Mark as Consumed
-                              </button>
-                            )}
-                            <Badge color={color} className="text-[8px]">{notif.type}</Badge>
-                         </div>
-                      </div>
-                   </div>
-                </Card>
-              </motion.div>
-            );
-          }) : (
-            <EmptyState 
-              icon={Bell} 
-              title="Inbox Clear" 
-              message="No system signals or operational updates detected in your terminal."
-            />
-          )}
-        </AnimatePresence>
-      </div>
+                Unread ({unreadCount})
+              </button>
+              <button
+                onClick={() => setFilter('read')}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  filter === 'read' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Read
+              </button>
+            </div>
 
-      {/* Security Telemetry Footer */}
-      <Card className="bg-slate-900 !p-10 text-white relative overflow-hidden flex items-center justify-between mt-20">
-         <div className="absolute top-0 right-0 p-8 opacity-5">
-            <Terminal size={140} className="grayscale" />
-         </div>
-         <div className="relative z-10 flex items-center gap-8">
-            <div className="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center">
-               <ShieldCheck size={28} className="text-emerald-400" />
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1">
+              <button
+                onClick={() => setTypeFilter('all')}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  typeFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                All Types
+              </button>
+              <button
+                onClick={() => setTypeFilter('BOOKING_APPROVED')}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  typeFilter === 'BOOKING_APPROVED' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Bookings
+              </button>
+              <button
+                onClick={() => setTypeFilter('TICKET_UPDATED')}
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  typeFilter === 'TICKET_UPDATED' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Tickets
+              </button>
             </div>
-            <div>
-               <h4 className="text-sm font-black uppercase tracking-widest mb-1">Encrypted Signal Channel</h4>
-               <p className="text-[10px] text-white/40 uppercase tracking-widest italic">Node: SLIIT-FC-01 • Secure Link Verified</p>
-            </div>
-         </div>
-         <div className="flex items-center gap-4 text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
-            <Activity size={16} className="animate-pulse" /> Pulse: Optimal
-         </div>
-      </Card>
+
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-black uppercase tracking-wider hover:bg-indigo-100 transition-all"
+              >
+                <Check className="w-4 h-4" />
+                Mark All Read
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Notifications List */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+          </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-12 text-center shadow-sm">
+            <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-gray-800 mb-2">No notifications found</h3>
+            <p className="text-gray-500">You're all caught up!</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredNotifications.map((notif, idx) => {
+              const Icon = getNotificationIcon(notif.type)
+              const colorClass = getNotificationColor(notif.type)
+              
+              return (
+                <motion.div
+                  key={notif.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`bg-white/80 backdrop-blur-sm border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all ${
+                    !notif.read ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-100'
+                  }`}
+                >
+                  <div className="flex gap-4">
+                    <div className={`flex-shrink-0 h-12 w-12 rounded-xl border flex items-center justify-center ${colorClass}`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <h3 className="text-sm font-bold text-gray-800">{notif.title}</h3>
+                          <p className="mt-1 text-sm text-gray-600">{notif.message}</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5 text-gray-400" />
+                            <span className="text-xs text-gray-400">{formatTime(notif.createdAt)}</span>
+                            {!notif.read && (
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-black uppercase tracking-wider">
+                                Unread
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {!notif.read && (
+                          <button
+                            onClick={() => handleMarkAsRead(notif.id)}
+                            className="flex-shrink-0 p-2 text-indigo-600 hover:bg-indigo-100 rounded-xl transition-colors"
+                            title="Mark as read"
+                          >
+                            <Check className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
