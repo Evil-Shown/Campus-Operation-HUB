@@ -12,7 +12,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     @Query("SELECT r FROM Resource r WHERE " +
            "(:type IS NULL OR r.type = :type) AND " +
-           "(:location IS NULL OR LOWER(r.location) LIKE LOWER(CONCAT('%',:location,'%'))) AND " +
+           "(:location IS NULL OR LOWER(r.location) LIKE CONCAT('%', LOWER(CAST(:location AS string)), '%')) AND " +
            "(:minCapacity IS NULL OR r.capacity >= :minCapacity) AND " +
            "r.status <> 'OUT_OF_SERVICE'")
     List<Resource> search(
