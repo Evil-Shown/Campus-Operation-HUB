@@ -1,4 +1,4 @@
-package com.campusops.campus_ops_backend.repository;
+/*package com.campusops.campus_ops_backend.repository;
 
 import java.util.List;
 
@@ -20,11 +20,20 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
             @Param("location") String location,
             @Param("minCapacity") Integer minCapacity);
 }
+*/
 
 
 
+package com.campusops.campus_ops_backend.repository;
 
+import com.campusops.campus_ops_backend.model.Resource;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
+@Repository
+public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSpecificationExecutor<Resource> {
+}
 
 
 
