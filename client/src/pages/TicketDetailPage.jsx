@@ -323,6 +323,9 @@ export default function TicketDetailPage() {
               <div>
                 <span className="font-semibold text-slate-600">Resource:</span> {ticket.resource?.name ? `${ticket.resource.name} (#${ticket.resource.id})` : '—'}
               </div>
+              <div>
+                <span className="font-semibold text-slate-600">Affected location/resource:</span> {ticket.resourceLocation || '—'}
+              </div>
             </div>
           </section>
 

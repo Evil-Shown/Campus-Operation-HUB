@@ -35,7 +35,6 @@ export default function TicketCreatePage() {
       setError('Resource or location is required')
       return
     }
-
     setSubmitting(true)
     try {
       const payload = {
@@ -81,7 +80,7 @@ export default function TicketCreatePage() {
           </div>
 
           <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Resource and Location (optional)</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Resource and Location</label>
           <input
             type="text"
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
