@@ -176,61 +176,6 @@ SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=<google-client-id>
 SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=<google-client-secret>
 ```
 
-### Shared cloud database (Option A: Neon/Supabase)
-
-For team development on one shared database, use a managed PostgreSQL provider (Neon or Supabase).
-
-1. Create a project/database in Neon or Supabase.
-2. Copy PostgreSQL connection details (`host`, `port`, `database`, `user`, `password`).
-3. Set backend environment variables in each developer machine before starting backend:
-
-```powershell
-$env:SPRING_DATASOURCE_URL="jdbc:postgresql://<host>:5432/<database>?sslmode=require"
-$env:SPRING_DATASOURCE_USERNAME="<user>"
-$env:SPRING_DATASOURCE_PASSWORD="<password>"
-```
-
-4. Start backend:
-
-```powershell
-cd server
-.\mvnw.cmd spring-boot:run
-```
-
-Notes:
-
-- Keep `sslmode=require` in cloud connection strings.
-- Never commit real DB passwords. Use `.env.example` as a template only.
-- Keep one shared `dev` database for team work and separate local/test databases for experiments.
-
-Quick start for this repository (PowerShell):
-
-```powershell
-cd server
-.\start-supabase-dev.ps1
-```
-
-Or pass password inline for non-interactive startup:
-
-```powershell
-cd server
-.\start-supabase-dev.ps1 -DbPassword "<your-supabase-password>"
-```
-
-One-time setup (recommended to avoid entering password every run):
-
-```powershell
-cd server
-.\setup-supabase-once.ps1 -DbPassword "<your-supabase-password>"
-```
-
-After this one-time command, open a new terminal and start backend normally:
-
-```powershell
-cd server
-.\mvnw.cmd spring-boot:run
-```
-
 ### Recommended Environment Files
 
 You can use shell-specific env files to avoid committing secrets:
@@ -276,8 +221,6 @@ SHOW data_directory;
 ```
 
 Do not run `docker compose down -v` unless you intentionally want to delete all local DB data.
-
-When you use a cloud shared database (Neon/Supabase), this local Docker database step is optional.
 
 For CI-like test runs, a dedicated database is commonly used:
 
