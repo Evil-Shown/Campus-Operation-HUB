@@ -1,4 +1,4 @@
-import api from '../api/api'
+import api from '../api/axios.js'
 
 // Member 2 - Booking Management
 const bookingService = {
