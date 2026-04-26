@@ -2,7 +2,8 @@ package com.campusops.campus_ops_backend.dto.request;
 
 import java.time.LocalTime;
 
-import com.campusops.campus_ops_backend.model.Resource;
+import com.campusops.campus_ops_backend.model.ResourceStatus;
+import com.campusops.campus_ops_backend.model.ResourceType;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -20,16 +21,16 @@ public class ResourceRequestDTO {
     private String name;
 
     @NotNull
-    private Resource.ResourceType type;
+    private ResourceType type;
 
     @Min(1)
-    private Integer capacity;
+    private Integer seatingCapacity;
 
     @NotBlank
-    private String location;
+    private String physicalLocation;
 
-    private Resource.ResourceStatus status;
+    private ResourceStatus status;
 
-    private LocalTime availabilityStart;
-    private LocalTime availabilityEnd;
+    private LocalTime availableFrom;
+    private LocalTime availableTo;
 }

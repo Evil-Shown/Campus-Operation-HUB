@@ -61,13 +61,18 @@ public class TicketService {
         Ticket ticket = Ticket.builder()
                 .reporter(reporter)
                 .resource(resource)
+                .resourceLocation(dto.getResourceLocation().trim())
                 .category(dto.getCategory())
-                .description(dto.getDescription().trim() + "\n\nResource/Location: " + dto.getResourceLocation().trim())
+                .description(dto.getDescription().trim())
                 .priority(dto.getPriority())
                 .contactInfo(dto.getContactInfo())
                 .build();
 
         Ticket saved = ticketRepository.save(ticket);
+        userRepository.findByRole(User.Role.ADMIN).forEach(admin -> notificationService.create(
+                admin,
+                "TICKET_CREATED",
+                "New ticket #" + saved.getId() + " reported by " + reporter.getName() + "."));
 
         if (files != null) {
             for (MultipartFile file : files) {
@@ -155,7 +160,12 @@ public class TicketService {
         if (ticket.getStatus() == Ticket.TicketStatus.OPEN) {
             ticket.setStatus(Ticket.TicketStatus.IN_PROGRESS);
         }
-        return TicketResponseDTO.from(ticketRepository.save(ticket));
+        Ticket saved = ticketRepository.save(ticket);
+        notificationService.create(
+                assignee,
+                "TICKET_ASSIGNED",
+                "You have been assigned ticket #" + saved.getId() + ".");
+        return TicketResponseDTO.from(saved);
     }
 
     @Transactional
@@ -171,6 +181,10 @@ public class TicketService {
         if (ticket.getReporter() != null && !ticket.getReporter().getId().equals(author.getId())) {
             notificationService.create(ticket.getReporter(), "TICKET_COMMENT_ADDED",
                     "New comment on your ticket #" + ticketId + " from " + author.getName());
+        }
+        if (ticket.getAssignee() != null && !ticket.getAssignee().getId().equals(author.getId())) {
+            notificationService.create(ticket.getAssignee(), "TICKET_COMMENT_ADDED",
+                    "New comment on ticket #" + ticketId + " from " + author.getName());
         }
 
         return CommentResponseDTO.from(saved);

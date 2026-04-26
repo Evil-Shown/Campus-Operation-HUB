@@ -124,4 +124,9 @@ public class ResourceService {
     public List<Resource> getAllResourcesForAdmin() {
         return repository.findAll();
     }
+
+    public Resource getResourceById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
+    }
 }

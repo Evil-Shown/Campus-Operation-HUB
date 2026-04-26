@@ -182,6 +182,7 @@ You can use shell-specific env files to avoid committing secrets:
 
 - `.env.local` for frontend values
 - shell profile or secure secret manager for backend credentials
+- copy `.env.example` and fill local values in your own private env file (do not commit)
 
 Never commit real OAuth secrets or production JWT secrets.
 

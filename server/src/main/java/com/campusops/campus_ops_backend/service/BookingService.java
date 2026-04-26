@@ -12,9 +12,11 @@ import com.campusops.campus_ops_backend.exception.ResourceNotFoundException;
 import com.campusops.campus_ops_backend.exception.UnauthorizedActionException;
 import com.campusops.campus_ops_backend.model.Booking;
 import com.campusops.campus_ops_backend.model.Resource;
+import com.campusops.campus_ops_backend.model.ResourceStatus;
 import com.campusops.campus_ops_backend.model.User;
 import com.campusops.campus_ops_backend.repository.BookingRepository;
 import com.campusops.campus_ops_backend.repository.ResourceRepository;
+import com.campusops.campus_ops_backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +26,7 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
+    private final UserRepository userRepository;
     private final NotificationService notificationService;
 
     @Transactional
@@ -35,7 +38,7 @@ public class BookingService {
         Resource resource = resourceRepository.findById(dto.getResourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + dto.getResourceId()));
 
-        if (resource.getStatus() != Resource.ResourceStatus.ACTIVE) {
+        if (resource.getStatus() != ResourceStatus.ACTIVE) {
             throw new IllegalStateException("Resource is out of service");
         }
 
@@ -53,7 +56,12 @@ public class BookingService {
                 .status(Booking.BookingStatus.PENDING)
                 .build();
 
-        return BookingResponseDTO.from(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        userRepository.findByRole(User.Role.ADMIN).forEach(admin -> notificationService.create(
+                admin,
+                "BOOKING_PENDING_REVIEW",
+                "New booking request from " + currentUser.getName() + " for " + resource.getName() + "."));
+        return BookingResponseDTO.from(saved);
     }
 
     @Transactional(readOnly = true)

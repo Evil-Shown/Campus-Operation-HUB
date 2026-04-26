@@ -8,8 +8,9 @@ import SignupPage from './pages/SignupPage'
 import AuthCallback from './pages/auth/AuthCallback'
 import ResourceListPage from './pages/resources/ResourceListPage'
 import ResourceDetailPage from './pages/resources/ResourceDetailPage'
-import BookingFormPage from './pages/bookings/BookingFormPage'
-import MyBookingsPage from './pages/bookings/MyBookingsPage'
+import BookingFormPage from './pages/bookings/BookingForm'
+import MyBookingsPage from './pages/bookings/MyBookings'
+import BookingDetailPage from './pages/bookings/BookingDetail'
 import TicketCreatePage from './pages/tickets/TicketCreatePage'
 import TicketsPage from './pages/TicketsPage'
 import TicketDetailPage from './pages/TicketDetailPage'
@@ -44,6 +45,7 @@ function App() {
           <Route path="/bookings/new" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/my" element={withProtectedLayout(<MyBookingsPage />)} />
+          <Route path="/bookings/:id" element={withProtectedLayout(<BookingDetailPage />)} />
           <Route path="/tickets" element={withProtectedLayout(<TicketsPage />)} />
           <Route path="/tickets/new" element={withProtectedLayout(<TicketCreatePage />)} />
           <Route path="/tickets/:id" element={withProtectedLayout(<TicketDetailPage />)} />

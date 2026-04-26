@@ -10,6 +10,7 @@ public record TicketResponseDTO(
         Long id,
         UserSummaryDTO reporter,
         ResourceResponseDTO resource,
+        String resourceLocation,
         UserSummaryDTO assignee,
         Ticket.TicketCategory category,
         String description,
@@ -30,6 +31,7 @@ public record TicketResponseDTO(
                         t.getReporter().getPictureUrl(),
                         t.getReporter().getRole()),
                 t.getResource() == null ? null : ResourceResponseDTO.from(t.getResource()),
+                t.getResourceLocation(),
                 t.getAssignee() == null ? null : new UserSummaryDTO(
                         t.getAssignee().getId(),
                         t.getAssignee().getName(),

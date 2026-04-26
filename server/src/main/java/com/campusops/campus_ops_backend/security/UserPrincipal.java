@@ -9,8 +9,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.campusops.campus_ops_backend.model.User;
 
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
+@RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
 
     private final User user;

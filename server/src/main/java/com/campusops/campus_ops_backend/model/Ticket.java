@@ -43,6 +43,9 @@ public class Ticket {
     @JoinColumn(name = "resource_id")
     private Resource resource;
 
+    @Column(name = "resource_location", nullable = false)
+    private String resourceLocation;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;
