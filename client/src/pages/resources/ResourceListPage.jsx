@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Building2,
@@ -49,13 +49,14 @@ function StatusPill({ status }) {
 export default function ResourceListPage() {
   const { user, token, apiBaseUrl } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // Check if the current user is an admin
   const isAdmin = user?.role === 'ADMIN'
 
   const [resources, setResources] = useState([])
   const [filters, setFilters] = useState({
-    type: '',
+    type: searchParams.get('type') || '',
     location: '',
     minCapacity: '',
   })
@@ -95,9 +96,23 @@ export default function ResourceListPage() {
     fetchResources()
   }, [fetchResources])
 
+  // Keep `type` filter in sync with URL query so dashboard category links prefilter this page.
+  useEffect(() => {
+    const typeFromUrl = searchParams.get('type') || ''
+    setFilters((prev) => (prev.type === typeFromUrl ? prev : { ...prev, type: typeFromUrl }))
+  }, [searchParams])
+
   // Handle filter input changes
   const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setFilters((prev) => ({ ...prev, [name]: value }))
+
+    if (name === 'type') {
+      const nextParams = new URLSearchParams(searchParams)
+      if (value) nextParams.set('type', value)
+      else nextParams.delete('type')
+      setSearchParams(nextParams)
+    }
   }
 
   // Handle resource deletion (Soft Delete)
