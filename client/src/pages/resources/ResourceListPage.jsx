@@ -18,7 +18,8 @@ import {
   Clock,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { searchResources, deleteResource } from '../../api/resources'
+import { searchResources, deleteResource, createResource, updateResource } from '../../api/resources'
+import ResourceFormModal from '../../components/common/ResourceFormModal'
 
 // Gradient palette for resource cards based on type
 const TYPE_GRADIENTS = {
@@ -60,6 +61,10 @@ export default function ResourceListPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Modal state management
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingResource, setEditingResource] = useState(null)
 
   // Fetch resources from the backend
   const fetchResources = useCallback(async () => {
@@ -110,6 +115,38 @@ export default function ResourceListPage() {
     }
   }
 
+  // Called when Save/Update is pressed inside the modal
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (editingResource) {
+        // Update existing resource
+        await updateResource({ baseUrl: apiBaseUrl, token, id: editingResource.id, data: formData })
+      } else {
+        // Create a new resource
+        await createResource({ baseUrl: apiBaseUrl, token, data: formData })
+      }
+      setIsModalOpen(false)
+      setEditingResource(null)
+      // Refresh the list with the latest data
+      fetchResources()
+    } catch (err) {
+      console.error('Error saving resource:', err)
+      alert('Failed to save resource: ' + (err.message || 'Please try again.'))
+    }
+  }
+
+  // Open the modal in "create" mode
+  const openCreateModal = () => {
+    setEditingResource(null)
+    setIsModalOpen(true)
+  }
+
+  // Open the modal in "edit" mode with existing resource data
+  const openEditModal = (resource) => {
+    setEditingResource(resource)
+    setIsModalOpen(true)
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
@@ -139,7 +176,7 @@ export default function ResourceListPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/admin/resources')}
+            onClick={openCreateModal}
             className="btn-primary !py-3 !px-6 text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary-500/20"
           >
             <Plus className="w-4 h-4" /> Add New Resource
@@ -297,7 +334,7 @@ export default function ResourceListPage() {
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => navigate(`/admin/resources?edit=${resource.id}`)}
+                          onClick={() => openEditModal(resource)}
                           className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors"
                         >
                           <Edit3 className="w-3 h-3" /> Edit
@@ -348,6 +385,14 @@ export default function ResourceListPage() {
           )}
         </div>
       )}
+
+      {/* Add/Edit Resource Modal */}
+      <ResourceFormModal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setEditingResource(null) }}
+        onSubmit={handleFormSubmit}
+        initialData={editingResource}
+      />
     </div>
   )
 }
