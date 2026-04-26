@@ -39,6 +39,7 @@ function App() {
           <Route path="/user-dashboard" element={withProtectedLayout(<UserDashboard />, ['USER'])} />
           <Route path="/notifications" element={withProtectedLayout(<NotificationsPage />)} />
           <Route path="/admin-dashboard" element={withProtectedLayout(<AdminDashboardPage />, ['ADMIN'])} />
+          <Route path="/resources" element={withProtectedLayout(<ResourceListPage />)} />
           <Route path="/resources/:id" element={withProtectedLayout(<ResourceDetailPage />)} />
           <Route path="/bookings/new" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
