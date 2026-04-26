@@ -104,6 +104,42 @@ export default function AdminDashboardPage() {
         return String(value).length + 2
       }
 
+      const setCellStyle = (sheet, cellRef, style) => {
+        if (!sheet[cellRef]) return
+        sheet[cellRef].s = { ...(sheet[cellRef].s || {}), ...style }
+      }
+
+      const styleHeaderRow = (sheet, rowIndex, columnCount) => {
+        for (let col = 0; col < columnCount; col += 1) {
+          const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: col })
+          setCellStyle(sheet, cellRef, {
+            font: { bold: true, color: { rgb: 'FFFFFFFF' } },
+            fill: { fgColor: { rgb: '1F4E78' } },
+            alignment: { vertical: 'center', horizontal: 'center', wrapText: true },
+          })
+        }
+      }
+
+      const styleTitleCell = (sheet, cellRef) => {
+        setCellStyle(sheet, cellRef, {
+          font: { bold: true, sz: 16, color: { rgb: '1F4E78' } },
+          alignment: { vertical: 'center', horizontal: 'left' },
+        })
+      }
+
+      const styleTotalRow = (sheet, rowIndex, columnCount) => {
+        for (let col = 0; col < columnCount; col += 1) {
+          const cellRef = XLSX.utils.encode_cell({ r: rowIndex, c: col })
+          setCellStyle(sheet, cellRef, {
+            font: { bold: true, color: { rgb: '1F4E78' } },
+            fill: { fgColor: { rgb: 'EAF2FB' } },
+            border: {
+              top: { style: 'thin', color: { rgb: '1F4E78' } },
+            },
+          })
+        }
+      }
+
       const applySheetLayout = (sheet, rows) => {
         if (!rows || rows.length === 0) return
         const headers = Object.keys(rows[0])
@@ -117,6 +153,13 @@ export default function AdminDashboardPage() {
         })
         sheet['!autofilter'] = { ref: sheet['!ref'] }
         sheet['!freeze'] = { xSplit: 0, ySplit: 1 }
+        styleHeaderRow(sheet, 0, headers.length)
+        sheet['!pageSetup'] = {
+          orientation: 'landscape',
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+        }
       }
 
       const bookingHours = data.bookings.reduce((sum, booking) => {
@@ -220,6 +263,7 @@ export default function AdminDashboardPage() {
         { Section: 'Tickets', Metric: 'Critical/High Tickets', Value: criticalTickets },
         { Section: 'Tickets', Metric: 'Resolved', Value: ticketsByStatus.RESOLVED || 0 },
       ]
+      const summaryTotalsRow = { Section: 'Totals', Metric: 'Core Records (Resources + Bookings + Tickets)', Value: data.resources.length + data.bookings.length + data.tickets.length }
 
       const resourcesRows = data.resources.map((resource) => ({
         ResourceId: resource.id,
@@ -300,6 +344,13 @@ export default function AdminDashboardPage() {
         ...ticketPriorityRows.map((row) => ({ Category: 'Tickets By Priority', Key: row.Priority, Value: row.Count })),
       ]
 
+      const chartDataRows = [
+        ...bookingStatusRows.map((row) => ({ Series: 'Bookings by Status', Label: row.Status, Value: row.Count })),
+        ...ticketStatusRows.map((row) => ({ Series: 'Tickets by Status', Label: row.Status, Value: row.Count })),
+        ...ticketPriorityRows.map((row) => ({ Series: 'Tickets by Priority', Label: row.Priority, Value: row.Count })),
+        ...topResourcesRows.slice(0, 10).map((row) => ({ Series: 'Top Resources', Label: row.Resource, Value: row.Bookings })),
+      ]
+
       const summarySheet = XLSX.utils.aoa_to_sheet([
         ['Campus Operation Hub - Admin Dashboard Report'],
         ['Generated At', generatedAtText],
@@ -308,19 +359,33 @@ export default function AdminDashboardPage() {
         ['Section', 'Metric', 'Value'],
       ])
       XLSX.utils.sheet_add_json(summarySheet, summaryRows, { origin: 'A6', skipHeader: true })
+      XLSX.utils.sheet_add_json(summarySheet, [summaryTotalsRow], { origin: `A${summaryRows.length + 7}`, skipHeader: true })
       summarySheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
       summarySheet['!cols'] = [{ wch: 20 }, { wch: 34 }, { wch: 26 }]
-      summarySheet['!autofilter'] = { ref: 'A5:C5' }
+      summarySheet['!autofilter'] = { ref: `A5:C${summaryRows.length + 7}` }
       summarySheet['!freeze'] = { xSplit: 0, ySplit: 5 }
+      summarySheet['!pageSetup'] = {
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+      }
+      styleTitleCell(summarySheet, 'A1')
+      styleHeaderRow(summarySheet, 4, 3)
+      styleTotalRow(summarySheet, summaryRows.length + 6, 3)
       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary')
 
-      const makeDataSheet = (rows) => {
+      const makeDataSheet = (rows, title) => {
         if (!rows || rows.length === 0) {
           const sheet = XLSX.utils.aoa_to_sheet([
+            [title],
+            [],
             ['No data available for this report section'],
             ['Generated At', generatedAtText],
           ])
-          sheet['!cols'] = [{ wch: 42 }, { wch: 24 }]
+          sheet['!cols'] = [{ wch: 48 }, { wch: 28 }]
+          sheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]
+          styleTitleCell(sheet, 'A1')
           return sheet
         }
 
@@ -331,20 +396,60 @@ export default function AdminDashboardPage() {
             return acc
           }, {}),
         )
-        const sheet = XLSX.utils.json_to_sheet(normalizedRows)
+        const sheet = XLSX.utils.json_to_sheet(normalizedRows, { origin: 'A3' })
+        XLSX.utils.sheet_add_aoa(sheet, [[title], []], { origin: 'A1' })
+        sheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(headers.length - 1, 0) } }]
+        styleTitleCell(sheet, 'A1')
+        styleHeaderRow(sheet, 2, headers.length)
         applySheetLayout(sheet, normalizedRows)
+        const totals = headers.reduce((acc, key) => {
+          const normalizedKey = toTitleLabel(key)
+          const numericTotal = normalizedRows.reduce((sum, row) => {
+            const value = row[normalizedKey]
+            return typeof value === 'number' ? sum + value : sum
+          }, 0)
+          acc[normalizedKey] = numericTotal > 0 ? Number(numericTotal.toFixed(2)) : ''
+          return acc
+        }, {})
+        totals[toTitleLabel(headers[0])] = 'Totals'
+        XLSX.utils.sheet_add_json(sheet, [totals], { origin: -1, skipHeader: true })
+        const totalsRowIndex = XLSX.utils.decode_range(sheet['!ref']).e.r
+        styleTotalRow(sheet, totalsRowIndex, headers.length)
+        sheet['!freeze'] = { xSplit: 0, ySplit: 3 }
+        sheet['!autofilter'] = { ref: `A3:${XLSX.utils.encode_col(headers.length - 1)}3` }
         return sheet
       }
 
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(analyticsRows), 'KPI Analytics')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(resourcesRows), 'Resources')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(bookingsRows), 'Bookings')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(ticketsRows), 'Tickets')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(usersRows), 'Users')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(topUsersRows), 'Top Booking Users')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(topResourcesRows), 'Top Resources')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(utilizationRows), 'Utilization')
-      XLSX.utils.book_append_sheet(workbook, makeDataSheet(dailyActivityRows), 'Daily Activity')
+      const instructionsSheet = XLSX.utils.aoa_to_sheet([
+        ['Campus Operation Hub - Report Guide'],
+        [],
+        ['How to use this report'],
+        ['1. Open "Summary" for executive KPIs and totals.'],
+        ['2. Use the filter dropdowns in every data sheet header row.'],
+        ['3. Open "Chart Data" and insert charts from grouped series (Series, Label, Value).'],
+        ['4. Print each sheet in landscape mode for board-ready reports.'],
+      ])
+      instructionsSheet['!cols'] = [{ wch: 86 }]
+      styleTitleCell(instructionsSheet, 'A1')
+      styleHeaderRow(instructionsSheet, 2, 1)
+      instructionsSheet['!pageSetup'] = {
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+      }
+      XLSX.utils.book_append_sheet(workbook, instructionsSheet, 'Report Guide')
+
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(analyticsRows, 'KPI Analytics Overview'), 'KPI Analytics')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(chartDataRows, 'Chart Data (Use Insert -> Charts)'), 'Chart Data')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(resourcesRows, 'Resource Inventory Report'), 'Resources')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(bookingsRows, 'Bookings Operational Report'), 'Bookings')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(ticketsRows, 'Tickets Service Report'), 'Tickets')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(usersRows, 'Users and Roles Report'), 'Users')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(topUsersRows, 'Top Booking Users'), 'Top Booking Users')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(topResourcesRows, 'Top Reserved Resources'), 'Top Resources')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(utilizationRows, 'Resource Utilization by Hours'), 'Utilization')
+      XLSX.utils.book_append_sheet(workbook, makeDataSheet(dailyActivityRows, 'Daily Activity Trend'), 'Daily Activity')
 
       const dateStamp = generatedAt.toISOString().slice(0, 10)
       XLSX.writeFile(workbook, `admin-advanced-report-${dateStamp}.xlsx`)
