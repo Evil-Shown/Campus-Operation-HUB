@@ -12,6 +12,8 @@ const INITIAL_FORM = {
   expectedAttendees: '',
 }
 
+const buildLocalDateTime = (date, time) => `${date}T${time}:00`
+
 const BookingForm = () => {
   // Member 2 - Booking Management
   const [resources, setResources] = useState([])
@@ -69,11 +71,10 @@ const BookingForm = () => {
 
     const payload = {
       resourceId: Number(formData.resourceId),
-      bookingDate: formData.bookingDate,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
+      startTime: buildLocalDateTime(formData.bookingDate, formData.startTime),
+      endTime: buildLocalDateTime(formData.bookingDate, formData.endTime),
       purpose: formData.purpose.trim(),
-      expectedAttendees: Number(formData.expectedAttendees),
+      attendees: Number(formData.expectedAttendees),
     }
 
     setSubmitting(true)
@@ -129,7 +130,7 @@ const BookingForm = () => {
                   <option value="">Select resource</option>
                   {resources.map((resource) => (
                     <option key={resource.id} value={resource.id}>
-                      {resource.name} ({resource.location})
+                      {resource.name} ({resource.physicalLocation || resource.location || 'N/A'})
                     </option>
                   ))}
                 </select>
