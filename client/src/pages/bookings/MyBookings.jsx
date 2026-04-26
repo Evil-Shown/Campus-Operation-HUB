@@ -17,12 +17,13 @@ const MyBookings = () => {
   const [toast, setToast] = useState('')
 
   useEffect(() => {
-    bookingService
-      .getMyBookings()
+    const loader = isAdmin ? bookingService.getAllBookings : bookingService.getMyBookings
+
+    loader()
       .then((res) => setBookings(res.data || []))
-      .catch(() => setError('Failed to load your bookings.'))
+      .catch(() => setError(isAdmin ? 'Failed to load bookings.' : 'Failed to load your bookings.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [isAdmin])
 
   useEffect(() => {
     if (!toast) return undefined
@@ -82,7 +83,11 @@ const MyBookings = () => {
     }
   }
 
-  const formatDate = (date) => new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  const formatDate = (date) => {
+    const parsed = date ? new Date(date) : null
+    if (!parsed || Number.isNaN(parsed.getTime())) return 'N/A'
+    return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
 
   const actionBtn = 'rounded-lg px-3 py-1.5 text-xs font-semibold tracking-wide transition-all duration-200 shadow-sm'
 
@@ -103,11 +108,13 @@ const MyBookings = () => {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-              My Bookings
+              {isAdmin ? 'Booking Management' : 'My Bookings'}
             </span>
           </h1>
           <p className="text-slate-500 text-sm mt-1.5 font-medium">
-            Manage and track all your facility reservations in one place
+            {isAdmin
+              ? 'Review and manage all booking requests across users'
+              : 'Manage and track all your facility reservations in one place'}
           </p>
         </div>
         <Link
@@ -222,7 +229,7 @@ const MyBookings = () => {
                     <td className="px-6 py-5">
                       <div className="font-medium text-slate-700">{formatDate(b.bookingDate)}</div>
                       <div className="text-slate-400 text-xs font-mono mt-0.5">
-                        {b.startTime} - {b.endTime}
+                        {b.startTimeOnly || b.startTime} - {b.endTimeOnly || b.endTime}
                       </div>
                     </td>
                     <td className="px-6 py-5">
@@ -304,7 +311,9 @@ const MyBookings = () => {
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Time</span>
-                    <span className="font-mono text-slate-600 text-xs">{b.startTime} - {b.endTime}</span>
+                    <span className="font-mono text-slate-600 text-xs">
+                      {b.startTimeOnly || b.startTime} - {b.endTimeOnly || b.endTime}
+                    </span>
                   </div>
                 </div>
 

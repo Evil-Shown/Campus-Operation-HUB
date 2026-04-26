@@ -23,8 +23,10 @@ import {
   Globe,
   Send,
   MessageCircle,
-  Mail
+  Mail,
+  UserRound
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 // --- HELPER COMPONENTS ---
 
@@ -113,6 +115,7 @@ const PhotoCarousel = () => {
 }
 
 export default function LandingPage() {
+  const { user } = useAuth()
   const [scrolled, setScrolled] = useState(false)
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [headlineIndex, setHeadlineIndex] = useState(0)
@@ -141,6 +144,7 @@ export default function LandingPage() {
   }, [headlines.length])
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+  const dashboardPath = user?.role === 'ADMIN' ? '/admin' : '/dashboard'
 
   const features = [
     {
@@ -265,12 +269,38 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/login" className={`text-sm font-bold px-4 py-2 transition-colors ${scrolled ? 'text-slate-600 hover:text-indigo-600' : 'text-white/80 hover:text-white'}`}>
-              Login
-            </Link>
-            <Link to="/signup" className="bg-indigo-600 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30">
-              Get started
-            </Link>
+            {user ? (
+              <Link
+                to={dashboardPath}
+                aria-label="Open dashboard"
+                className={`group inline-flex items-center justify-center rounded-full p-1 transition-all ${
+                  scrolled
+                    ? 'hover:bg-indigo-50'
+                    : 'hover:bg-white/10'
+                }`}
+                title="Go to dashboard"
+              >
+                <div className="relative">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-sm transition-all ${
+                    scrolled
+                      ? 'border-indigo-200 bg-white text-indigo-700 group-hover:border-indigo-300'
+                      : 'border-white/40 bg-white/15 text-white group-hover:bg-white/25'
+                  }`}>
+                    <UserRound className="h-5 w-5" />
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                </div>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className={`text-sm font-bold px-4 py-2 transition-colors ${scrolled ? 'text-slate-600 hover:text-indigo-600' : 'text-white/80 hover:text-white'}`}>
+                  Login
+                </Link>
+                <Link to="/signup" className="bg-indigo-600 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30">
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

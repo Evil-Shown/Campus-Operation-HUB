@@ -373,13 +373,23 @@ export default function ResourceListPage() {
                       </div>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/resources/${resource.id}`)}
-                      className="btn-primary !py-2.5 !px-5 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group-hover:scale-105 transition-all shadow-lg shadow-primary-500/20"
-                    >
-                      Initiate Booking <ArrowUpRight className="w-3.5 h-3.5" />
-                    </button>
+                    {!isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/resources/${resource.id}`)}
+                        className="btn-primary !py-2.5 !px-5 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group-hover:scale-105 transition-all shadow-lg shadow-primary-500/20"
+                      >
+                        Initiate Booking <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/resources/${resource.id}`)}
+                        className="btn-primary !py-2.5 !px-5 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group-hover:scale-105 transition-all shadow-lg shadow-primary-500/20"
+                      >
+                        View Details <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>

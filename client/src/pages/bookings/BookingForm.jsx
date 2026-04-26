@@ -24,12 +24,25 @@ const BookingForm = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  const fetchResources = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoadingResources(true)
+    }
+    setError('')
+    try {
+      const res = await api.get('/resources')
+      setResources(res.data || [])
+    } catch {
+      setError('Failed to load resources.')
+    } finally {
+      if (!silent) {
+        setLoadingResources(false)
+      }
+    }
+  }
+
   useEffect(() => {
-    api
-      .get('/resources')
-      .then((res) => setResources(res.data || []))
-      .catch(() => setError('Failed to load resources.'))
-      .finally(() => setLoadingResources(false))
+    fetchResources()
   }, [])
 
   useEffect(() => {
@@ -125,6 +138,7 @@ const BookingForm = () => {
                 <select
                   className="w-full rounded-lg border border-gray-300 px-3 py-2"
                   value={formData.resourceId}
+                  onFocus={() => fetchResources({ silent: true })}
                   onChange={(e) => handleChange('resourceId', e.target.value)}
                 >
                   <option value="">Select resource</option>

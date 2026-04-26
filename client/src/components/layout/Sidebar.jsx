@@ -4,7 +4,7 @@ import {
   Boxes,
   CalendarCheck2,
   AlertCircle,
-  ShieldCheck,
+  UserCog,
   School,
   Sparkles
 } from 'lucide-react'
@@ -19,13 +19,17 @@ export default function Sidebar() {
     { label: 'Browse Resources', href: '/resources', icon: Boxes },
     { label: 'My Bookings', href: '/bookings/my', icon: CalendarCheck2 },
     { label: 'Support Tickets', href: '/tickets', icon: AlertCircle },
-    ...(isAdmin ? [{ label: 'System Admin', href: '/admin/resources', icon: ShieldCheck }] : []),
+    ...(isAdmin
+      ? [
+          { label: 'Users', href: '/admin/users', icon: UserCog },
+        ]
+      : []),
   ]
 
   return (
     <aside className="sticky top-0 h-screen w-72 flex flex-col bg-white border-r border-gray-200 px-4 py-8 overflow-y-auto">
       {/* Branding */}
-      <div className="mb-10 px-3 flex items-center gap-4 group">
+      <Link to="/" className="mb-10 px-3 flex items-center gap-4 group">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
           <School className="h-6 w-6 text-white" />
         </div>
@@ -35,7 +39,7 @@ export default function Sidebar() {
           </h2>
           <p className="text-xs text-gray-500 font-medium">University Portal</p>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1">
@@ -74,6 +78,12 @@ export default function Sidebar() {
 
       {/* Campus Support Section */}
       <div className="mt-auto pt-8">
+        <Link
+          to="/"
+          className="mb-3 block text-center py-2 bg-indigo-50 border border-indigo-100 rounded-lg text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+        >
+          Back to Landing Page
+        </Link>
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
