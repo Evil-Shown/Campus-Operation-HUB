@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 
 function getNotificationIcon(type) {
   const icons = {
+    BOOKING_PENDING_REVIEW: Bell,
     BOOKING_APPROVED: CheckCircle,
     BOOKING_REJECTED: XCircle,
     TICKET_UPDATED: MessageCircle,
@@ -18,23 +19,24 @@ function getNotificationIcon(type) {
 
 function getNotificationColor(type) {
   const colors = {
-    BOOKING_APPROVED: 'text-emerald-500 bg-emerald-50 border-emerald-200',
-    BOOKING_REJECTED: 'text-rose-500 bg-rose-50 border-rose-200',
-    TICKET_UPDATED: 'text-blue-500 bg-blue-50 border-blue-200',
-    TICKET_RESOLVED: 'text-emerald-500 bg-emerald-50 border-emerald-200',
-    TICKET_ASSIGNED: 'text-indigo-500 bg-indigo-50 border-indigo-200',
-    COMMENT_ADDED: 'text-purple-500 bg-purple-50 border-purple-200',
-  }
-  return colors[type] || 'text-gray-500 bg-gray-50 border-gray-200'
-}
+    BOOKING_PENDING_REVIEW: 'amber',
+    BOOKING_APPROVED: 'emerald',
+    BOOKING_REJECTED: 'rose',
+    TICKET_UPDATED: 'blue',
+    TICKET_RESOLVED: 'emerald',
+    TICKET_ASSIGNED: 'indigo',
+    COMMENT_ADDED: 'violet',
+  };
+  return colors[type] || 'slate';
+};
 
-function formatTime(dateString) {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / (1000 * 60))
-  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffHrs / 24)
+const formatTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHrs / 24);
   
   if (diffMins < 1) return 'Just now'
   if (diffMins < 60) return `${diffMins}m ago`
@@ -71,7 +73,7 @@ export default function NotificationsPage() {
   const handleMarkAsRead = async (id) => {
     try {
       await markOneRead({ baseUrl: apiBaseUrl, token, id })
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true, isRead: true } : n))
     } catch (error) {
       console.error('Failed to mark as read:', error)
     }
@@ -80,7 +82,7 @@ export default function NotificationsPage() {
   const handleMarkAllRead = async () => {
     try {
       await markAllRead({ baseUrl: apiBaseUrl, token })
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })))
     } catch (error) {
       console.error('Failed to mark all as read:', error)
     }

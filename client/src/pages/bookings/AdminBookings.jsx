@@ -1,111 +1,143 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import api from '../../api/api'
-import BookingCard from '../../components/bookings/BookingCard'
+import { useEffect, useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
+import BookingStatusBadge from '../../components/bookings/BookingStatusBadge'
+import bookingService from '../../services/bookingService'
+import { useAuth } from '../../context/AuthContext'
 
-function AdminBookings() {
-  const navigate = useNavigate()
+const AdminBookings = () => {
+  // Member 2 - Booking Management
+  const { user, loading: authLoading } = useAuth()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
+  const [date, setDate] = useState('')
+  const [resourceId, setResourceId] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 8
 
   useEffect(() => {
-    const role = localStorage.getItem('role')
-    if (role !== 'ROLE_ADMIN') {
-      navigate('/dashboard')
-      return
-    }
+    if (authLoading || user?.role !== 'ADMIN') return
+    setLoading(true)
+    bookingService
+      .getAllBookings({
+        ...(status ? { status } : {}),
+        ...(date ? { date } : {}),
+        ...(resourceId ? { resourceId: Number(resourceId) } : {}),
+      })
+      .then((res) => setBookings(res.data || []))
+      .catch(() => setError('Failed to load bookings.'))
+      .finally(() => setLoading(false))
+  }, [authLoading, user?.role, status, date, resourceId])
 
-    const loadPendingBookings = async () => {
-      try {
-        const response = await api.get('/bookings?status=PENDING')
-        setBookings(response.data)
-      } catch (err) {
-        setError('Failed to load pending bookings.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadPendingBookings()
-  }, [navigate])
+  if (authLoading) {
+    return <div className="flex items-center justify-center py-16 text-sm text-gray-500">Loading...</div>
+  }
+  if (user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const handleApprove = async (id) => {
+    const note = window.prompt('Optional approval note:')
+    if (note === null) return
     try {
-      await api.patch(`/bookings/${id}/approve`)
-      setBookings((prev) => prev.filter((booking) => booking.id !== id))
+      await bookingService.approveBooking(id, note)
+      setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'APPROVED', adminReviewNote: note } : b)))
     } catch (err) {
-      if (err.response?.status === 409) {
-        alert('Could not approve — a conflicting booking exists.')
-      } else {
-        alert(err.response?.data?.message || 'Failed to approve booking.')
-      }
+      alert(err.response?.data?.message || 'Failed to approve booking.')
     }
   }
 
   const handleReject = async (id) => {
-    const reason = window.prompt('Enter rejection reason (optional):')
-    if (reason === null) {
-      return
-    }
-
+    const reason = window.prompt('Enter rejection reason (required):')
+    if (reason === null || !reason.trim()) return
     try {
-      const query = reason.trim() ? `?reason=${encodeURIComponent(reason)}` : ''
-      await api.patch(`/bookings/${id}/reject${query}`)
-      setBookings((prev) => prev.filter((booking) => booking.id !== id))
+      await bookingService.rejectBooking(id, reason.trim())
+      setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'REJECTED', adminReviewNote: reason.trim() } : b)))
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to reject booking.')
     }
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="flex flex-col items-center justify-center py-16 text-gray-600">
-          <span className="animate-spin border-2 border-gray-400 border-t-transparent rounded-full w-6 h-6 mb-3" />
-          <p>Loading pending bookings...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <p className="text-red-600 text-center py-8">{error}</p>
-      </div>
-    )
-  }
+  const totalPages = Math.max(1, Math.ceil(bookings.length / pageSize))
+  const paginated = bookings.slice((page - 1) * pageSize, page * pageSize)
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-2xl font-bold text-gray-800">Pending Approvals</h1>
-        {bookings.length > 0 && (
-          <span className="bg-yellow-100 text-yellow-800 text-sm px-3 py-1 rounded-full font-medium">
-            {bookings.length} pending
-          </span>
-        )}
+    <div className="mx-auto max-w-6xl p-6">
+      <div className="mb-2 flex items-center gap-3">
+        <h1 className="text-2xl font-bold text-gray-800">Booking Dashboard</h1>
+        <span className="rounded-full border border-yellow-200 bg-yellow-100 px-3 py-0.5 text-sm font-semibold text-yellow-700">
+          {bookings.length} results
+        </span>
+      </div>
+      <p className="mb-5 text-sm text-gray-500">Review, approve, or reject booking requests.</p>
+
+      <div className="mb-5 grid gap-3 md:grid-cols-4">
+        <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="rounded-lg border px-3 py-2 text-sm">
+          <option value="">All statuses</option>
+          <option value="PENDING">PENDING</option>
+          <option value="APPROVED">APPROVED</option>
+          <option value="REJECTED">REJECTED</option>
+          <option value="CANCELLED">CANCELLED</option>
+        </select>
+        <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setPage(1) }} className="rounded-lg border px-3 py-2 text-sm" />
+        <input type="number" placeholder="Resource ID" value={resourceId} onChange={(e) => { setResourceId(e.target.value); setPage(1) }} className="rounded-lg border px-3 py-2 text-sm" />
       </div>
 
-      <p className="text-gray-500 mb-6">Review and action pending booking requests</p>
+      {loading && <div className="py-16 text-center text-sm text-gray-500">Loading bookings...</div>}
+      {error && <div className="py-8 text-center text-red-600">{error}</div>}
 
-      {bookings.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-4xl">✅</div>
-          <p className="text-xl font-semibold text-gray-700 mt-3">All caught up!</p>
-          <p className="text-gray-500 mt-1">No pending bookings to review.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {bookings.map((booking) => (
-            <BookingCard
-              key={booking.id}
-              booking={booking}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          ))}
+      {!loading && !error && bookings.length === 0 && (
+        <div className="py-20 text-center text-gray-500">No bookings found for current filters.</div>
+      )}
+
+      {!loading && !error && bookings.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-5 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Booking</th>
+                <th className="px-5 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Resource</th>
+                <th className="px-5 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Requested By</th>
+                <th className="px-5 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Date & Time</th>
+                <th className="px-5 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                <th className="px-5 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map((b) => (
+                <tr key={b.id} className="border-b border-gray-50 transition-colors hover:bg-gray-50">
+                  <td className="px-5 py-4 font-semibold text-gray-800">BK-{b.id}</td>
+                  <td className="px-5 py-4">
+                    <div className="font-medium text-gray-700">{b.resourceName}</div>
+                    <div className="text-xs text-gray-400">📍 {b.resourceLocation}</div>
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">{b.userName}</td>
+                  <td className="px-5 py-4 text-gray-600">
+                    <div>{b.bookingDate}</div>
+                    <div className="text-xs text-gray-400">{b.startTime} - {b.endTime}</div>
+                  </td>
+                  <td className="px-5 py-4"><BookingStatusBadge status={b.status} /></td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link to={`/bookings/${b.id}`} className="text-xs text-blue-600 hover:underline">Details</Link>
+                      {b.status === 'PENDING' && (
+                        <>
+                          <button onClick={() => handleApprove(b.id)} className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700">Approve</button>
+                          <button onClick={() => handleReject(b.id)} className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">Reject</button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex items-center justify-end gap-2 border-t border-gray-100 p-3">
+            <button disabled={page === 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))} className="rounded border px-3 py-1 text-xs disabled:opacity-40">Prev</button>
+            <span className="text-xs text-gray-600">Page {page} of {totalPages}</span>
+            <button disabled={page >= totalPages} onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} className="rounded border px-3 py-1 text-xs disabled:opacity-40">Next</button>
+          </div>
         </div>
       )}
     </div>
