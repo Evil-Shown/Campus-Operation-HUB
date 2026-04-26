@@ -15,8 +15,8 @@ import TicketCreatePage from './pages/tickets/TicketCreatePage'
 import TicketsPage from './pages/TicketsPage'
 import TicketDetailPage from './pages/TicketDetailPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
-import AdminResourcesPage from './pages/admin/AdminResourcesPage'
 import AdminBookingsPage from './pages/admin/AdminBookingsPage'
+import AdminUsersPage from './pages/admin/AdminUsersPage'
 import UserDashboard from './pages/UserDashboard'
 import NotificationsPage from './pages/NotificationsPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -40,6 +40,7 @@ function App() {
           <Route path="/user-dashboard" element={withProtectedLayout(<UserDashboard />, ['USER'])} />
           <Route path="/notifications" element={withProtectedLayout(<NotificationsPage />)} />
           <Route path="/admin-dashboard" element={withProtectedLayout(<AdminDashboardPage />, ['ADMIN'])} />
+          <Route path="/resources" element={withProtectedLayout(<ResourceListPage />)} />
           <Route path="/resources/:id" element={withProtectedLayout(<ResourceDetailPage />)} />
           <Route path="/bookings/new" element={withProtectedLayout(<BookingFormPage />)} />
           <Route path="/bookings/new/:resourceId" element={withProtectedLayout(<BookingFormPage />)} />
@@ -49,8 +50,8 @@ function App() {
           <Route path="/tickets/new" element={withProtectedLayout(<TicketCreatePage />)} />
           <Route path="/tickets/:id" element={withProtectedLayout(<TicketDetailPage />)} />
           <Route path="/admin" element={withProtectedLayout(<AdminDashboardPage />, ['ADMIN'])} />
-          <Route path="/admin/resources" element={withProtectedLayout(<AdminResourcesPage />, ['ADMIN'])} />
           <Route path="/admin/bookings" element={withProtectedLayout(<AdminBookingsPage />, ['ADMIN'])} />
+          <Route path="/admin/users" element={withProtectedLayout(<AdminUsersPage />, ['ADMIN'])} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>

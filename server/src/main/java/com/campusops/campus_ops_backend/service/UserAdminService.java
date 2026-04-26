@@ -1,5 +1,7 @@
 package com.campusops.campus_ops_backend.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,5 +41,25 @@ public class UserAdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         return UserSummaryDTO.from(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserSummaryDTO> listUsers() {
+        return userRepository.findAll().stream()
+                .map(UserSummaryDTO::from)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteUser(Long userId, String actorEmail) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (user.getEmail().equalsIgnoreCase(actorEmail)) {
+            throw new IllegalStateException("You cannot delete your own admin account.");
+        }
+
+        userRepository.delete(user);
+        log.info("User deleted: {} ({}) by {}", user.getEmail(), userId, actorEmail);
     }
 }

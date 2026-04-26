@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { CheckCircle, Clock, MessageCircle, XCircle, Check, Bell, Filter, Trash2, RefreshCw } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { CheckCircle, Clock, MessageCircle, XCircle, Check, Bell, RefreshCw, X } from 'lucide-react'
 import { listNotifications, markAllRead, markOneRead } from '../api/notifications'
 import { useAuth } from '../context/AuthContext'
 
@@ -50,6 +50,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all') // all, unread, read
   const [typeFilter, setTypeFilter] = useState('all')
+  const [selectedNotification, setSelectedNotification] = useState(null)
   const { apiBaseUrl, token } = useAuth()
 
   useEffect(() => {
@@ -97,6 +98,16 @@ export default function NotificationsPage() {
       console.error('Failed to refresh notifications:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const closeDetailsModal = () => setSelectedNotification(null)
+
+  const handleOpenNotificationDetails = async (notification) => {
+    setSelectedNotification(notification)
+
+    if (!notification.read) {
+      await handleMarkAsRead(notification.id)
     }
   }
 
@@ -247,9 +258,18 @@ export default function NotificationsPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className={`bg-white/80 backdrop-blur-sm border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all ${
+                  className={`bg-white/80 backdrop-blur-sm border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer ${
                     !notif.read ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-100'
                   }`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleOpenNotificationDetails(notif)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      handleOpenNotificationDetails(notif)
+                    }
+                  }}
                 >
                   <div className="flex gap-4">
                     <div className={`flex-shrink-0 h-12 w-12 rounded-xl border flex items-center justify-center ${colorClass}`}>
@@ -272,7 +292,10 @@ export default function NotificationsPage() {
                         </div>
                         {!notif.read && (
                           <button
-                            onClick={() => handleMarkAsRead(notif.id)}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleMarkAsRead(notif.id)
+                            }}
                             className="flex-shrink-0 p-2 text-indigo-600 hover:bg-indigo-100 rounded-xl transition-colors"
                             title="Mark as read"
                           >
@@ -288,6 +311,82 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {selectedNotification && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeDetailsModal}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="notification-detail-title"
+              >
+                <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                    Notification Details
+                  </p>
+                  <h2 id="notification-detail-title" className="mt-1 text-xl font-black text-gray-800">
+                    {selectedNotification.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={closeDetailsModal}
+                  className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                  aria-label="Close notification details"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+                <div className="mt-6 space-y-4">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <p className="text-xs font-black uppercase tracking-widest text-gray-500">Message</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                      {selectedNotification.message}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Type</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-800">{selectedNotification.type || 'N/A'}</p>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Status</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-800">
+                        {selectedNotification.read ? 'Read' : 'Unread'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Received</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-800">
+                        {new Date(selectedNotification.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Notification ID</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-800">{selectedNotification.id}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

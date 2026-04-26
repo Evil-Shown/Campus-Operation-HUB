@@ -129,10 +129,9 @@ export default function UserDashboard() {
 
   // Calculate resource categories dynamically
   const resourceCategories = [
-    { name: 'Study Rooms', icon: BookOpen, type: 'STUDY_ROOM', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', path: '/resources?type=STUDY_ROOM' },
-    { name: 'Computer Labs', icon: Monitor, type: 'COMPUTER_LAB', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', path: '/resources?type=COMPUTER_LAB' },
-    { name: 'Meeting Rooms', icon: Users, type: 'MEETING_ROOM', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', path: '/resources?type=MEETING_ROOM' },
     { name: 'Lecture Halls', icon: BarChart3, type: 'LECTURE_HALL', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', path: '/resources?type=LECTURE_HALL' },
+    { name: 'Labs', icon: Monitor, type: 'LAB', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', path: '/resources?type=LAB' },
+    { name: 'Meeting Rooms', icon: Users, type: 'MEETING_ROOM', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', path: '/resources?type=MEETING_ROOM' },
     { name: 'Equipment', icon: Cpu, type: 'EQUIPMENT', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', path: '/resources?type=EQUIPMENT' },
     { name: 'All Resources', icon: Search, type: null, color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200', path: '/resources' }
   ].map(cat => ({

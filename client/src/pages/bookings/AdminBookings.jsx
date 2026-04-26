@@ -115,7 +115,7 @@ const AdminBookings = () => {
                   <td className="px-5 py-4 text-gray-600">{b.userName}</td>
                   <td className="px-5 py-4 text-gray-600">
                     <div>{b.bookingDate}</div>
-                    <div className="text-xs text-gray-400">{b.startTime} - {b.endTime}</div>
+                    <div className="text-xs text-gray-400">{b.startTimeOnly || b.startTime} - {b.endTimeOnly || b.endTime}</div>
                   </td>
                   <td className="px-5 py-4"><BookingStatusBadge status={b.status} /></td>
                   <td className="px-5 py-4">
