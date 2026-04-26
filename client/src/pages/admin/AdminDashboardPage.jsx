@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import * as XLSX from 'xlsx'
+import * as XLSX from 'xlsx-js-style'
 import {
   Package,
   CalendarClock,
