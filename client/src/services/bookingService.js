@@ -3,39 +3,40 @@ import api from '../api/axios.js'
 // Member 2 - Booking Management
 const bookingService = {
   createBooking(payload) {
-    return api.post('/v1/bookings', payload)
+    return api.post('/bookings', payload)
   },
 
   getMyBookings() {
-    return api.get('/v1/bookings/my')
+    return api.get('/bookings/my')
   },
 
   getAllBookings(params = {}) {
-    return api.get('/v1/bookings', { params })
+    return api.get('/bookings', { params })
   },
 
   getBookingById(id) {
-    return api.get(`/v1/bookings/${id}`)
+    return api.get(`/bookings/${id}`)
   },
 
-  approveBooking(id, adminReviewNote = '') {
-    return api.put(`/v1/bookings/${id}/approve`, { adminReviewNote })
+  approveBooking(id, _adminReviewNote = '') {
+    return api.patch(`/bookings/${id}/approve`)
   },
 
   rejectBooking(id, adminReviewNote) {
-    return api.put(`/v1/bookings/${id}/reject`, { adminReviewNote })
+    const reason = encodeURIComponent(adminReviewNote || '')
+    return api.patch(`/bookings/${id}/reject?reason=${reason}`)
   },
 
   cancelBooking(id) {
-    return api.delete(`/v1/bookings/${id}`)
+    return api.patch(`/bookings/${id}/cancel`)
   },
 
   getResourceBookings(resourceId) {
-    return api.get(`/v1/bookings/resource/${resourceId}`)
+    return api.get(`/bookings/resource/${resourceId}`)
   },
 
   getResourceAvailability(resourceId) {
-    return api.get(`/v1/bookings/resource/${resourceId}/availability`)
+    return api.get(`/bookings/resource/${resourceId}/availability`)
   },
 }
 

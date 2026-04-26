@@ -72,7 +72,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkRead, onUn
     try {
       await markOneRead({ baseUrl: apiBaseUrl, token, id })
       setNotifications((prev) => {
-        const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        const updated = prev.map((n) => (n.id === id ? { ...n, read: true, isRead: true } : n))
         const nextUnread = updated.filter((n) => !n.read).length
         onUnreadCountChange?.(nextUnread)
         if (nextUnread === 0) {
@@ -88,7 +88,7 @@ export default function NotificationDropdown({ isOpen, onClose, onMarkRead, onUn
   const handleMarkAllRead = async () => {
     try {
       await markAllRead({ baseUrl: apiBaseUrl, token })
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })))
       onUnreadCountChange?.(0)
       if (onMarkRead) {
         onMarkRead()

@@ -82,12 +82,25 @@ public class ResourceController {
     @Autowired
     private ResourceService resourceService;
 
+    @GetMapping
+    public ResponseEntity<List<Resource>> list(
+            @RequestParam(required = false) ResourceType type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Integer minCapacity) {
+        return ResponseEntity.ok(resourceService.searchResources(type, location, minCapacity));
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<Resource>> search(
             @RequestParam(required = false) ResourceType type,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Integer minCapacity) {
         return ResponseEntity.ok(resourceService.searchResources(type, location, minCapacity));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Resource> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(resourceService.getResourceById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

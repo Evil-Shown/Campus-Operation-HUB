@@ -36,6 +36,7 @@ const formatTime = (dateString) => {
   const diffMs = now - date;
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHrs / 24);
   
   if (diffMins < 1) return 'Just now'
   if (diffMins < 60) return `${diffMins}m ago`
@@ -72,7 +73,7 @@ export default function NotificationsPage() {
   const handleMarkAsRead = async (id) => {
     try {
       await markOneRead({ baseUrl: apiBaseUrl, token, id })
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true, isRead: true } : n))
     } catch (error) {
       console.error('Failed to mark as read:', error)
     }
@@ -81,7 +82,7 @@ export default function NotificationsPage() {
   const handleMarkAllRead = async () => {
     try {
       await markAllRead({ baseUrl: apiBaseUrl, token })
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setNotifications(prev => prev.map(n => ({ ...n, read: true, isRead: true })))
     } catch (error) {
       console.error('Failed to mark all as read:', error)
     }
