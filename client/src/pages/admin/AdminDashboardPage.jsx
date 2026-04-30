@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import * as XLSX from 'xlsx-js-style'
+// Lazy-load xlsx-js-style only when needed (export) to avoid Node built-in usage in main bundle
 import {
   Package,
   CalendarClock,
@@ -70,6 +70,9 @@ export default function AdminDashboardPage() {
   const handleExportReport = async () => {
     try {
       setExporting(true)
+
+      const mod = await import('xlsx-js-style')
+      const XLSX = mod && (mod.default || mod)
 
       const workbook = XLSX.utils.book_new()
       const generatedAt = new Date()
