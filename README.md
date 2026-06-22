@@ -264,22 +264,27 @@ Frontend app:
 
 - `http://localhost:5173`
 
-### Quick Start (2 terminals)
+### Quick Start
 
-Terminal 1:
+**Prerequisite (Database Setup):**
+Ensure your local PostgreSQL is running on port `5432` with a database named `campus_op_hub`, user `campus_user`, and password `campus123`.
+
+**Terminal 1 (Backend):**
 
 ```powershell
 cd server
 .\mvnw.cmd spring-boot:run
 ```
+*API will run at `http://localhost:8080` and documentation at `http://localhost:8080/swagger-ui/index.html`.*
 
-Terminal 2:
+**Terminal 2 (Frontend):**
 
 ```powershell
 cd client
 npm install
 npm run dev
 ```
+*App will run at `http://localhost:5173`.*
 
 ## Scripts Reference
 
